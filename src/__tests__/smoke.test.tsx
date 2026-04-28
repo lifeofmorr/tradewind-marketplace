@@ -47,8 +47,14 @@ vi.mock("@/lib/supabase", () => {
 vi.mock("framer-motion", async () => {
   const React = await import("react");
   const passthrough = (tag: keyof JSX.IntrinsicElements) => {
-    return ({ children, ...rest }: { children?: React.ReactNode } & Record<string, unknown>) =>
-      React.createElement(tag, rest, children);
+    return ({ children, ...rest }: { children?: React.ReactNode } & Record<string, unknown>) => {
+      // Drop framer-only props that aren't valid DOM attributes
+      const safe = { ...rest };
+      delete safe.initial; delete safe.animate; delete safe.transition;
+      delete safe.whileHover; delete safe.whileTap; delete safe.exit;
+      delete safe.layout; delete safe.layoutId; delete safe.variants;
+      return React.createElement(tag, safe, children);
+    };
   };
   return {
     motion: new Proxy(
@@ -59,6 +65,10 @@ vi.mock("framer-motion", async () => {
     ),
     AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
     useReducedMotion: () => false,
+    useScroll: () => ({ scrollYProgress: 0, scrollY: 0 }),
+    useTransform: () => 0,
+    useMotionValue: (init: unknown) => init,
+    useSpring: (v: unknown) => v,
   };
 });
 
@@ -109,7 +119,8 @@ describe("TradeWind smoke", () => {
     const { default: Home } = await import("@/pages/Home");
     renderRoute(<Home />, "/");
     expect(screen.getAllByRole("heading").length).toBeGreaterThan(0);
-    expect(screen.getByPlaceholderText(/Boston Whaler|Porsche/i)).toBeInTheDocument();
+    // Hero scene is lazy-loaded; the search input mounts after Suspense resolves.
+    expect(await screen.findByPlaceholderText(/Boston Whaler|Porsche/i)).toBeInTheDocument();
   });
 
   it("TrustCenter page renders verification copy", async () => {

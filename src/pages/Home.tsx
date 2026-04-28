@@ -1,35 +1,21 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, Sparkles, ShieldCheck, Wrench, Anchor, Car as CarIcon, ArrowRight, Zap, Star } from "lucide-react";
+import { lazy, Suspense, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Sparkles, ShieldCheck, Wrench, Anchor, Car as CarIcon, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Reveal } from "@/components/ui/Reveal";
 import { ListingGrid } from "@/components/listings/ListingGrid";
+import { MarketPulseCard } from "@/components/market/MarketPulseCard";
 import { useListings } from "@/hooks/useListings";
 import { CATEGORIES } from "@/lib/categories";
 import { BRAND } from "@/lib/brand";
 import { setMeta } from "@/lib/seo";
 
-function HeroSearch() {
-  const [q, setQ] = useState("");
-  const navigate = useNavigate();
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (q.trim()) params.set("q", q.trim());
-    navigate(`/browse${params.toString() ? `?${params}` : ""}`);
-  }
+const TradeWindHeroScene = lazy(() => import("@/components/visual/TradeWindHeroScene"));
+
+function HeroFallback() {
   return (
     <section className="relative overflow-hidden border-b border-border hero-glow">
-      {/* Floating brass accents */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-      >
-        <div className="absolute -top-24 left-1/4 h-72 w-72 rounded-full bg-brass-500/10 blur-3xl animate-float" />
-        <div className="absolute top-40 right-1/4 h-96 w-96 rounded-full bg-navy-700/30 blur-3xl animate-float [animation-delay:1.5s]" />
-      </div>
-      <div className="container-pad py-24 lg:py-36 text-center relative">
+      <div className="container-pad py-24 lg:py-36 text-center">
         <div className="inline-flex items-center gap-2 text-brass-400 mb-2">
           <Sparkles className="h-3.5 w-3.5" />
           <span className="font-mono text-xs uppercase tracking-[0.32em]">{BRAND.name} marketplace</span>
@@ -39,31 +25,7 @@ function HeroSearch() {
           <br />
           <span className="text-brass-gradient">Serious buyers.</span>
         </h1>
-        <p className="mt-5 max-w-xl mx-auto text-muted-foreground px-2">
-          {BRAND.tagline}
-        </p>
-        <form onSubmit={onSubmit} className="mt-8 max-w-2xl mx-auto flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <label htmlFor="hero-search" className="sr-only">Search listings</label>
-            <Input
-              id="hero-search"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Try 'Boston Whaler 320' or 'Porsche 911 GT3'"
-              className="pl-9 h-12 text-base bg-card/60 backdrop-blur"
-              autoComplete="off"
-            />
-          </div>
-          <Button size="lg" type="submit" className="btn-glow">Search</Button>
-        </form>
-
-        {/* Trust strip */}
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Verified dealers</span>
-          <span className="inline-flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-brass-400" /> AI fraud screening</span>
-          <span className="inline-flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-brass-400" /> Concierge for every deal</span>
-        </div>
+        <p className="mt-5 max-w-xl mx-auto text-muted-foreground px-2">{BRAND.tagline}</p>
       </div>
     </section>
   );
@@ -239,8 +201,16 @@ export default function Home() {
   }, []);
   return (
     <>
-      <HeroSearch />
+      <Suspense fallback={<HeroFallback />}>
+        <TradeWindHeroScene />
+      </Suspense>
       <FeaturedListings />
+      <Reveal as="section" className="container-pad py-12 border-t border-border">
+        <div className="eyebrow">Live signal</div>
+        <h2 className="section-title">Marketplace pulse</h2>
+        <div className="section-title-underline mb-6" />
+        <MarketPulseCard />
+      </Reveal>
       <CategoryGrid />
       <AIAssistantBanner />
       <ServicesGrid />

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MarketPulseCard } from "@/components/market/MarketPulseCard";
 import { setMeta } from "@/lib/seo";
 import { formatNumber } from "@/lib/utils";
 import type { Dealer } from "@/types/database";
@@ -69,6 +70,10 @@ export default function DealerDashboard() {
           <p className="text-xs text-muted-foreground mt-1">A complete profile lifts buyer trust.</p>
         </Link>
       </div>
+      <section>
+        <h2 className="font-display text-xl mb-3">Your inventory pulse</h2>
+        <MarketPulseCard scope="dealer" dealerId={dealerId} />
+      </section>
       <Card>
         <CardHeader><CardTitle>Subscription</CardTitle></CardHeader>
         <CardContent className="text-sm space-y-1">
