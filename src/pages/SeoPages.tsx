@@ -344,14 +344,8 @@ export function CategoryCityIndex() {
               </li>
             ))}
           </ul>
-          <Suspense />
         </section>
       ))}
     </div>
   );
 }
-
-function Suspense() { return null; }
-
-// Used by App.tsx to confirm BOAT vs AUTO partition still aligns.
-export const _seoCategoryGroups = { boats: BOAT_CATEGORIES, autos: AUTO_CATEGORIES };
