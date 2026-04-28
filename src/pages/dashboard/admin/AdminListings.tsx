@@ -90,7 +90,11 @@ export default function AdminListings() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Listings moderation</h1>
+      <div>
+        <div className="eyebrow">Admin · listings</div>
+        <h1 className="section-title">Moderation queue</h1>
+        <p className="text-sm text-muted-foreground mt-2">Approve, reject, or remove submitted listings.</p>
+      </div>
       {isLoading ? (
         <div className="rounded-lg border border-border overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (

@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { setMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
 import type { Profile } from "@/types/database";
@@ -26,8 +28,23 @@ export default function AdminUsers() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Users</h1>
-      {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
+      <div>
+        <div className="eyebrow">Admin · users</div>
+        <h1 className="section-title">User management</h1>
+      </div>
+      {isLoading ? (
+        <div className="rounded-lg border border-border overflow-hidden">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-12 skeleton border-b border-border last:border-0" />
+          ))}
+        </div>
+      ) : !users.length ? (
+        <EmptyState
+          icon={Users}
+          title="No users yet"
+          body="Users appear here as they sign up. Use this view to ban bad actors and monitor role distribution."
+        />
+      ) : (
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead className="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">
@@ -53,7 +70,6 @@ export default function AdminUsers() {
                   </td>
                 </tr>
               ))}
-              {!users.length && <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">No users yet.</td></tr>}
             </tbody>
           </table>
         </div>

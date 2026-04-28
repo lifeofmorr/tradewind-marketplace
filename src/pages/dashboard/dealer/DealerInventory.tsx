@@ -15,8 +15,11 @@ export default function DealerInventory() {
   useEffect(() => { setMeta({ title: "Dealer · inventory", description: "Your dealership inventory." }); }, []);
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl">Inventory</h1>
+      <div className="flex items-end justify-between flex-wrap gap-3">
+        <div>
+          <div className="eyebrow">Dealer</div>
+          <h1 className="section-title">Inventory</h1>
+        </div>
         <Button asChild><Link to="/seller/listings/new"><Plus className="h-4 w-4" /> New listing</Link></Button>
       </div>
       {isLoading ? (

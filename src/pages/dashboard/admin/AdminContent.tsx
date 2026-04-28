@@ -30,7 +30,11 @@ export default function AdminContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Content</h1>
+      <div>
+        <div className="eyebrow">Admin · content</div>
+        <h1 className="section-title">Content management</h1>
+        <p className="text-sm text-muted-foreground mt-2">Blog posts and market reports drive organic traffic — keep them fresh.</p>
+      </div>
       <Tabs defaultValue="blog">
         <TabsList>
           <TabsTrigger value="blog">Blog posts</TabsTrigger>

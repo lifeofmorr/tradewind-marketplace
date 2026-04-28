@@ -364,7 +364,11 @@ export function Concierge() {
     else { void notify("concierge", v.email); setDone(true); }
   }
   return (
-    <RequestShell eyebrow="Concierge" title="Tell us what you want." description="An expert sources, vets, and lines up logistics — end-to-end.">
+    <RequestShell
+      eyebrow="Concierge"
+      title="Tell us what you want."
+      description="An expert sources, vets, and lines up logistics — end-to-end. Flat $499 engagement, fully refundable if we can't find your match."
+    >
       {done ? <Submitted kind="concierge" /> : (
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3">
           <Field<ConciergeValues> id="full_name" label="Full name" register={register} errors={errors} />

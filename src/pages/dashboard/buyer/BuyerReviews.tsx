@@ -44,7 +44,13 @@ export default function BuyerReviews() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-3xl">My reviews</h1>
-      {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-28 skeleton rounded-lg" />
+          ))}
+        </div>
+      ) : (
         <div className="space-y-3">
           {reviews.map((r) => {
             const target = r.dealer
