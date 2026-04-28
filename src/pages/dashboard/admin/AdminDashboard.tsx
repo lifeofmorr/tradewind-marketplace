@@ -12,6 +12,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { MarketPulseCard } from "@/components/market/MarketPulseCard";
 import { setMeta } from "@/lib/seo";
 import { formatNumber, formatCents, cn } from "@/lib/utils";
 
@@ -187,6 +188,13 @@ export default function AdminDashboard() {
           tone="brass"
         />
       </div>
+
+      <section>
+        <div className="eyebrow">Marketplace</div>
+        <h2 className="section-title">Live pulse</h2>
+        <div className="section-title-underline mb-4" />
+        <MarketPulseCard />
+      </section>
 
       {/* Next best actions */}
       <section>
