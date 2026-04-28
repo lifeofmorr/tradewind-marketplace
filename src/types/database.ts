@@ -223,6 +223,11 @@ export interface Listing {
   inquiry_count: number;
   save_count: number;
   cover_photo_url: string | null;
+  // Advantage scoring (optional persisted snapshot; client recomputes for display)
+  deal_score: number | null;
+  deal_score_label: string | null;
+  quality_score: number | null;
+  quality_label: string | null;
   // lifecycle
   published_at: string | null;
   expires_at: string | null;
@@ -283,6 +288,9 @@ export interface Inquiry {
   status: LeadStatus;
   is_spam: boolean;
   source: string;
+  // Advantage lead-quality (optional persisted snapshot)
+  lead_quality_score: number | null;
+  lead_quality_label: string | null;
   created_at: string;
   updated_at: string;
 }

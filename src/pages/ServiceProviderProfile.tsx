@@ -3,7 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin, Globe, Phone, Mail } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { Badge } from "@/components/ui/badge";
+import { TrustBadgeList } from "@/components/ui/TrustBadge";
+import { getProviderBadges } from "@/lib/badges";
 import { ReviewList } from "@/components/reviews/ReviewList";
 import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { Stars } from "@/components/reviews/Stars";
@@ -49,10 +50,9 @@ export default function ServiceProviderProfile() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 text-xs">
               <span className="font-mono uppercase tracking-[0.32em] text-brass-400">{provider.category.replace("_", " ")}</span>
-              {provider.is_verified && <Badge variant="good">Verified</Badge>}
-              {provider.is_featured && <Badge variant="accent">Featured</Badge>}
             </div>
             <h1 className="font-display text-4xl mt-1">{provider.name}</h1>
+            <TrustBadgeList types={getProviderBadges(provider)} size="md" className="mt-2" />
             <div className="flex items-center gap-3 mt-1">
               {provider.rating_count > 0 && (
                 <div className="flex items-center gap-2">

@@ -137,20 +137,6 @@ export function Privacy() {
   return <PageShell eyebrow="Legal" title="Privacy policy."><p>Full policy ships with launch. Reach out at <a className="text-brass-400" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>.</p></PageShell>;
 }
 
-export function Trust() {
-  useTitle("Trust & Safety", `How TradeWind keeps the marketplace clean.`);
-  return (
-    <PageShell eyebrow="Trust & Safety" title="How we keep the marketplace clean.">
-      <ul className="list-disc pl-6 space-y-1">
-        <li>Verified dealers and service partners.</li>
-        <li>AI fraud-screening on every inquiry.</li>
-        <li>Photo + VIN/HIN spot-checks on listings.</li>
-        <li>Report a listing or message any time at <a className="text-brass-400" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>.</li>
-      </ul>
-    </PageShell>
-  );
-}
-
 export function NotFound() {
   useTitle("Not found", "That page doesn't exist on TradeWind.");
   return (

@@ -24,6 +24,16 @@
     --input: 215 20% 88%;
     --ring: 41 56% 54%;
     --radius: 0.5rem;
+
+    /* Premium tokens */
+    --tw-navy: #0a1628;
+    --tw-navy-2: #0f2238;
+    --tw-ivory: #f5f0e8;
+    --tw-brass: #c9a84c;
+    --tw-brass-soft: #e6c478;
+    --shadow-soft: 0 8px 24px -8px rgba(0,0,0,0.35);
+    --shadow-lift: 0 20px 50px -12px rgba(0,0,0,0.55);
+    --shadow-glow: 0 0 0 1px rgba(201,168,76,0.18), 0 12px 40px -10px rgba(201,168,76,0.18);
   }
   .dark, html {
     --background: 215 60% 6%;
@@ -51,10 +61,170 @@
 @layer base {
   * { @apply border-border; }
   html { @apply dark; }
-  body { @apply bg-background text-foreground; font-feature-settings: "cv02","cv03","cv04","cv11"; }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv02","cv03","cv04","cv11";
+    background-image:
+      radial-gradient(1200px 600px at 80% -10%, rgba(201,168,76,0.06), transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, rgba(41,74,114,0.18), transparent 60%);
+    background-attachment: fixed;
+  }
   ::selection { @apply bg-brass-500 text-navy-950; }
 }
 
 @layer components {
   .container-pad { @apply container px-6 md:px-8; }
+
+  /* Eyebrow label — recurring "MONO UPPERCASE BRASS" pattern */
+  .eyebrow {
+    @apply font-mono text-xs uppercase tracking-[0.32em] text-brass-400;
+  }
+
+  /* Section header brass underline */
+  .section-title {
+    @apply font-display text-3xl md:text-4xl mt-1;
+  }
+  .section-title-underline {
+    @apply mt-3 h-px w-12 bg-gradient-to-r from-brass-500 to-transparent;
+  }
+
+  /* Glassmorphism card */
+  .glass-card {
+    @apply rounded-xl border border-white/5 bg-card/70 backdrop-blur-xl;
+    box-shadow: var(--shadow-soft);
+  }
+  .glass-card-elevated {
+    @apply rounded-xl border border-white/5 bg-card/80 backdrop-blur-xl;
+    box-shadow: var(--shadow-lift);
+  }
+
+  /* Floating card hover lift */
+  .lift-card {
+    @apply transition-all duration-300 ease-out;
+    transform: translateZ(0);
+  }
+  .lift-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  /* Brass glow ring on hover */
+  .brass-glow:hover {
+    box-shadow: var(--shadow-glow);
+    border-color: rgba(201,168,76,0.45);
+  }
+
+  /* Premium button glow */
+  .btn-glow {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-glow::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(230,196,120,0.25) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+  .btn-glow:hover::before {
+    transform: translateX(100%);
+  }
+
+  /* Skeleton shimmer */
+  .skeleton {
+    @apply rounded-md bg-secondary/40;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255,255,255,0.04) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  /* Badge chip */
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.18em];
+  }
+}
+
+@layer utilities {
+  /* Animated gradient hero glow */
+  .hero-glow {
+    background:
+      radial-gradient(60% 80% at 50% 0%, rgba(201,168,76,0.18), transparent 60%),
+      radial-gradient(50% 60% at 80% 30%, rgba(41,74,114,0.4), transparent 60%),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+  }
+
+  /* Brass gradient text */
+  .text-brass-gradient {
+    background: linear-gradient(120deg, #e6c478 0%, #c9a84c 50%, #e6c478 100%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: brass-shift 6s linear infinite;
+  }
+
+  /* 3D depth */
+  .depth-3d {
+    perspective: 1000px;
+  }
+  .depth-3d-inner {
+    transform-style: preserve-3d;
+    transition: transform 0.4s ease;
+  }
+  .depth-3d:hover .depth-3d-inner {
+    transform: rotateY(-2deg) rotateX(2deg) translateZ(8px);
+  }
+
+  /* Smooth scroll-snap helpers */
+  .snap-x-mandatory { scroll-snap-type: x mandatory; }
+  .snap-start { scroll-snap-align: start; }
+
+  /* Dotted brass divider */
+  .divider-brass {
+    background-image: radial-gradient(circle, rgba(201,168,76,0.5) 1px, transparent 1px);
+    background-size: 8px 1px;
+    background-repeat: repeat-x;
+    height: 1px;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes brass-shift {
+  0% { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float { animation: float-slow 6s ease-in-out infinite; }
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.18); }
+  50% { box-shadow: 0 0 0 8px rgba(201,168,76,0); }
+}
+.animate-pulse-glow { animation: pulse-glow 2.4s ease-in-out infinite; }
+
+/* Reduced motion fallbacks */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-float, .animate-pulse-glow, .text-brass-gradient { animation: none !important; }
+  .lift-card:hover { transform: none !important; }
 }

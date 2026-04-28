@@ -28,14 +28,29 @@ interface RequestShellProps {
 }
 
 function RequestShell({ eyebrow, title, description, children }: RequestShellProps) {
+  const isConcierge = eyebrow.toLowerCase() === "concierge";
   return (
-    <div className="container-pad py-16 max-w-2xl space-y-6">
-      <header className="space-y-2">
-        <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">{eyebrow}</div>
-        <h1 className="font-display text-4xl">{title}</h1>
-        <p className="text-muted-foreground">{description}</p>
-      </header>
-      <div className="rounded-lg border border-border bg-card p-6">{children}</div>
+    <div className={isConcierge ? "relative overflow-hidden" : ""}>
+      {isConcierge && (
+        <>
+          <div aria-hidden className="pointer-events-none absolute inset-0 hero-glow" />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-20 right-1/4 h-72 w-72 rounded-full bg-brass-500/10 blur-3xl"
+          />
+        </>
+      )}
+      <div className="container-pad py-16 max-w-2xl space-y-6 relative">
+        <header className="space-y-2">
+          <div className="eyebrow">{eyebrow}</div>
+          <h1 className="font-display text-4xl">{title}</h1>
+          <p className="text-muted-foreground">{description}</p>
+          <p className="text-[11px] text-muted-foreground/80 pt-2">
+            Never send payment outside the platform. We screen every request before passing it on.
+          </p>
+        </header>
+        <div className={isConcierge ? "glass-card-elevated p-6" : "glass-card p-6"}>{children}</div>
+      </div>
     </div>
   );
 }

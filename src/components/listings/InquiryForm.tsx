@@ -68,8 +68,11 @@ export function InquiryForm({ listing }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-lg border border-border bg-card p-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 glass-card p-6">
       <div className="font-display text-lg">Contact seller</div>
+      <p className="text-[11px] text-muted-foreground/80 -mt-2">
+        Never send payment outside the platform. Verify title and HIN/VIN before any deposit.
+      </p>
       <div className="grid gap-3">
         <div>
           <Label htmlFor="buyer_name">Name</Label>

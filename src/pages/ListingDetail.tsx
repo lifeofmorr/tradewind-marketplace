@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Calendar, Gauge, MapPin, Anchor, Car as CarIcon } from "lucide-react";
+import { AlertTriangle, Calendar, Gauge, MapPin, Anchor, Car as CarIcon, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useListing } from "@/hooks/useListings";
 import { ListingGallery } from "@/components/listings/ListingGallery";
@@ -11,6 +11,11 @@ import { StartConversation } from "@/components/messaging/StartConversation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { TrustBadgeList } from "@/components/ui/TrustBadge";
+import { DealScoreCard } from "@/components/listings/DealScoreBadge";
+import { OwnershipCostCard } from "@/components/listings/OwnershipCostCard";
+import { BuyReadyChecklist } from "@/components/listings/BuyReadyChecklist";
+import { getListingBadges } from "@/lib/badges";
 import { formatCents, formatNumber } from "@/lib/utils";
 import { listingMeta, setMeta } from "@/lib/seo";
 import type { ListingPhoto } from "@/types/database";
@@ -55,7 +60,24 @@ export default function ListingDetail() {
   }, [listing]);
 
   if (isLoading) {
-    return <div className="container-pad py-16 text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="container-pad py-10 grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+        <div className="space-y-6">
+          <div className="aspect-[16/10] skeleton rounded-xl" />
+          <div className="h-8 w-2/3 skeleton" />
+          <div className="h-4 w-1/3 skeleton" />
+          <div className="grid grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-16 skeleton" />
+            ))}
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div className="h-32 skeleton rounded-xl" />
+          <div className="h-48 skeleton rounded-xl" />
+        </div>
+      </div>
+    );
   }
   if (!listing) {
     return (
@@ -67,6 +89,7 @@ export default function ListingDetail() {
   }
 
   const isBoat = BOAT_CATS.has(listing.category);
+  const badges = getListingBadges(listing);
 
   return (
     <div className="container-pad py-10 space-y-6">
@@ -87,89 +110,108 @@ export default function ListingDetail() {
       )}
 
       <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
-      <div className="space-y-6">
-        <ListingGallery
-          photos={photos}
-          coverFallback={listing.cover_photo_url}
-          category={listing.category}
-        />
-        <header className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            {listing.is_featured && <Badge variant="accent">Featured</Badge>}
-            {listing.is_verified && <Badge variant="good">Verified</Badge>}
-            <Badge>{listing.category.replace("_", " ")}</Badge>
-            {listing.condition && <Badge>{listing.condition}</Badge>}
-          </div>
-          <h1 className="font-display text-4xl leading-tight">{listing.title}</h1>
-          <div className="text-2xl font-mono text-brass-400">{formatCents(listing.price_cents)}</div>
-          {(listing.city || listing.state) && (
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" /> {[listing.city, listing.state].filter(Boolean).join(", ")}
-            </div>
-          )}
-        </header>
-
-        <Separator />
-
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-          <Spec icon={Calendar} label="Year"  value={listing.year ?? "—"} />
-          <Spec icon={isBoat ? Anchor : CarIcon} label="Make" value={listing.make ?? "—"} />
-          <Spec icon={isBoat ? Anchor : CarIcon} label="Model" value={listing.model ?? "—"} />
-          {isBoat ? (
-            <>
-              <Spec icon={Gauge} label="Length" value={listing.length_ft != null ? `${listing.length_ft} ft` : "—"} />
-              <Spec icon={Gauge} label="Hours"  value={listing.hours != null ? formatNumber(listing.hours) : "—"} />
-              <Spec icon={Gauge} label="Engines" value={listing.engine_count != null ? `${listing.engine_count}× ${listing.engine_make ?? ""}`.trim() : "—"} />
-              <Spec icon={Gauge} label="HP/engine" value={listing.engine_hp ?? "—"} />
-              <Spec icon={Gauge} label="Hull" value={listing.hull_material ?? "—"} />
-            </>
-          ) : (
-            <>
-              <Spec icon={Gauge} label="Mileage" value={listing.mileage != null ? `${formatNumber(listing.mileage)} mi` : "—"} />
-              <Spec icon={Gauge} label="Drivetrain" value={listing.drivetrain ?? "—"} />
-              <Spec icon={Gauge} label="Fuel" value={listing.fuel_type ?? "—"} />
-              <Spec icon={Gauge} label="Trans" value={listing.transmission ?? "—"} />
-              <Spec icon={Gauge} label="Color" value={listing.exterior_color ?? "—"} />
-            </>
-          )}
-        </section>
-
-        {listing.ai_summary && (
-          <>
-            <Separator />
-            <section>
-              <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">AI summary</div>
-              <p className="mt-2 text-sm leading-relaxed">{listing.ai_summary}</p>
-            </section>
-          </>
-        )}
-
-        {listing.description && (
-          <>
-            <Separator />
-            <section>
-              <h2 className="font-display text-2xl">Description</h2>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-                {listing.description}
-              </p>
-            </section>
-          </>
-        )}
-      </div>
-
-      <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-        <SaveListingButton listingId={listing.id} className="w-full" />
-        {user && user.id !== listing.seller_id && (
-          <StartConversation
-            otherId={listing.seller_id}
-            listingId={listing.id}
-            label="Message seller"
-            variant="outline"
-            className="w-full"
+        <div className="space-y-6">
+          <ListingGallery
+            photos={photos}
+            coverFallback={listing.cover_photo_url}
+            category={listing.category}
           />
-        )}
-        <InquiryForm listing={listing} />
-      </aside>
+          <header className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <Badge>{listing.category.replace("_", " ")}</Badge>
+              {listing.condition && <Badge>{listing.condition}</Badge>}
+              {listing.year && <Badge>{listing.year}</Badge>}
+            </div>
+            <h1 className="font-display text-4xl leading-tight">{listing.title}</h1>
+            <div className="text-2xl font-mono text-brass-400">{formatCents(listing.price_cents)}</div>
+            {(listing.city || listing.state) && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4" /> {[listing.city, listing.state].filter(Boolean).join(", ")}
+              </div>
+            )}
+            <TrustBadgeList types={badges} size="md" className="pt-1" />
+          </header>
+
+          <Separator />
+
+          <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <Spec icon={Calendar} label="Year"  value={listing.year ?? "—"} />
+            <Spec icon={isBoat ? Anchor : CarIcon} label="Make" value={listing.make ?? "—"} />
+            <Spec icon={isBoat ? Anchor : CarIcon} label="Model" value={listing.model ?? "—"} />
+            {isBoat ? (
+              <>
+                <Spec icon={Gauge} label="Length" value={listing.length_ft != null ? `${listing.length_ft} ft` : "—"} />
+                <Spec icon={Gauge} label="Hours"  value={listing.hours != null ? formatNumber(listing.hours) : "—"} />
+                <Spec icon={Gauge} label="Engines" value={listing.engine_count != null ? `${listing.engine_count}× ${listing.engine_make ?? ""}`.trim() : "—"} />
+                <Spec icon={Gauge} label="HP/engine" value={listing.engine_hp ?? "—"} />
+                <Spec icon={Gauge} label="Hull" value={listing.hull_material ?? "—"} />
+              </>
+            ) : (
+              <>
+                <Spec icon={Gauge} label="Mileage" value={listing.mileage != null ? `${formatNumber(listing.mileage)} mi` : "—"} />
+                <Spec icon={Gauge} label="Drivetrain" value={listing.drivetrain ?? "—"} />
+                <Spec icon={Gauge} label="Fuel" value={listing.fuel_type ?? "—"} />
+                <Spec icon={Gauge} label="Trans" value={listing.transmission ?? "—"} />
+                <Spec icon={Gauge} label="Color" value={listing.exterior_color ?? "—"} />
+              </>
+            )}
+          </section>
+
+          {!listing.is_demo && <DealScoreCard listing={listing} />}
+
+          {listing.ai_summary && (
+            <>
+              <Separator />
+              <section>
+                <div className="eyebrow">AI summary</div>
+                <p className="mt-2 text-sm leading-relaxed">{listing.ai_summary}</p>
+              </section>
+            </>
+          )}
+
+          {listing.description && (
+            <>
+              <Separator />
+              <section>
+                <h2 className="font-display text-2xl">Description</h2>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                  {listing.description}
+                </p>
+              </section>
+            </>
+          )}
+
+          {/* Trust + safety notice */}
+          <div className="rounded-lg border border-border bg-card/50 p-4">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+              <div className="text-sm">
+                <div className="font-display text-base">Buy with confidence</div>
+                <p className="text-muted-foreground mt-1 leading-relaxed">
+                  Always verify title, HIN/VIN, and matching numbers before purchase. Never wire
+                  funds, send crypto, or pay outside the platform. Use a TradeWind concierge or
+                  bonded F&I office for high-value deals.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+          <SaveListingButton listingId={listing.id} className="w-full" />
+          {user && user.id !== listing.seller_id && (
+            <StartConversation
+              otherId={listing.seller_id}
+              listingId={listing.id}
+              label="Message seller"
+              variant="outline"
+              className="w-full"
+            />
+          )}
+          <InquiryForm listing={listing} />
+          {!listing.is_demo && <OwnershipCostCard listing={listing} />}
+          {user && !listing.is_demo && <BuyReadyChecklist listing={listing} />}
+        </aside>
       </div>
     </div>
   );

@@ -43,9 +43,9 @@ const COLS: FooterCol[] = [
   {
     title: "Legal",
     links: [
-      { label: "Terms",          to: "/terms" },
-      { label: "Privacy",        to: "/privacy" },
-      { label: "Trust & Safety", to: "/trust" },
+      { label: "Terms",         to: "/terms" },
+      { label: "Privacy",       to: "/privacy" },
+      { label: "Trust Center",  to: "/trust" },
     ],
   },
 ];

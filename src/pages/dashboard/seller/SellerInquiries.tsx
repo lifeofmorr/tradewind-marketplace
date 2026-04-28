@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
+import { LeadQualityBadge } from "@/components/listings/LeadQualityBadge";
 import { setMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
 import type { Inquiry, LeadStatus } from "@/types/database";
@@ -43,14 +44,17 @@ export default function SellerInquiries() {
       {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
         <div className="space-y-3">
           {inquiries.map((q) => (
-            <div key={q.id} className="rounded-lg border border-border bg-card p-5">
+            <div key={q.id} className="glass-card p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="font-display text-lg">{q.buyer_name}</div>
                   <div className="text-xs text-muted-foreground font-mono">{q.buyer_email}{q.buyer_phone ? ` · ${q.buyer_phone}` : ""}</div>
                   <div className="text-xs text-muted-foreground mt-1">on <span className="text-foreground">{q.listing?.title ?? "(removed listing)"}</span> · {timeAgo(q.created_at)} ago</div>
                 </div>
-                <Badge variant={STATUS_VARIANT[q.status]}>{q.status}</Badge>
+                <div className="flex items-center gap-2 shrink-0">
+                  <LeadQualityBadge inquiry={q} />
+                  <Badge variant={STATUS_VARIANT[q.status]}>{q.status}</Badge>
+                </div>
               </div>
               <p className="mt-3 text-sm whitespace-pre-wrap text-muted-foreground">{q.message}</p>
             </div>
