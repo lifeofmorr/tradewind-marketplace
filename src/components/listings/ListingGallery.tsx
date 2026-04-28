@@ -28,17 +28,24 @@ export function ListingGallery({ photos, coverFallback, category }: Props) {
   return (
     <div className="space-y-3">
       <div className="aspect-[16/9] bg-secondary rounded-lg overflow-hidden">
-        <img src={current.url} alt="listing" className="h-full w-full object-cover" />
+        <img src={current.url} alt={`Photo ${active + 1} of ${list.length}`} className="h-full w-full object-cover" />
       </div>
       {list.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div
+          className="flex gap-2 overflow-x-auto pb-1"
+          role="tablist"
+          aria-label="Photo gallery"
+        >
           {list.map((p, i) => (
             <button
               key={p.id}
               type="button"
+              role="tab"
+              aria-selected={i === active}
+              aria-label={`Show photo ${i + 1} of ${list.length}`}
               onClick={() => setActive(i)}
               className={cn(
-                "h-16 w-24 shrink-0 rounded overflow-hidden border-2",
+                "h-16 w-24 shrink-0 rounded overflow-hidden border-2 focus:outline-none focus:ring-2 focus:ring-brass-500",
                 i === active ? "border-brass-500" : "border-transparent",
               )}
             >

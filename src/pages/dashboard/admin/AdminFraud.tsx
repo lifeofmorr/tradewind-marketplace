@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Mail, MessageSquare, ShieldAlert, ListChecks } from "lucide-react";
+import { Mail, MessageSquare, ShieldAlert, ListChecks, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -140,8 +140,14 @@ export default function AdminFraud() {
                 </div>
               ))}
               {!flags.length && (
-                <div className="rounded-lg border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
-                  {tab === "open" ? "No open fraud flags." : "No resolved fraud flags."}
+                <div className="rounded-lg border border-dashed border-border p-12 text-center">
+                  <ShieldCheck className="h-8 w-8 mx-auto text-emerald-400 mb-3" />
+                  <div className="font-display text-base">{tab === "open" ? "All clear" : "No history"}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {tab === "open"
+                      ? "AI fraud screening flags suspicious inquiries automatically. Nothing needs your attention right now."
+                      : "Resolved flags will appear here for audit history."}
+                  </p>
                 </div>
               )}
             </>

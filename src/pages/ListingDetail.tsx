@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Calendar, Gauge, MapPin, Anchor, Car as CarIcon, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -192,6 +192,9 @@ export default function ListingDetail() {
                   funds, send crypto, or pay outside the platform. Use a TradeWind concierge or
                   bonded F&I office for high-value deals.
                 </p>
+                <Link to="/trust" className="inline-block text-xs text-brass-400 mt-2 hover:underline">
+                  How TradeWind verifies →
+                </Link>
               </div>
             </div>
           </div>

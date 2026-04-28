@@ -84,9 +84,9 @@ export default function CreateListing() {
         <h1 className="font-display text-3xl mt-1">Create a listing</h1>
         <p className="text-muted-foreground text-sm mt-1">You can add photos and polish details after.</p>
       </div>
-      <form onSubmit={handleSubmit(onSubmit)} className="rounded-lg border border-border bg-card p-6 grid gap-3">
+      <form onSubmit={handleSubmit(onSubmit)} className="rounded-lg border border-border bg-card p-6 grid gap-3" noValidate>
         <div>
-          <Label>Category</Label>
+          <Label>Category <span className="text-brass-400">*</span></Label>
           <Select value={category} onValueChange={(v) => setValue("category", v as ListingCategory)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -94,19 +94,31 @@ export default function CreateListing() {
             </SelectContent>
           </Select>
         </div>
-        <div><Label htmlFor="title">Title</Label><Input id="title" placeholder="2022 Boston Whaler 320 Outrage" {...register("title")} />{errors.title && <p className="text-xs text-red-400 mt-1">{errors.title.message}</p>}</div>
+        <div>
+          <Label htmlFor="title">Title <span className="text-brass-400">*</span></Label>
+          <Input id="title" placeholder="2022 Boston Whaler 320 Outrage" aria-invalid={!!errors.title} {...register("title")} />
+          {errors.title && <p className="text-xs text-red-400 mt-1">{errors.title.message}</p>}
+        </div>
         <div className="grid grid-cols-3 gap-3">
           <div><Label htmlFor="make">Make</Label><Input id="make" {...register("make")} /></div>
           <div><Label htmlFor="model">Model</Label><Input id="model" {...register("model")} /></div>
-          <div><Label htmlFor="year">Year</Label><Input id="year" type="number" {...register("year")} /></div>
+          <div>
+            <Label htmlFor="year">Year</Label>
+            <Input id="year" type="number" min={1900} max={new Date().getFullYear() + 1} {...register("year")} />
+            {errors.year && <p className="text-xs text-red-400 mt-1">{errors.year.message}</p>}
+          </div>
         </div>
-        <div><Label htmlFor="price">Asking price (USD)</Label><Input id="price" type="number" inputMode="numeric" {...register("price")} />{errors.price && <p className="text-xs text-red-400 mt-1">{errors.price.message}</p>}</div>
+        <div>
+          <Label htmlFor="price">Asking price (USD) <span className="text-brass-400">*</span></Label>
+          <Input id="price" type="number" inputMode="numeric" min={1} step="any" aria-invalid={!!errors.price} {...register("price")} />
+          {errors.price && <p className="text-xs text-red-400 mt-1">{errors.price.message}</p>}
+        </div>
         <div className="grid grid-cols-2 gap-3">
-          <div><Label htmlFor="city">City</Label><Input id="city" {...register("city")} /></div>
-          <div><Label htmlFor="state">State</Label><Input id="state" maxLength={2} {...register("state")} /></div>
+          <div><Label htmlFor="city">City</Label><Input id="city" autoComplete="address-level2" {...register("city")} /></div>
+          <div><Label htmlFor="state">State</Label><Input id="state" maxLength={2} autoComplete="address-level1" placeholder="FL" {...register("state")} /></div>
         </div>
-        <div><Label htmlFor="description">Description</Label><Textarea id="description" rows={6} {...register("description")} /></div>
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        <div><Label htmlFor="description">Description</Label><Textarea id="description" rows={6} placeholder="Trim, options, condition, recent service. Our AI will polish this into a listing." {...register("description")} /></div>
+        {error && <p className="text-xs text-red-400" role="alert">{error}</p>}
         <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creating…" : "Save as draft"}</Button>
       </form>
     </div>

@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Inbox } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { setMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
 import type { ServiceRequest, RequestStatus } from "@/types/database";
@@ -35,7 +37,20 @@ export default function ServiceLeads() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-3xl">Leads</h1>
-      {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-24 skeleton rounded-lg" />
+          ))}
+        </div>
+      ) : !leads.length ? (
+        <EmptyState
+          icon={Inbox}
+          title="No requests yet"
+          body="When buyers submit a financing, insurance, inspection, transport, or concierge request that matches your category and region, it appears here."
+          cta={{ label: "Edit your profile", to: "/service/profile" }}
+        />
+      ) : (
         <div className="space-y-3">
           {leads.map((q) => (
             <div key={q.id} className="rounded-lg border border-border bg-card p-5">
@@ -50,9 +65,6 @@ export default function ServiceLeads() {
               {q.notes && <p className="mt-3 text-sm whitespace-pre-wrap text-muted-foreground">{q.notes}</p>}
             </div>
           ))}
-          {!leads.length && (
-            <div className="rounded-lg border border-dashed border-border p-12 text-center text-sm text-muted-foreground">No leads yet.</div>
-          )}
         </div>
       )}
     </div>

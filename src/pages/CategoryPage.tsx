@@ -44,9 +44,19 @@ export default function CategoryPage() {
       </header>
       <ListingFilters value={filters} onChange={setFilters} />
       {isLoading ? (
-        <div className="text-sm text-muted-foreground">Loading…</div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="aspect-[4/3] skeleton rounded-xl" />
+          ))}
+        </div>
       ) : (
-        <ListingGrid listings={listings} emptyText="No listings match those filters yet." />
+        <ListingGrid
+          listings={listings}
+          emptyText="No listings match those filters"
+          emptyBody="Try a wider price range, a different state, or browse all categories."
+          emptyCtaTo="/browse"
+          emptyCtaLabel="Browse all"
+        />
       )}
     </div>
   );
@@ -74,16 +84,23 @@ export function CategoriesIndex() {
 
 export function BrowsePage() {
   const [searchParams] = useSearchParams();
+  const featuredOnly = searchParams.get("featured") === "1";
   const initial: ListingFilterValues = {
     search: searchParams.get("q") ?? undefined,
     state: searchParams.get("state") ?? undefined,
   };
   const [filters, setFilters] = useState<ListingFilterValues>(initial);
   useEffect(() => {
-    setMeta({ title: "Browse listings", description: "All active boats and autos on TradeWind." });
-  }, []);
+    setMeta({
+      title: featuredOnly ? "Featured listings" : "Browse listings",
+      description: featuredOnly
+        ? "Hand-picked featured listings on TradeWind."
+        : "All active boats and autos on TradeWind.",
+    });
+  }, [featuredOnly]);
   const { data: listings = [], isLoading } = useListings({
     ...filters,
+    is_featured: featuredOnly ? true : undefined,
     status: "active",
     limit: 80,
     order: "newest",
@@ -91,14 +108,29 @@ export function BrowsePage() {
   return (
     <div className="container-pad py-12 space-y-8">
       <header>
-        <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">Browse</div>
-        <h1 className="font-display text-4xl mt-1">All listings</h1>
+        <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">{featuredOnly ? "Featured" : "Browse"}</div>
+        <h1 className="font-display text-4xl mt-1">{featuredOnly ? "Featured listings" : "All listings"}</h1>
+        {featuredOnly && (
+          <p className="text-muted-foreground mt-2 text-sm">
+            Promoted by sellers and dealers — surfaced first across the marketplace.
+          </p>
+        )}
       </header>
       <ListingFilters value={filters} onChange={setFilters} />
       {isLoading ? (
-        <div className="text-sm text-muted-foreground">Loading…</div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="aspect-[4/3] skeleton rounded-xl" />
+          ))}
+        </div>
       ) : (
-        <ListingGrid listings={listings} emptyText="No listings match those filters." />
+        <ListingGrid
+          listings={listings}
+          emptyText={featuredOnly ? "No featured listings right now" : "No listings match those filters"}
+          emptyBody={featuredOnly ? "Check back soon — sellers feature new inventory daily." : "Try widening your search or removing a filter."}
+          emptyCtaTo="/browse"
+          emptyCtaLabel="Browse all"
+        />
       )}
     </div>
   );

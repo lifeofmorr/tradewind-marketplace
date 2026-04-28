@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus, ExternalLink } from "lucide-react";
+import { Plus, ExternalLink, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useListings } from "@/hooks/useListings";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { setMeta } from "@/lib/seo";
 import { formatCents, formatNumber } from "@/lib/utils";
 
@@ -18,7 +19,20 @@ export default function DealerInventory() {
         <h1 className="font-display text-3xl">Inventory</h1>
         <Button asChild><Link to="/seller/listings/new"><Plus className="h-4 w-4" /> New listing</Link></Button>
       </div>
-      {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
+      {isLoading ? (
+        <div className="rounded-lg border border-border overflow-hidden">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-12 skeleton border-b border-border last:border-0" />
+          ))}
+        </div>
+      ) : !listings.length ? (
+        <EmptyState
+          icon={Package}
+          title="No inventory yet"
+          body="Post your first listing to start showing up in search results and dealer feeds."
+          cta={{ label: "Create your first listing", to: "/seller/listings/new" }}
+        />
+      ) : (
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead className="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">
@@ -52,9 +66,6 @@ export default function DealerInventory() {
                   </td>
                 </tr>
               ))}
-              {!listings.length && (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">No inventory yet.</td></tr>
-              )}
             </tbody>
           </table>
         </div>

@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Inbox } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { LeadQualityBadge } from "@/components/listings/LeadQualityBadge";
 import { setMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
@@ -41,7 +43,21 @@ export default function SellerInquiries() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-3xl">Inquiries</h1>
-      {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-28 skeleton rounded-lg" />
+          ))}
+        </div>
+      ) : !inquiries.length ? (
+        <EmptyState
+          icon={Inbox}
+          title="No inquiries yet"
+          body="Buyer messages on your listings appear here. Featuring or boosting a listing typically lifts inquiries within 24 hours."
+          cta={{ label: "View my listings", to: "/seller/listings" }}
+          secondary={{ label: "Boost a listing", to: "/pricing", variant: "outline" }}
+        />
+      ) : (
         <div className="space-y-3">
           {inquiries.map((q) => (
             <div key={q.id} className="glass-card p-5">
@@ -59,9 +75,6 @@ export default function SellerInquiries() {
               <p className="mt-3 text-sm whitespace-pre-wrap text-muted-foreground">{q.message}</p>
             </div>
           ))}
-          {!inquiries.length && (
-            <div className="rounded-lg border border-dashed border-border p-12 text-center text-sm text-muted-foreground">No inquiries yet.</div>
-          )}
         </div>
       )}
     </div>

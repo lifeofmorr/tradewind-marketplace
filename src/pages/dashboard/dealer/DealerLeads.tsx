@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Inbox } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { LeadQualityBadge } from "@/components/listings/LeadQualityBadge";
 import { setMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
@@ -41,7 +43,21 @@ export default function DealerLeads() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-3xl">Leads</h1>
-      {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-28 skeleton rounded-lg" />
+          ))}
+        </div>
+      ) : !leads.length ? (
+        <EmptyState
+          icon={Inbox}
+          title="No leads yet"
+          body="Leads land here the moment a buyer messages one of your listings. Boost a top listing to drive impressions."
+          cta={{ label: "View inventory", to: "/dealer/inventory" }}
+          secondary={{ label: "Boost a listing", to: "/pricing", variant: "outline" }}
+        />
+      ) : (
         <div className="space-y-3">
           {leads.map((q) => (
             <div key={q.id} className="glass-card p-5">
@@ -59,9 +75,6 @@ export default function DealerLeads() {
               <p className="mt-3 text-sm whitespace-pre-wrap text-muted-foreground">{q.message}</p>
             </div>
           ))}
-          {!leads.length && (
-            <div className="rounded-lg border border-dashed border-border p-12 text-center text-sm text-muted-foreground">No leads yet.</div>
-          )}
         </div>
       )}
     </div>

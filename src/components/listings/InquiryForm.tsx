@@ -67,34 +67,46 @@ export function InquiryForm({ listing }: Props) {
     );
   }
 
+  if (listing.is_demo) {
+    return (
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-6 text-sm">
+        <div className="font-display text-base text-amber-100">Demo listing</div>
+        <p className="text-amber-200/90 mt-1">
+          This is a marketplace preview, not real inventory. Inquiries are disabled. Browse{" "}
+          <a href="/browse" className="text-amber-100 underline">live listings</a> to contact a real seller.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 glass-card p-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 glass-card p-6" noValidate>
       <div className="font-display text-lg">Contact seller</div>
       <p className="text-[11px] text-muted-foreground/80 -mt-2">
         Never send payment outside the platform. Verify title and HIN/VIN before any deposit.
       </p>
       <div className="grid gap-3">
         <div>
-          <Label htmlFor="buyer_name">Name</Label>
-          <Input id="buyer_name" {...register("buyer_name")} />
+          <Label htmlFor="buyer_name">Name <span className="text-brass-400">*</span></Label>
+          <Input id="buyer_name" autoComplete="name" aria-invalid={!!errors.buyer_name} {...register("buyer_name")} />
           {errors.buyer_name && <p className="text-xs text-red-400 mt-1">{errors.buyer_name.message}</p>}
         </div>
         <div>
-          <Label htmlFor="buyer_email">Email</Label>
-          <Input id="buyer_email" type="email" {...register("buyer_email")} />
+          <Label htmlFor="buyer_email">Email <span className="text-brass-400">*</span></Label>
+          <Input id="buyer_email" type="email" autoComplete="email" aria-invalid={!!errors.buyer_email} {...register("buyer_email")} />
           {errors.buyer_email && <p className="text-xs text-red-400 mt-1">{errors.buyer_email.message}</p>}
         </div>
         <div>
-          <Label htmlFor="buyer_phone">Phone (optional)</Label>
-          <Input id="buyer_phone" type="tel" {...register("buyer_phone")} />
+          <Label htmlFor="buyer_phone">Phone <span className="text-muted-foreground">(optional)</span></Label>
+          <Input id="buyer_phone" type="tel" autoComplete="tel" {...register("buyer_phone")} />
         </div>
         <div>
-          <Label htmlFor="message">Message</Label>
-          <Textarea id="message" rows={5} {...register("message")} />
+          <Label htmlFor="message">Message <span className="text-brass-400">*</span></Label>
+          <Textarea id="message" rows={5} aria-invalid={!!errors.message} {...register("message")} />
           {errors.message && <p className="text-xs text-red-400 mt-1">{errors.message.message}</p>}
         </div>
       </div>
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-red-400" role="alert">{error}</p>}
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? "Sending…" : "Send inquiry"}
       </Button>

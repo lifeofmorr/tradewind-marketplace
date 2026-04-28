@@ -17,8 +17,8 @@ export function NotificationBell() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="relative inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-secondary"
-          aria-label="notifications"
+          className="relative inline-flex items-center justify-center h-11 w-11 md:h-9 md:w-9 rounded-md hover:bg-secondary"
+          aria-label={unread > 0 ? `${unread} unread notifications` : "notifications"}
         >
           <Bell className="h-4 w-4" />
           {unread > 0 && (

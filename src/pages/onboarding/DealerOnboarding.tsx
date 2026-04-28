@@ -68,25 +68,46 @@ export default function DealerOnboarding() {
   return (
     <div className="min-h-screen container-pad py-16 max-w-xl space-y-6">
       <div>
-        <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">Step 1 of 1</div>
+        <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">Dealer onboarding</div>
         <h1 className="font-display text-4xl mt-1">Set up your dealership</h1>
-        <p className="text-muted-foreground mt-2 text-sm">You can edit any of this later.</p>
+        <p className="text-muted-foreground mt-2 text-sm">
+          A complete profile attracts higher-intent buyers. Only the dealership name is required to continue —
+          you can polish photos, hours, and bio from your dashboard later.
+        </p>
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="rounded-lg border border-border bg-card p-6 grid gap-3">
-        <div><Label htmlFor="name">Dealership name</Label><Input id="name" {...register("name")} />{errors.name && <p className="text-xs text-red-400 mt-1">{errors.name.message}</p>}</div>
-        <div><Label htmlFor="description">Description</Label><Textarea id="description" rows={3} {...register("description")} /></div>
-        <div><Label htmlFor="website">Website</Label><Input id="website" type="url" placeholder="https://" {...register("website")} /></div>
+        <div>
+          <Label htmlFor="name">Dealership name <span className="text-brass-400">*</span></Label>
+          <Input id="name" autoComplete="organization" {...register("name")} />
+          {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name.message}</p>}
+        </div>
+        <div>
+          <Label htmlFor="description">Description <span className="text-muted-foreground">(optional)</span></Label>
+          <Textarea id="description" rows={3} placeholder="What you specialize in, your inventory focus, what makes you different." {...register("description")} />
+        </div>
+        <div>
+          <Label htmlFor="website">Website <span className="text-muted-foreground">(optional)</span></Label>
+          <Input id="website" type="url" placeholder="https://" autoComplete="url" {...register("website")} />
+          {errors.website && <p className="text-xs text-red-400 mt-1">{errors.website.message}</p>}
+        </div>
         <div className="grid grid-cols-2 gap-3">
-          <div><Label htmlFor="phone">Phone</Label><Input id="phone" {...register("phone")} /></div>
-          <div><Label htmlFor="email">Email</Label><Input id="email" type="email" {...register("email")} /></div>
+          <div>
+            <Label htmlFor="phone">Phone <span className="text-muted-foreground">(optional)</span></Label>
+            <Input id="phone" type="tel" autoComplete="tel" {...register("phone")} />
+          </div>
+          <div>
+            <Label htmlFor="email">Sales email <span className="text-muted-foreground">(optional)</span></Label>
+            <Input id="email" type="email" autoComplete="email" {...register("email")} />
+            {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <div><Label htmlFor="city">City</Label><Input id="city" {...register("city")} /></div>
-          <div><Label htmlFor="state">State</Label><Input id="state" maxLength={2} {...register("state")} /></div>
-          <div><Label htmlFor="zip">Zip</Label><Input id="zip" {...register("zip")} /></div>
+          <div><Label htmlFor="city">City</Label><Input id="city" autoComplete="address-level2" {...register("city")} /></div>
+          <div><Label htmlFor="state">State</Label><Input id="state" maxLength={2} autoComplete="address-level1" placeholder="FL" {...register("state")} /></div>
+          <div><Label htmlFor="zip">Zip</Label><Input id="zip" autoComplete="postal-code" {...register("zip")} /></div>
         </div>
         {error && <p className="text-xs text-red-400">{error}</p>}
-        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creating…" : "Continue"}</Button>
+        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creating…" : "Continue to dashboard"}</Button>
       </form>
     </div>
   );

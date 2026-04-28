@@ -57,8 +57,9 @@ export function ListingCard({ listing, saved, onToggleSave }: Props) {
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSave(); }}
-                className="rounded-full bg-background/70 backdrop-blur p-2 hover:bg-background/90 transition-colors"
+                className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-background/70 backdrop-blur hover:bg-background/90 transition-colors"
                 aria-label={saved ? "remove from saved" : "save listing"}
+                aria-pressed={!!saved}
               >
                 <Heart className={saved ? "h-4 w-4 fill-brass-500 text-brass-500" : "h-4 w-4"} />
               </button>

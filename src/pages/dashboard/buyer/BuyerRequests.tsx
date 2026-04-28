@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
@@ -40,13 +41,13 @@ export default function BuyerRequests() {
   const con = useUserRequests<AnyRequest>("concierge_requests", user?.id);
   const svc = useUserRequests<AnyRequest>("service_requests", user?.id);
 
-  const groups: { title: string; rows: AnyRequest[]; eyebrow: string }[] = [
-    { title: "Concierge",   eyebrow: "concierge",   rows: con.data ?? [] },
-    { title: "Financing",   eyebrow: "financing",   rows: fin.data ?? [] },
-    { title: "Insurance",   eyebrow: "insurance",   rows: ins.data ?? [] },
-    { title: "Inspections", eyebrow: "inspection",  rows: insp.data ?? [] },
-    { title: "Transport",   eyebrow: "transport",   rows: trn.data ?? [] },
-    { title: "Service",     eyebrow: "service",     rows: svc.data ?? [] },
+  const groups: { title: string; rows: AnyRequest[]; eyebrow: string; ctaTo: string }[] = [
+    { title: "Concierge",   eyebrow: "concierge",   rows: con.data ?? [],  ctaTo: "/concierge" },
+    { title: "Financing",   eyebrow: "financing",   rows: fin.data ?? [],  ctaTo: "/financing" },
+    { title: "Insurance",   eyebrow: "insurance",   rows: ins.data ?? [],  ctaTo: "/insurance" },
+    { title: "Inspections", eyebrow: "inspection",  rows: insp.data ?? [], ctaTo: "/inspections" },
+    { title: "Transport",   eyebrow: "transport",   rows: trn.data ?? [],  ctaTo: "/transport" },
+    { title: "Service",     eyebrow: "service",     rows: svc.data ?? [],  ctaTo: "/services" },
   ];
 
   return (
@@ -57,7 +58,10 @@ export default function BuyerRequests() {
           <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400 mb-3">{g.eyebrow}</div>
           <h2 className="font-display text-xl mb-3">{g.title}</h2>
           {g.rows.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">No {g.title.toLowerCase()} requests yet.</div>
+            <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground flex items-center justify-between gap-3 flex-wrap">
+              <span>No {g.title.toLowerCase()} requests yet.</span>
+              <Link to={g.ctaTo} className="text-brass-400 text-xs font-mono uppercase tracking-wider">Start one →</Link>
+            </div>
           ) : (
             <div className="space-y-2">
               {g.rows.map((r) => (

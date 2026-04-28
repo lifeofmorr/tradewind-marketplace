@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
+import { MessageSquare } from "lucide-react";
 import { useConversations, useProfilesByIds, type ConversationWithMeta } from "@/hooks/useConversations";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn, timeAgo } from "@/lib/utils";
 
 interface Props {
@@ -20,9 +22,21 @@ export function ConversationList({ selectedId, onSelect }: Props) {
         <h2 className="font-display text-lg mt-1">Messages</h2>
       </div>
       {isLoading ? (
-        <div className="p-4 text-sm text-muted-foreground">Loading…</div>
+        <div className="p-4 space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-14 skeleton rounded" />
+          ))}
+        </div>
       ) : convos.length === 0 ? (
-        <div className="p-6 text-sm text-muted-foreground">No conversations yet.</div>
+        <div className="p-4">
+          <EmptyState
+            compact
+            icon={MessageSquare}
+            title="No conversations"
+            body="Message a seller from any listing to start a thread. Replies land here."
+            cta={{ label: "Browse listings", to: "/browse" }}
+          />
+        </div>
       ) : (
         <ul>
           {convos.map((c) => (

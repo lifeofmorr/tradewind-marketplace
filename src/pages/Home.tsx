@@ -34,22 +34,25 @@ function HeroSearch() {
           <Sparkles className="h-3.5 w-3.5" />
           <span className="font-mono text-xs uppercase tracking-[0.32em]">{BRAND.name} marketplace</span>
         </div>
-        <h1 className="mt-2 font-display text-5xl md:text-7xl leading-[1.05]">
+        <h1 className="mt-2 font-display text-4xl sm:text-5xl md:text-7xl leading-[1.05]">
           Boats. Autos.
           <br />
           <span className="text-brass-gradient">Serious buyers.</span>
         </h1>
-        <p className="mt-5 max-w-xl mx-auto text-muted-foreground">
+        <p className="mt-5 max-w-xl mx-auto text-muted-foreground px-2">
           {BRAND.tagline}
         </p>
-        <form onSubmit={onSubmit} className="mt-8 max-w-2xl mx-auto flex gap-2">
+        <form onSubmit={onSubmit} className="mt-8 max-w-2xl mx-auto flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <label htmlFor="hero-search" className="sr-only">Search listings</label>
             <Input
+              id="hero-search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Try 'Boston Whaler 320' or 'Porsche 911 GT3'"
               className="pl-9 h-12 text-base bg-card/60 backdrop-blur"
+              autoComplete="off"
             />
           </div>
           <Button size="lg" type="submit" className="btn-glow">Search</Button>
