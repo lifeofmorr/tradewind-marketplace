@@ -11,7 +11,7 @@ import OnboardingGuard from "@/routes/OnboardingGuard";
 
 // Public pages — eager-loaded so the homepage paints fast
 import Home from "@/pages/Home";
-import CategoryPage, { CategoriesIndex, BrowsePage } from "@/pages/CategoryPage";
+import CategoryPage, { CategoriesIndex, BrowsePage, GroupPage } from "@/pages/CategoryPage";
 import ListingDetail from "@/pages/ListingDetail";
 import DealerProfile, { DealersIndex } from "@/pages/DealerProfile";
 import ServiceProviderProfile, { ServicesIndex } from "@/pages/ServiceProviderProfile";
@@ -105,6 +105,8 @@ export default function App() {
       <Route element={<PublicShell />}>
         <Route path="/" element={<Home />} />
         <Route path="/browse" element={<BrowsePage />} />
+        <Route path="/boats" element={<GroupPage group="boat" />} />
+        <Route path="/autos" element={<GroupPage group="auto" />} />
         <Route path="/categories" element={<CategoriesIndex />} />
         <Route path="/categories/:category" element={<CategoryPage />} />
         <Route path="/listings/:slug" element={<ListingDetail />} />

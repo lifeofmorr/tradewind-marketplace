@@ -4,6 +4,7 @@ import type { Listing, ListingCategory, ListingStatus } from "@/types/database";
 
 export interface UseListingsArgs {
   category?: ListingCategory;
+  categories?: ListingCategory[];
   status?: ListingStatus;
   state?: string;
   min_price?: number;
@@ -25,6 +26,7 @@ export function useListings(args: UseListingsArgs = {}) {
       let q = supabase.from("listings").select("*");
       if (args.status) q = q.eq("status", args.status);
       if (args.category) q = q.eq("category", args.category);
+      if (args.categories && args.categories.length > 0) q = q.in("category", args.categories);
       if (args.state) q = q.eq("state", args.state.toUpperCase());
       if (args.seller_id) q = q.eq("seller_id", args.seller_id);
       if (args.dealer_id) q = q.eq("dealer_id", args.dealer_id);

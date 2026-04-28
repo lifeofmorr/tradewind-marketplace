@@ -82,6 +82,67 @@ export function CategoriesIndex() {
   );
 }
 
+export function GroupPage({ group }: { group: "boat" | "auto" }) {
+  const [searchParams] = useSearchParams();
+  const groupCats = useMemo(
+    () => CATEGORIES.filter((c) => c.group === group).map((c) => c.key) as ListingCategory[],
+    [group],
+  );
+  const initial: ListingFilterValues = {
+    search: searchParams.get("q") ?? undefined,
+    state: searchParams.get("state") ?? undefined,
+  };
+  const [filters, setFilters] = useState<ListingFilterValues>(initial);
+  useEffect(() => {
+    setMeta({
+      title: group === "boat" ? "Boats for sale" : "Cars, trucks, and more",
+      description: group === "boat"
+        ? "Cruisers, center-consoles, performance boats, yachts."
+        : "Cars, trucks, exotics, classics, RVs, and powersports.",
+    });
+  }, [group]);
+  const { data: listings = [], isLoading } = useListings({
+    ...filters,
+    categories: filters.category ? undefined : groupCats,
+    status: "active",
+    limit: 80,
+    order: "newest",
+  });
+  return (
+    <div className="container-pad py-12 space-y-8">
+      <header>
+        <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">
+          {group === "boat" ? "marine" : "automotive"}
+        </div>
+        <h1 className="font-display text-4xl mt-1">
+          {group === "boat" ? "Boats for sale" : "Cars, trucks, and more"}
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          {group === "boat"
+            ? "Cruisers, center-consoles, performance boats, and yachts from vetted sellers."
+            : "Cars, trucks, exotics, classics, RVs, and powersports from vetted sellers."}
+        </p>
+      </header>
+      <ListingFilters value={filters} onChange={setFilters} />
+      {isLoading ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="aspect-[4/3] skeleton rounded-xl" />
+          ))}
+        </div>
+      ) : (
+        <ListingGrid
+          listings={listings}
+          emptyText="No listings match those filters"
+          emptyBody="Try a wider price range, a different state, or browse all categories."
+          emptyCtaTo="/browse"
+          emptyCtaLabel="Browse all"
+        />
+      )}
+    </div>
+  );
+}
+
 export function BrowsePage() {
   const [searchParams] = useSearchParams();
   const featuredOnly = searchParams.get("featured") === "1";
