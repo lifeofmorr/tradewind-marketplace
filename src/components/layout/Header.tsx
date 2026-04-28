@@ -60,8 +60,8 @@ export default function Header() {
             <>
               <Link
                 to="/messages"
-                className="relative inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-secondary"
-                aria-label="messages"
+                className="relative inline-flex items-center justify-center h-11 w-11 md:h-9 md:w-9 rounded-md hover:bg-secondary"
+                aria-label={unreadMsgs > 0 ? `${unreadMsgs} unread messages` : "messages"}
               >
                 <MessageSquare className="h-4 w-4" />
                 {unreadMsgs > 0 && (
@@ -88,41 +88,61 @@ export default function Header() {
         </div>
         <button
           type="button"
-          className="md:hidden p-2"
+          className="md:hidden inline-flex items-center justify-center h-11 w-11 -mr-2"
           onClick={() => setOpen((v) => !v)}
-          aria-label="menu"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
       {open && (
         <div className="md:hidden border-t border-border bg-background">
-          <div className="container-pad flex flex-col gap-3 py-4 text-sm">
+          <nav className="container-pad flex flex-col py-2 text-sm">
             {NAV_LINKS.map((l) => (
-              <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
+              <Link
+                key={l.to}
+                to={l.to}
+                onClick={() => setOpen(false)}
+                className="py-3 px-1 text-base text-muted-foreground hover:text-foreground border-b border-border/40 last:border-0"
+              >
                 {l.label}
               </Link>
             ))}
-            <div className="flex items-center gap-2 pt-2">
+            {user && (
+              <Link
+                to="/messages"
+                onClick={() => setOpen(false)}
+                className="py-3 px-1 text-base text-muted-foreground hover:text-foreground border-b border-border/40 flex items-center justify-between"
+              >
+                <span>Messages</span>
+                {unreadMsgs > 0 && (
+                  <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-brass-500 text-navy-950 text-[10px] font-mono font-semibold inline-flex items-center justify-center">
+                    {unreadMsgs > 99 ? "99+" : unreadMsgs}
+                  </span>
+                )}
+              </Link>
+            )}
+            <div className="flex items-center gap-2 pt-3 pb-1">
               {user ? (
                 <>
-                  <Button asChild variant="ghost" size="sm" className="flex-1">
+                  <Button asChild variant="ghost" className="flex-1">
                     <Link to={dashboardPathFor(role)} onClick={() => setOpen(false)}>Account</Link>
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => { setOpen(false); void signOut(); }}>Sign out</Button>
+                  <Button variant="outline" onClick={() => { setOpen(false); void signOut(); }}>Sign out</Button>
                 </>
               ) : (
                 <>
-                  <Button asChild variant="ghost" size="sm" className="flex-1">
+                  <Button asChild variant="ghost" className="flex-1">
                     <Link to="/login" onClick={() => setOpen(false)}>Log in</Link>
                   </Button>
-                  <Button asChild size="sm" className="flex-1">
+                  <Button asChild className="flex-1">
                     <Link to="/signup" onClick={() => setOpen(false)}>Sign up</Link>
                   </Button>
                 </>
               )}
             </div>
-          </div>
+          </nav>
         </div>
       )}
     </header>

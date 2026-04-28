@@ -90,13 +90,21 @@ export default function ServiceProviderOnboarding() {
   return (
     <div className="min-h-screen container-pad py-16 max-w-xl space-y-6">
       <div>
-        <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">Step 1 of 1</div>
+        <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">Service partner onboarding</div>
         <h1 className="font-display text-4xl mt-1">Set up your service business</h1>
+        <p className="text-muted-foreground mt-2 text-sm">
+          Buyers find you through your category and region. Get your profile up to start receiving routed
+          requests — only the business name and category are required.
+        </p>
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="rounded-lg border border-border bg-card p-6 grid gap-3">
-        <div><Label htmlFor="name">Business name</Label><Input id="name" {...register("name")} />{errors.name && <p className="text-xs text-red-400 mt-1">{errors.name.message}</p>}</div>
         <div>
-          <Label>Primary category</Label>
+          <Label htmlFor="name">Business name <span className="text-brass-400">*</span></Label>
+          <Input id="name" autoComplete="organization" {...register("name")} />
+          {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name.message}</p>}
+        </div>
+        <div>
+          <Label>Primary category <span className="text-brass-400">*</span></Label>
           <Select value={category} onValueChange={(v) => setValue("category", v as ServiceCategory)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -104,18 +112,32 @@ export default function ServiceProviderOnboarding() {
             </SelectContent>
           </Select>
         </div>
-        <div><Label htmlFor="description">Description</Label><Textarea id="description" rows={3} {...register("description")} /></div>
-        <div><Label htmlFor="website">Website</Label><Input id="website" type="url" placeholder="https://" {...register("website")} /></div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label htmlFor="phone">Phone</Label><Input id="phone" {...register("phone")} /></div>
-          <div><Label htmlFor="email">Email</Label><Input id="email" type="email" {...register("email")} /></div>
+        <div>
+          <Label htmlFor="description">Description <span className="text-muted-foreground">(optional)</span></Label>
+          <Textarea id="description" rows={3} placeholder="What you do, areas served, certifications, response time." {...register("description")} />
+        </div>
+        <div>
+          <Label htmlFor="website">Website <span className="text-muted-foreground">(optional)</span></Label>
+          <Input id="website" type="url" placeholder="https://" autoComplete="url" {...register("website")} />
+          {errors.website && <p className="text-xs text-red-400 mt-1">{errors.website.message}</p>}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div><Label htmlFor="city">City</Label><Input id="city" {...register("city")} /></div>
-          <div><Label htmlFor="state">State</Label><Input id="state" maxLength={2} {...register("state")} /></div>
+          <div>
+            <Label htmlFor="phone">Phone <span className="text-muted-foreground">(optional)</span></Label>
+            <Input id="phone" type="tel" autoComplete="tel" {...register("phone")} />
+          </div>
+          <div>
+            <Label htmlFor="email">Email <span className="text-muted-foreground">(optional)</span></Label>
+            <Input id="email" type="email" autoComplete="email" {...register("email")} />
+            {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label htmlFor="city">City</Label><Input id="city" autoComplete="address-level2" {...register("city")} /></div>
+          <div><Label htmlFor="state">State</Label><Input id="state" maxLength={2} placeholder="FL" autoComplete="address-level1" {...register("state")} /></div>
         </div>
         {error && <p className="text-xs text-red-400">{error}</p>}
-        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creating…" : "Continue"}</Button>
+        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creating…" : "Continue to dashboard"}</Button>
       </form>
     </div>
   );

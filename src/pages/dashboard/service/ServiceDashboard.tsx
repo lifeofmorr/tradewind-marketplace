@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Inbox, Star, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -33,10 +34,28 @@ export default function ServiceDashboard() {
         </div>
         <Button asChild variant="outline"><Link to="/service/profile">Edit profile</Link></Button>
       </div>
-      <div className="rounded-lg border border-border bg-card p-6 text-sm">
+      <div className="grid gap-3 md:grid-cols-3">
+        <Link to="/service/leads" className="rounded-lg border border-border bg-card/60 p-5 hover:border-brass-500/40 transition-colors">
+          <Inbox className="h-5 w-5 text-brass-400" />
+          <div className="font-display text-base mt-3">Open requests</div>
+          <p className="text-xs text-muted-foreground mt-1">New buyer requests routed to your category.</p>
+        </Link>
+        <Link to="/service/profile" className="rounded-lg border border-border bg-card/60 p-5 hover:border-brass-500/40 transition-colors">
+          <Settings className="h-5 w-5 text-brass-400" />
+          <div className="font-display text-base mt-3">Edit your profile</div>
+          <p className="text-xs text-muted-foreground mt-1">Verified profiles get priority in routing.</p>
+        </Link>
+        <Link to="/pricing" className="rounded-lg border border-border bg-card/60 p-5 hover:border-brass-500/40 transition-colors">
+          <Star className="h-5 w-5 text-brass-400" />
+          <div className="font-display text-base mt-3">Manage plan</div>
+          <p className="text-xs text-muted-foreground mt-1">Upgrade for priority placement.</p>
+        </Link>
+      </div>
+      <div className="rounded-lg border border-border bg-card p-6 text-sm space-y-1">
+        <div className="font-display text-base mb-2">Account</div>
         <div>Category: <span className="font-mono text-brass-400">{provider?.category ?? "—"}</span></div>
-        <div>Verified: <span className="font-mono">{provider?.is_verified ? "yes" : "no"}</span></div>
-        <div>Subscription: <span className="font-mono">{provider?.subscription_tier ?? "—"} · {provider?.subscription_status ?? "—"}</span></div>
+        <div>Verified: <span className="font-mono">{provider?.is_verified ? "yes" : "pending — submit credentials to support"}</span></div>
+        <div>Subscription: <span className="font-mono">{provider?.subscription_tier ?? "trial"} · {provider?.subscription_status ?? "active"}</span></div>
       </div>
     </div>
   );

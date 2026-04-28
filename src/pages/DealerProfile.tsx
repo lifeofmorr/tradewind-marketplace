@@ -5,7 +5,8 @@ import { MapPin, Globe, Phone, Mail } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { ListingGrid } from "@/components/listings/ListingGrid";
 import { useListings } from "@/hooks/useListings";
-import { Badge } from "@/components/ui/badge";
+import { TrustBadgeList } from "@/components/ui/TrustBadge";
+import { getDealerBadges } from "@/lib/badges";
 import { ReviewList } from "@/components/reviews/ReviewList";
 import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { Stars } from "@/components/reviews/Stars";
@@ -58,10 +59,9 @@ export default function DealerProfile() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 text-xs">
               <span className="font-mono uppercase tracking-[0.32em] text-brass-400">Dealer</span>
-              {dealer.is_verified && <Badge variant="good">Verified</Badge>}
-              {dealer.is_featured && <Badge variant="accent">Featured</Badge>}
             </div>
             <h1 className="font-display text-4xl mt-1">{dealer.name}</h1>
+            <TrustBadgeList types={getDealerBadges(dealer)} size="md" className="mt-2" />
             <div className="flex items-center gap-3 mt-1">
               {dealer.rating_count > 0 && (
                 <div className="flex items-center gap-2">

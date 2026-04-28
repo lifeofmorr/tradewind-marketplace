@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { FileText, BarChart3 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { setMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
 import type { BlogPost, MarketReport } from "@/types/database";
@@ -45,7 +47,14 @@ export default function AdminContent() {
                 <Badge variant={p.is_published ? "good" : "default"}>{p.is_published ? "published" : "draft"}</Badge>
               </div>
             ))}
-            {!posts.data?.length && <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No posts yet.</div>}
+            {!posts.data?.length && (
+              <EmptyState
+                icon={FileText}
+                title="No blog posts yet"
+                body="Publish guides, model spotlights, and SEO-friendly category essays to drive organic traffic."
+                cta={{ label: "Open blog editor", to: "/admin/blog" }}
+              />
+            )}
           </div>
         </TabsContent>
         <TabsContent value="reports">
@@ -59,7 +68,14 @@ export default function AdminContent() {
                 <Badge variant={r.is_published ? "good" : "default"}>{r.is_published ? "published" : "draft"}</Badge>
               </div>
             ))}
-            {!reports.data?.length && <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No reports yet.</div>}
+            {!reports.data?.length && (
+              <EmptyState
+                icon={BarChart3}
+                title="No market reports yet"
+                body="Quarterly pricing reports build buyer trust and earn high-intent backlinks."
+                cta={{ label: "Open report editor", to: "/admin/market-reports" }}
+              />
+            )}
           </div>
         </TabsContent>
       </Tabs>

@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { Trash2, MessageSquareQuote } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Stars } from "@/components/reviews/Stars";
 import { setMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
@@ -71,9 +72,13 @@ export default function BuyerReviews() {
             );
           })}
           {!reviews.length && (
-            <div className="rounded-lg border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
-              You haven't written any reviews yet.
-            </div>
+            <EmptyState
+              icon={MessageSquareQuote}
+              title="No reviews yet"
+              body="Help future buyers by reviewing dealers and service partners you've worked with."
+              cta={{ label: "Browse dealers", to: "/dealers" }}
+              secondary={{ label: "Service partners", to: "/services", variant: "outline" }}
+            />
           )}
         </div>
       )}

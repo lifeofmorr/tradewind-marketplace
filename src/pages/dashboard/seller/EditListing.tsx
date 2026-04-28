@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PhotoUploader } from "@/components/listings/PhotoUploader";
+import { ListingQualityPanel } from "@/components/listings/ListingQualityPanel";
 import { setMeta } from "@/lib/seo";
 import type { Listing, ListingPhoto } from "@/types/database";
 
@@ -94,7 +95,8 @@ export default function EditListing() {
   const ownerId = current.dealer_id ?? current.seller_id;
 
   return (
-    <div className="space-y-8 max-w-3xl">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="space-y-8 min-w-0">
       <header className="flex items-start justify-between gap-4">
         <div>
           <Link to="/seller/listings" className="text-xs text-muted-foreground hover:text-foreground">← Listings</Link>
@@ -137,6 +139,10 @@ export default function EditListing() {
           onChange={(next) => { void persistPhotos(next); }}
         />
       </section>
+      </div>
+      <aside className="lg:sticky lg:top-20 lg:self-start space-y-4">
+        <ListingQualityPanel listing={listing} photoCount={photos.length} />
+      </aside>
     </div>
   );
 }

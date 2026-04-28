@@ -32,18 +32,32 @@ export function ListingFilters({ value, onChange }: Props) {
     setDraft((d) => ({ ...d, [k]: v }));
   }
 
+  const dirty =
+    draft.search !== value.search ||
+    draft.category !== value.category ||
+    draft.min_price !== value.min_price ||
+    draft.max_price !== value.max_price ||
+    draft.state !== value.state;
+
+  function clearAll() {
+    const cleared: ListingFilterValues = {};
+    setDraft(cleared);
+    onChange(cleared);
+  }
+
   return (
     <form
       onSubmit={(e) => { e.preventDefault(); onChange(draft); }}
-      className="rounded-lg border border-border bg-card p-4 grid gap-3 md:grid-cols-7 md:items-end"
+      className="rounded-lg border border-border bg-card p-4 grid gap-3 sm:grid-cols-2 md:grid-cols-7 md:items-end"
     >
-      <div className="md:col-span-2">
+      <div className="sm:col-span-2 md:col-span-2">
         <Label htmlFor="search">Search</Label>
         <Input
           id="search"
           value={draft.search ?? ""}
           onChange={(e) => update("search", e.target.value || undefined)}
           placeholder="Boston Whaler 320"
+          autoComplete="off"
         />
       </div>
       <div>
@@ -66,8 +80,9 @@ export function ListingFilters({ value, onChange }: Props) {
         <Input
           id="min_price"
           type="number"
+          min={0}
           inputMode="numeric"
-          value={draft.min_price ?? ""}
+          value={draft.min_price != null ? draft.min_price / 100 : ""}
           onChange={(e) => update("min_price", e.target.value ? Number(e.target.value) * 100 : undefined)}
         />
       </div>
@@ -76,8 +91,9 @@ export function ListingFilters({ value, onChange }: Props) {
         <Input
           id="max_price"
           type="number"
+          min={0}
           inputMode="numeric"
-          value={draft.max_price ?? ""}
+          value={draft.max_price != null ? draft.max_price / 100 : ""}
           onChange={(e) => update("max_price", e.target.value ? Number(e.target.value) * 100 : undefined)}
         />
       </div>
@@ -86,12 +102,18 @@ export function ListingFilters({ value, onChange }: Props) {
         <Input
           id="state"
           value={draft.state ?? ""}
-          onChange={(e) => update("state", e.target.value || undefined)}
+          onChange={(e) => update("state", (e.target.value || "").toUpperCase().replace(/[^A-Z]/g, "") || undefined)}
           placeholder="FL"
           maxLength={2}
+          autoCapitalize="characters"
         />
       </div>
-      <Button type="submit">Apply</Button>
+      <div className="flex gap-2 sm:col-span-2 md:col-span-1">
+        <Button type="submit" className="flex-1" disabled={!dirty}>Apply</Button>
+        {(value.search || value.category || value.min_price || value.max_price || value.state) && (
+          <Button type="button" variant="outline" onClick={clearAll}>Clear</Button>
+        )}
+      </div>
     </form>
   );
 }

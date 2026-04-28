@@ -1,6 +1,10 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useListings } from "@/hooks/useListings";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { setMeta } from "@/lib/seo";
 import { formatNumber } from "@/lib/utils";
 
@@ -13,9 +17,26 @@ export default function DealerAnalytics() {
   const totalInquiries = listings.reduce((s, l) => s + (l.inquiry_count ?? 0), 0);
   const conv = totalViews > 0 ? ((totalInquiries / totalViews) * 100).toFixed(2) + "%" : "—";
   const top = [...listings].sort((a, b) => (b.inquiry_count ?? 0) - (a.inquiry_count ?? 0)).slice(0, 10);
+  if (!listings.length) {
+    return (
+      <div className="space-y-6">
+        <h1 className="font-display text-3xl">Analytics</h1>
+        <EmptyState
+          icon={TrendingUp}
+          title="No analytics yet"
+          body="Once your inventory is live, this dashboard tracks views, inquiries, and the listings driving the most engagement."
+          cta={{ label: "Add inventory", to: "/seller/listings/new" }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      <h1 className="font-display text-3xl">Analytics</h1>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="font-display text-3xl">Analytics</h1>
+        <Button asChild variant="outline" size="sm"><Link to="/dealer/inventory">Manage inventory</Link></Button>
+      </div>
       <div className="grid gap-4 sm:grid-cols-4">
         <Stat label="Active" value={active.length} />
         <Stat label="Views" value={formatNumber(totalViews)} />
@@ -43,7 +64,6 @@ export default function DealerAnalytics() {
                   <td className="px-4 py-3 text-right">{formatNumber(l.save_count)}</td>
                 </tr>
               ))}
-              {!top.length && <tr><td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">No data yet.</td></tr>}
             </tbody>
           </table>
         </div>

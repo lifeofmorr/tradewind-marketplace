@@ -18,8 +18,9 @@ import ServiceProviderProfile, { ServicesIndex } from "@/pages/ServiceProviderPr
 import {
   About, Contact, Services as ServicesHub,
   Pricing, Dealers as DealersInfo, SellMyBoat, SellMyCar, SellHub,
-  Terms, Privacy, Trust, NotFound,
+  Terms, Privacy, NotFound,
 } from "@/pages/SimplePages";
+import TrustCenter from "@/pages/public/TrustCenter";
 import Blog from "@/pages/Blog";
 import BlogPostDetail from "@/pages/BlogPostDetail";
 import MarketReports from "@/pages/MarketReports";
@@ -68,6 +69,7 @@ const BuyerDashboard = lazy(() => import("@/pages/dashboard/buyer/BuyerDashboard
 const BuyerSaved = lazy(() => import("@/pages/dashboard/buyer/BuyerSaved"));
 const BuyerRequests = lazy(() => import("@/pages/dashboard/buyer/BuyerRequests"));
 const BuyerReviews = lazy(() => import("@/pages/dashboard/buyer/BuyerReviews"));
+const BuyerCompare = lazy(() => import("@/pages/dashboard/buyer/BuyerCompare"));
 
 // Messaging
 const Messages = lazy(() => import("@/pages/dashboard/Messages"));
@@ -136,7 +138,7 @@ export default function App() {
 
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
-        <Route path="/trust" element={<Trust />} />
+        <Route path="/trust" element={<TrustCenter />} />
 
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/checkout/cancel" element={<CheckoutCancel />} />
@@ -179,6 +181,7 @@ export default function App() {
           <Route path="/buyer/saved" element={<L><BuyerSaved /></L>} />
           <Route path="/buyer/requests" element={<L><BuyerRequests /></L>} />
           <Route path="/buyer/reviews" element={<L><BuyerReviews /></L>} />
+          <Route path="/buyer/compare" element={<L><BuyerCompare /></L>} />
         </Route>
       </Route>
 

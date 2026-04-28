@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,12 +32,19 @@ type Values = z.infer<typeof Schema>;
 export default function Signup() {
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
+  const initialRole = useMemo<Values["role"]>(() => {
+    const r = params.get("role");
+    if (r === "buyer" || r === "seller" || r === "dealer" || r === "service_provider") return r;
+    return "buyer";
+  }, [params]);
+
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<Values>({
     resolver: zodResolver(Schema),
-    defaultValues: { role: "buyer" },
+    defaultValues: { role: initialRole },
   });
   const role = watch("role");
 

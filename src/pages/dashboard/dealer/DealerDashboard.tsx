@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, Inbox, TrendingUp, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useListings } from "@/hooks/useListings";
 import { useQuery } from "@tanstack/react-query";
@@ -52,12 +52,29 @@ export default function DealerDashboard() {
         <Stat label="Views" value={formatNumber(totalViews)} />
         <Stat label="Inquiries" value={formatNumber(totalInquiries)} />
       </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <Link to="/dealer/leads" className="rounded-lg border border-border bg-card/60 p-5 hover:border-brass-500/40 transition-colors">
+          <Inbox className="h-5 w-5 text-brass-400" />
+          <div className="font-display text-base mt-3">Open the inbox</div>
+          <p className="text-xs text-muted-foreground mt-1">New leads route here automatically.</p>
+        </Link>
+        <Link to="/dealer/analytics" className="rounded-lg border border-border bg-card/60 p-5 hover:border-brass-500/40 transition-colors">
+          <TrendingUp className="h-5 w-5 text-brass-400" />
+          <div className="font-display text-base mt-3">Review analytics</div>
+          <p className="text-xs text-muted-foreground mt-1">See what's driving views and inquiries.</p>
+        </Link>
+        <Link to="/dealer/profile" className="rounded-lg border border-border bg-card/60 p-5 hover:border-brass-500/40 transition-colors">
+          <Settings className="h-5 w-5 text-brass-400" />
+          <div className="font-display text-base mt-3">Polish your profile</div>
+          <p className="text-xs text-muted-foreground mt-1">A complete profile lifts buyer trust.</p>
+        </Link>
+      </div>
       <Card>
         <CardHeader><CardTitle>Subscription</CardTitle></CardHeader>
         <CardContent className="text-sm space-y-1">
-          <div>Tier: <span className="font-mono text-brass-400">{dealer?.subscription_tier ?? "—"}</span></div>
-          <div>Status: <span className="font-mono">{dealer?.subscription_status ?? "—"}</span></div>
-          <Button asChild variant="outline" className="mt-3"><Link to="/pricing">Upgrade</Link></Button>
+          <div>Tier: <span className="font-mono text-brass-400">{dealer?.subscription_tier ?? "starter"}</span></div>
+          <div>Status: <span className="font-mono">{dealer?.subscription_status ?? "trialing"}</span></div>
+          <Button asChild variant="outline" className="mt-3"><Link to="/pricing">Manage plan</Link></Button>
         </CardContent>
       </Card>
     </div>
