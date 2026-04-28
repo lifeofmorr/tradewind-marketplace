@@ -24,7 +24,7 @@ export default {
         popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
         navy: { 50:"#f0f3f8",100:"#dce4ee",400:"#6b86a8",600:"#294a72",700:"#1a3454",800:"#0f2238",900:"#0a1628",950:"#050b18" },
-        brass: { 400:"#e6c478", 500:"#c9a14a", 700:"#8a6b2c" },
+        brass: { 400:"#e6c478", 500:"#c9a84c", 700:"#8a6b2c" },
       },
       borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
     },

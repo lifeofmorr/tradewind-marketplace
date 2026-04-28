@@ -16,13 +16,13 @@ export interface MetaArgs {
 const TITLE_SUFFIX = ` — ${BRAND.name}`;
 
 function upsertMeta(selector: string, attrs: Record<string, string>) {
-  let el = document.head.querySelector(selector) as HTMLMetaElement | HTMLLinkElement | null;
+  let el = document.head.querySelector<HTMLMetaElement | HTMLLinkElement>(selector);
   if (!el) {
     const tag = selector.startsWith("link") ? "link" : "meta";
-    el = document.createElement(tag) as any;
-    document.head.appendChild(el!);
+    el = document.createElement(tag) as HTMLMetaElement | HTMLLinkElement;
+    document.head.appendChild(el);
   }
-  for (const [k, v] of Object.entries(attrs)) (el as any).setAttribute(k, v);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
 }
 
 function upsertJsonLd(json: object) {

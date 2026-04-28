@@ -17,6 +17,7 @@ export const CATEGORIES: CategoryDef[] = [
   { key: "exotic",           label: "Exotics",           group: "auto", blurb: "Lambo, Ferrari, McLaren" },
   { key: "classic",          label: "Classics",          group: "auto", blurb: "Vintage and restomod" },
   { key: "powersports",      label: "Powersports",       group: "auto", blurb: "ATVs, side-by-sides, dirt bikes" },
+  { key: "rv",               label: "RVs",               group: "auto", blurb: "Class A/B/C, fifth-wheels, trailers" },
 ];
 
 export const FEATURED_BOAT_BRANDS = [
