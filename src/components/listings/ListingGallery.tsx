@@ -13,6 +13,7 @@ interface GalleryPhoto { id: string; url: string }
 
 export function ListingGallery({ photos, coverFallback, category }: Props) {
   const [active, setActive] = useState(0);
+  const [failed, setFailed] = useState<Set<string>>(new Set());
   const list: GalleryPhoto[] = photos.length
     ? photos.map((p) => ({ id: p.id, url: p.url ?? p.storage_path }))
     : (coverFallback ? [{ id: "cover", url: coverFallback }] : []);
@@ -25,10 +26,20 @@ export function ListingGallery({ photos, coverFallback, category }: Props) {
     );
   }
   const current = list[Math.min(active, list.length - 1)];
+  const currentFailed = failed.has(current.id);
   return (
     <div className="space-y-3">
       <div className="aspect-[16/9] bg-secondary rounded-lg overflow-hidden">
-        <img src={current.url} alt={`Photo ${active + 1} of ${list.length}`} className="h-full w-full object-cover" />
+        {currentFailed ? (
+          <ListingPlaceholder category={category ?? "car"} label="Photo unavailable" />
+        ) : (
+          <img
+            src={current.url}
+            alt={`Photo ${active + 1} of ${list.length}`}
+            className="h-full w-full object-cover"
+            onError={() => setFailed((prev) => new Set(prev).add(current.id))}
+          />
+        )}
       </div>
       {list.length > 1 && (
         <div

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import { Heart, MapPin, GitCompare } from "lucide-react";
 import type { Listing } from "@/types/database";
 import { ListingPlaceholder } from "@/components/listings/ListingPlaceholder";
@@ -22,6 +23,7 @@ export function ListingCard({ listing, saved, onToggleSave }: Props) {
   const compare = useCompare();
   const inCompare = compare.has(listing.id);
   const compareDisabled = !inCompare && compare.isFull;
+  const [imgFailed, setImgFailed] = useState(false);
 
   // We deliberately exclude `demo` and `featured` from the chip list — those are shown as overlay chips
   const chipBadges = badges.filter((b) => b !== "demo" && b !== "featured" && b !== "premium");
@@ -30,12 +32,13 @@ export function ListingCard({ listing, saved, onToggleSave }: Props) {
     <div className="group glass-card lift-card brass-glow overflow-hidden transition-all">
       <Link to={`/listings/${listing.slug}`} className="block">
         <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
-          {listing.cover_photo_url ? (
+          {listing.cover_photo_url && !imgFailed ? (
             <img
               src={listing.cover_photo_url}
               alt={listing.title}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
+              onError={() => setImgFailed(true)}
             />
           ) : (
             <ListingPlaceholder category={listing.category} />
