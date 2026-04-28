@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, Gauge, MapPin, Anchor, Car as CarIcon } from "lucide-react";
+import { AlertTriangle, Calendar, Gauge, MapPin, Anchor, Car as CarIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useListing } from "@/hooks/useListings";
 import { ListingGallery } from "@/components/listings/ListingGallery";
@@ -69,9 +69,30 @@ export default function ListingDetail() {
   const isBoat = BOAT_CATS.has(listing.category);
 
   return (
-    <div className="container-pad py-10 grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+    <div className="container-pad py-10 space-y-6">
+      {listing.is_demo && (
+        <div
+          role="status"
+          className="flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-amber-200"
+        >
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+          <div className="text-sm leading-relaxed">
+            <div className="font-display text-base text-amber-100">Demo listing</div>
+            <p className="mt-1 text-amber-200/90">
+              This is a demo listing for marketplace preview purposes. It does not represent
+              real available inventory.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
       <div className="space-y-6">
-        <ListingGallery photos={photos} coverFallback={listing.cover_photo_url} />
+        <ListingGallery
+          photos={photos}
+          coverFallback={listing.cover_photo_url}
+          category={listing.category}
+        />
         <header className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {listing.is_featured && <Badge variant="accent">Featured</Badge>}
@@ -149,6 +170,7 @@ export default function ListingDetail() {
         )}
         <InquiryForm listing={listing} />
       </aside>
+      </div>
     </div>
   );
 }
