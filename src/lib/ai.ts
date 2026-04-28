@@ -4,7 +4,10 @@ export type AIWorkflow =
   | "listing_generator" | "buyer_assistant" | "fraud_check"
   | "pricing_estimate" | "concierge_intake";
 
-async function call<TIn, TOut>(fn: string, body: TIn): Promise<TOut> {
+async function call<TIn extends Record<string, unknown>, TOut>(
+  fn: string,
+  body: TIn,
+): Promise<TOut> {
   const { data, error } = await supabase.functions.invoke(fn, { body });
   if (error) throw error;
   return data as TOut;

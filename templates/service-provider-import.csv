@@ -1,0 +1,4 @@
+name,category,description,city,state,phone,email,website,service_radius_mi
+Coastal Marine Repair,marine_mechanic,"Mercury, Yamaha, and Volvo certified. Outboards, inboards, sterndrives. Mobile service across South FL.",Miami,FL,305-555-0211,service@coastalmarine.example,https://coastalmarine.example,75
+Tidewater Marine Surveyors,inspector_surveyor,"SAMS-certified pre-purchase, insurance, and damage surveys. Hull, rigging, and engine analysis.",Fort Lauderdale,FL,954-555-0237,survey@tidewatersurvey.example,https://tidewatersurvey.example,200
+Smoky Mountain Detail,detailer,"Ceramic coatings, paint correction, and full reconditioning. Mobile service across East Tennessee.",Knoxville,TN,865-555-0254,book@smokymtndetail.example,https://smokymtndetail.example,80
