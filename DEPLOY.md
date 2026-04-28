@@ -1,16 +1,115 @@
-# TradeWind · Deploy runbook
+# TradeWind · Deploy status + remaining work
 
-Everything below is **manual** because each step needs an interactive login
-or a token Claude doesn't have. Run the blocks in order on your laptop.
+## ✓ Live now
 
-What's already done locally:
-- ✓ `git commit` of all Phase 0–3 work
-- ✓ `vercel.json` written (rewrites + security headers)
-- ✓ `.env.local` created from the template (empty values)
-- ✓ Final `npm run typecheck && npm run build` clean
+- **App** — https://fervent-proskuriakova-6f629e.vercel.app
+- **Repo** — https://github.com/lifeofmorr/tradewind-marketplace (`main`)
+- **Supabase** — https://supabase.com/dashboard/project/qwaotydaazymgnvnfuuj
+  Region us-east-1 · Org `donmondemorrison@gmail.com's Org`
+- **Schema** — 3 migrations applied
+  (`20260101000000_initial.sql`, `…_phase3.sql`, `…_seed.sql`)
+- **Edge functions** — 12/12 deployed:
+  `stripe-checkout`, `stripe-webhook` (no-jwt), `ai-listing-generator`,
+  `ai-buyer-assistant`, `ai-fraud-check`, `ai-pricing-estimate`,
+  `ai-concierge-intake`, `inquiry-fraud-check` (no-jwt), `send-email`,
+  `photo-enhance`, `sitemap` (no-jwt), `auction-end`
+- **Vercel envs (production)** — `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- **vercel.json** — wires `/sitemap.xml` to the deployed sitemap function
 
-The current branch is `claude/fervent-proskuriakova-6f629e`. You'll likely
-want to merge it into `main` (or push it as a feature branch) — see Step 1.
+## ⏸ What still needs Don
+
+### 1. Stripe (no payments work yet)
+
+Create the 7 prices in https://dashboard.stripe.com/test/products
+(see [PRICING.md](./PRICING.md) for the table).
+
+```bash
+export SUPABASE_ACCESS_TOKEN=<your-supabase-pat>
+npx supabase@latest secrets set --project-ref qwaotydaazymgnvnfuuj \
+  STRIPE_SECRET_KEY=sk_test_... \
+  STRIPE_WEBHOOK_SECRET=whsec_... \
+  STRIPE_PRICE_FEATURED_LISTING=price_... \
+  STRIPE_PRICE_BOOST_LISTING=price_... \
+  STRIPE_PRICE_DEALER_STARTER=price_... \
+  STRIPE_PRICE_DEALER_PRO=price_... \
+  STRIPE_PRICE_DEALER_PREMIER=price_... \
+  STRIPE_PRICE_SERVICE_PROVIDER=price_... \
+  STRIPE_PRICE_CONCIERGE=price_... \
+  APP_URL=https://fervent-proskuriakova-6f629e.vercel.app
+```
+
+Then add the matching `VITE_STRIPE_*` vars to Vercel:
+
+```bash
+for v in VITE_STRIPE_PUBLISHABLE_KEY VITE_STRIPE_PRICE_FEATURED_LISTING \
+         VITE_STRIPE_PRICE_BOOST_LISTING VITE_STRIPE_PRICE_DEALER_STARTER \
+         VITE_STRIPE_PRICE_DEALER_PRO VITE_STRIPE_PRICE_DEALER_PREMIER \
+         VITE_STRIPE_PRICE_SERVICE_PROVIDER VITE_STRIPE_PRICE_CONCIERGE; do
+  vercel env add "$v" production    # paste each value when prompted
+done
+vercel --prod --yes                  # rebuild with the new envs
+```
+
+Webhook endpoint in Stripe Dashboard:
+`https://qwaotydaazymgnvnfuuj.supabase.co/functions/v1/stripe-webhook`
+Events: `checkout.session.completed`,
+`customer.subscription.{created,updated,deleted}`, `charge.refunded`.
+Copy the signing secret into `STRIPE_WEBHOOK_SECRET` above.
+
+### 2. AI + email keys
+
+```bash
+npx supabase@latest secrets set --project-ref qwaotydaazymgnvnfuuj \
+  ANTHROPIC_API_KEY=sk-ant-... \
+  OPENAI_API_KEY=sk-... \
+  RESEND_API_KEY=re_... \
+  RESEND_FROM='TradeWind <hello@gotradewind.com>'
+```
+
+### 3. DB webhook for fraud-check (auto-screen every inquiry)
+
+Supabase Dashboard → **Database → Webhooks**:
+- Name `inquiry-fraud-check`
+- Table `public.inquiries` · Event `INSERT`
+- POST → `https://qwaotydaazymgnvnfuuj.supabase.co/functions/v1/inquiry-fraud-check`
+- Header `Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>`
+
+### 4. pg_cron schedule for auction finalizer
+
+In the SQL editor (replace `<service-role-key>` with your service-role JWT):
+
+```sql
+select cron.schedule('auction-end', '*/5 * * * *', $$
+  select net.http_post(
+    url := 'https://qwaotydaazymgnvnfuuj.supabase.co/functions/v1/auction-end',
+    headers := jsonb_build_object('Authorization', 'Bearer <service-role-key>')
+  )
+$$);
+```
+
+### 5. Custom domain (optional)
+
+Vercel Dashboard → Project → Domains → add `gotradewind.com`. Then update
+`APP_URL` in Supabase secrets to match.
+
+### 6. Promote yourself to admin
+
+Sign up at https://fervent-proskuriakova-6f629e.vercel.app/signup as a
+buyer, then in the Supabase SQL editor:
+
+```sql
+update profiles set role = 'admin' where email = 'YOU@example.com';
+```
+
+Sign out and back in. You'll land on `/admin`.
+
+---
+
+## Original runbook (reference)
+
+The original step-by-step (gh login → supabase create → vercel deploy) is
+preserved below — most of it has been executed, but it's useful for
+re-deploying to a different environment later.
 
 ---
 

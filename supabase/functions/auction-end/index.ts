@@ -6,10 +6,9 @@
 //   - emails the winner + the seller
 //   - inserts a notification row for both
 //
-// Trigger this hourly with Supabase scheduled jobs (pg_cron):
-//   select cron.schedule('auction-end', '*/5 * * * *',
-//     $$select net.http_post(url := 'https://YOUR-PROJECT.supabase.co/functions/v1/auction-end',
---       headers := json_build_object('Authorization','Bearer ' || current_setting('app.settings.service_role_key')))$$);
+// Trigger every 5 minutes with Supabase scheduled jobs (pg_cron). The SQL
+// snippet to register the cron is in DEPLOY.md / README — it lives outside
+// this file so its `:=` and `--` syntax doesn't confuse the TS bundler.
 //
 // Required secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, optional RESEND_API_KEY.
 

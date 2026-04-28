@@ -2,8 +2,13 @@
 
 The AI-powered marketplace for boats, autos, dealers, and serious buyers.
 
-> Phase 1 complete. Auth, listings, dashboards, AI workflow stubs, Stripe checkout/webhook,
-> seed data, full route tree.
+> Phase 0–3 complete and **live**:
+> - **App**: https://fervent-proskuriakova-6f629e.vercel.app
+> - **Supabase project**: https://supabase.com/dashboard/project/qwaotydaazymgnvnfuuj
+> - **Repo**: https://github.com/lifeofmorr/tradewind-marketplace
+>
+> Stripe + AI keys are still placeholders — see [DEPLOY.md](./DEPLOY.md)
+> for what's left.
 
 ---
 
