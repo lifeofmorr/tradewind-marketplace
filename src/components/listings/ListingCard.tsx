@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Heart, MapPin } from "lucide-react";
 import type { Listing } from "@/types/database";
 import { Badge } from "@/components/ui/badge";
+import { ListingPlaceholder } from "@/components/listings/ListingPlaceholder";
 import { formatCents, formatNumber } from "@/lib/utils";
 
 interface Props {
@@ -28,13 +29,16 @@ export function ListingCard({ listing, saved, onToggleSave }: Props) {
             loading="lazy"
           />
         ) : (
-          <div className="h-full w-full grid place-items-center text-xs font-mono text-muted-foreground">
-            no photo
-          </div>
+          <ListingPlaceholder category={listing.category} />
         )}
-        {listing.is_featured && (
-          <div className="absolute top-2 left-2"><Badge variant="accent">Featured</Badge></div>
-        )}
+        <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
+          {listing.is_demo && (
+            <span className="inline-flex items-center rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.18em] text-white ring-1 ring-inset ring-white/20 backdrop-blur-sm">
+              Demo
+            </span>
+          )}
+          {listing.is_featured && <Badge variant="accent">Featured</Badge>}
+        </div>
         {onToggleSave && (
           <button
             type="button"

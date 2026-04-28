@@ -212,6 +212,7 @@ export interface Listing {
   // marketing flags
   is_featured: boolean;
   is_premium: boolean;
+  is_demo: boolean;
   featured_until: string | null;
   boost_until: string | null;
   is_finance_partner: boolean;

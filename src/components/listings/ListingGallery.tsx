@@ -1,15 +1,17 @@
 import { useState } from "react";
-import type { ListingPhoto } from "@/types/database";
+import type { ListingCategory, ListingPhoto } from "@/types/database";
+import { ListingPlaceholder } from "@/components/listings/ListingPlaceholder";
 import { cn } from "@/lib/utils";
 
 interface Props {
   photos: ListingPhoto[];
   coverFallback?: string | null;
+  category?: ListingCategory;
 }
 
 interface GalleryPhoto { id: string; url: string }
 
-export function ListingGallery({ photos, coverFallback }: Props) {
+export function ListingGallery({ photos, coverFallback, category }: Props) {
   const [active, setActive] = useState(0);
   const list: GalleryPhoto[] = photos.length
     ? photos.map((p) => ({ id: p.id, url: p.url ?? p.storage_path }))
@@ -17,8 +19,8 @@ export function ListingGallery({ photos, coverFallback }: Props) {
 
   if (!list.length) {
     return (
-      <div className="aspect-[16/9] bg-secondary rounded-lg grid place-items-center text-sm font-mono text-muted-foreground">
-        no photos
+      <div className="aspect-[16/9] rounded-lg overflow-hidden">
+        <ListingPlaceholder category={category ?? "car"} label="No photos yet" />
       </div>
     );
   }
