@@ -52,7 +52,11 @@ export default function AdminRequests() {
   const svc = useReqs("service_requests");
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Requests</h1>
+      <div>
+        <div className="eyebrow">Admin · requests</div>
+        <h1 className="section-title">Partner request inboxes</h1>
+        <p className="text-sm text-muted-foreground mt-2">Triage every concierge, financing, insurance, inspection, transport, and service request.</p>
+      </div>
       <Tabs defaultValue="con">
         <TabsList>
           <TabsTrigger value="con">Concierge</TabsTrigger>

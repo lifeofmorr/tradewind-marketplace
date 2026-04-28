@@ -26,8 +26,11 @@ export default function SellerListings() {
   useEffect(() => { setMeta({ title: "Seller · listings", description: "Manage your listings." }); }, []);
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl">Listings</h1>
+      <div className="flex items-end justify-between flex-wrap gap-3">
+        <div>
+          <div className="eyebrow">Seller</div>
+          <h1 className="section-title">My listings</h1>
+        </div>
         <Button asChild><Link to="/seller/listings/new"><Plus className="h-4 w-4" /> New listing</Link></Button>
       </div>
       {isLoading ? (

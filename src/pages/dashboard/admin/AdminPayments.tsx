@@ -77,7 +77,11 @@ export default function AdminPayments() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Payments</h1>
+      <div>
+        <div className="eyebrow">Admin · payments</div>
+        <h1 className="section-title">Stripe payments</h1>
+        <p className="text-sm text-muted-foreground mt-2">Every successful, failed, and refunded charge across the marketplace.</p>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
         <Stat label="Count" value={totals.count} />
@@ -107,7 +111,13 @@ export default function AdminPayments() {
         </div>
       </div>
 
-      {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
+      {isLoading ? (
+        <div className="rounded-lg border border-border overflow-hidden">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-14 skeleton border-b border-border last:border-0" />
+          ))}
+        </div>
+      ) : (
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead className="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">

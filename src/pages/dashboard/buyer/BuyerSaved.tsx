@@ -10,7 +10,13 @@ export default function BuyerSaved() {
   const listings: Listing[] = saved.map((s) => s.listing).filter((l): l is Listing => !!l);
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Saved</h1>
+      <div>
+        <div className="eyebrow">Buyer · saved</div>
+        <h1 className="section-title">Saved listings</h1>
+        <p className="text-sm text-muted-foreground mt-2">
+          Listings you bookmarked for later. Saves sync across devices when you sign in.
+        </p>
+      </div>
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (

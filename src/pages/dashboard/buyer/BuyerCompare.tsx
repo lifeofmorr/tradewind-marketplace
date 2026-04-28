@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { X, Anchor, ArrowRight } from "lucide-react";
@@ -10,6 +11,7 @@ import { DealScoreBadge } from "@/components/listings/DealScoreBadge";
 import { TrustBadgeList } from "@/components/ui/TrustBadge";
 import { getListingBadges } from "@/lib/badges";
 import { calculateOwnershipCost } from "@/lib/ownershipCost";
+import { setMeta } from "@/lib/seo";
 import { formatCents, formatNumber } from "@/lib/utils";
 
 const BOAT_CATS = new Set(["boat", "performance_boat", "yacht", "center_console"]);
@@ -21,6 +23,9 @@ interface Row {
 
 export default function BuyerCompare() {
   const { ids, remove, clear } = useCompare();
+  useEffect(() => {
+    setMeta({ title: "Compare listings", description: "Compare up to three listings side-by-side." });
+  }, []);
   const { data: listings = [], isLoading } = useQuery<Listing[]>({
     queryKey: ["buyer-compare", ids],
     enabled: ids.length > 0,

@@ -52,7 +52,13 @@ export default function BuyerRequests() {
 
   return (
     <div className="space-y-8">
-      <h1 className="font-display text-3xl">My requests</h1>
+      <div>
+        <div className="eyebrow">Buyer · requests</div>
+        <h1 className="section-title">My requests</h1>
+        <p className="text-sm text-muted-foreground mt-2">
+          Concierge, financing, insurance, inspections, transport, and service requests you've submitted.
+        </p>
+      </div>
       {groups.map((g) => (
         <section key={g.title}>
           <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400 mb-3">{g.eyebrow}</div>

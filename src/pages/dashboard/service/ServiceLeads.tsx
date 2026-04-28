@@ -36,7 +36,11 @@ export default function ServiceLeads() {
   });
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Leads</h1>
+      <div>
+        <div className="eyebrow">Service · leads</div>
+        <h1 className="section-title">Inbound requests</h1>
+        <p className="text-sm text-muted-foreground mt-2">Buyer requests routed to your category and region.</p>
+      </div>
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (

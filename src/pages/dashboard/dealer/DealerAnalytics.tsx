@@ -20,7 +20,10 @@ export default function DealerAnalytics() {
   if (!listings.length) {
     return (
       <div className="space-y-6">
-        <h1 className="font-display text-3xl">Analytics</h1>
+        <div>
+          <div className="eyebrow">Dealer · analytics</div>
+          <h1 className="section-title">Performance</h1>
+        </div>
         <EmptyState
           icon={TrendingUp}
           title="No analytics yet"
@@ -33,8 +36,11 @@ export default function DealerAnalytics() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-display text-3xl">Analytics</h1>
+      <div className="flex items-end justify-between flex-wrap gap-3">
+        <div>
+          <div className="eyebrow">Dealer · analytics</div>
+          <h1 className="section-title">Performance</h1>
+        </div>
         <Button asChild variant="outline" size="sm"><Link to="/dealer/inventory">Manage inventory</Link></Button>
       </div>
       <div className="grid gap-4 sm:grid-cols-4">

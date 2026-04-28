@@ -45,8 +45,11 @@ export default function DealerProfilePage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl">Profile</h1>
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <div className="eyebrow">Dealer · profile</div>
+          <h1 className="section-title">Dealership profile</h1>
+        </div>
         {saveError ? (
           <span className="text-xs text-red-400 font-mono" role="alert">save failed</span>
         ) : savedAt && Date.now() - savedAt < 2000 ? (

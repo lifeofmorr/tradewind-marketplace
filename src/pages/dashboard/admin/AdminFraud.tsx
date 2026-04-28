@@ -84,7 +84,13 @@ export default function AdminFraud() {
           <TabsTrigger value="resolved">Resolved · {counts.resolved}</TabsTrigger>
         </TabsList>
         <TabsContent value={tab} className="space-y-3">
-          {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
+          {isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-32 skeleton rounded-lg" />
+              ))}
+            </div>
+          ) : (
             <>
               {flags.map((f) => (
                 <div key={f.id} className="rounded-lg border border-border bg-card p-5 space-y-3">

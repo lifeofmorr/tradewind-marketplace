@@ -42,7 +42,11 @@ export default function DealerLeads() {
   });
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Leads</h1>
+      <div>
+        <div className="eyebrow">Dealer · leads</div>
+        <h1 className="section-title">Lead inbox</h1>
+        <p className="text-sm text-muted-foreground mt-2">Inbound buyer leads on your dealership inventory.</p>
+      </div>
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
