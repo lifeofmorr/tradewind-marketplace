@@ -171,7 +171,7 @@ begin
   update public.listings
      set cover_photo_url = case category
        when 'center_console' then 'https://images.unsplash.com/photo-1502209524164-acea936639a2?w=1200'
-       when 'boat' then 'https://images.unsplash.com/photo-1527431016772-49a972b56e7c?w=1200'
+       when 'boat' then 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200'
        when 'yacht' then 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200'
        when 'performance_boat' then 'https://images.unsplash.com/photo-1501761095094-94d36f57edbb?w=1200'
        when 'car' then 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200'
@@ -179,7 +179,7 @@ begin
        when 'exotic' then 'https://images.unsplash.com/photo-1553440569-bcc63803a83d?w=1200'
        when 'classic' then 'https://images.unsplash.com/photo-1485463611174-f302f6a5c1c9?w=1200'
        when 'powersports' then 'https://images.unsplash.com/photo-1558981852-426c6c22a060?w=1200'
-       when 'rv' then 'https://images.unsplash.com/photo-1532779550027-cc7195a458a4?w=1200'
+       when 'rv' then 'https://images.unsplash.com/photo-1601158935942-52255782d322?w=1200'
        else null end
    where cover_photo_url is null
      and slug in (

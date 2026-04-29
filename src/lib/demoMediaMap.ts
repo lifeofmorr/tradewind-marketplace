@@ -27,18 +27,18 @@ export const demoMediaMap: Record<ListingCategory, string[]> = {
     u("photo-1544551763-77ef2d0cfc6c"),
     u("photo-1559494007-9f5847c49d94"),
     u("photo-1590523277543-a94d2e4eb00b"),
-    u("photo-1558618666-fcd25c85f82e"),
-    u("photo-1597701981029-69da8bbd5c62"),
+    u("photo-1502209524164-acea936639a2"),
+    u("photo-1544551763-77ef2d0cfc6c"),
   ],
   performance_boat: [
     u("photo-1510707577719-ae7c14805e3a"),
-    u("photo-1575994532957-773da2e09efd"),
+    u("photo-1501761095094-94d36f57edbb"),
     u("photo-1562281302-809108fd533c"),
     u("photo-1544551763-46a013bb70d5"),
     u("photo-1605281317010-fe5ffe798166"),
   ],
   boat: [
-    u("photo-1570991404394-e01de1e6f4a6"),
+    u("photo-1469854523086-cc02fe5d8800"),
     u("photo-1507525428034-b723cf961d3e"),
     u("photo-1540946485063-a40da27545f8"),
     u("photo-1569317002804-ab77bcf1bce4"),
@@ -47,8 +47,8 @@ export const demoMediaMap: Record<ListingCategory, string[]> = {
   car: [
     u("photo-1494976388531-d1058494cdd8"),
     u("photo-1502877338535-766e1452684a"),
-    u("photo-1533473359331-2969b64c911c"),
-    u("photo-1549317661-bd32c8ce0abe"),
+    u("photo-1494976388531-d1058494cdd8"),
+    u("photo-1502877338535-766e1452684a"),
     u("photo-1503376780353-7e6692767b70"),
   ],
   truck: [
@@ -56,14 +56,14 @@ export const demoMediaMap: Record<ListingCategory, string[]> = {
     u("photo-1580273916550-e323be2ae537"),
     u("photo-1609521263047-f8f205293f24"),
     u("photo-1494976388531-d1058494cdd8"),
-    u("photo-1533473359331-2969b64c911c"),
+    u("photo-1547038577-da80abbc4f19"),
   ],
   exotic: [
     u("photo-1544636331-e26879cd4d9b"),
     u("photo-1503376780353-7e6692767b70"),
-    u("photo-1525609004556-c46c6c5104b8"),
+    u("photo-1553440569-bcc63803a83d"),
     u("photo-1502877338535-766e1452684a"),
-    u("photo-1549317661-bd32c8ce0abe"),
+    u("photo-1544636331-e26879cd4d9b"),
   ],
   classic: [
     u("photo-1489824904134-891ab64532f1"),
@@ -75,7 +75,7 @@ export const demoMediaMap: Record<ListingCategory, string[]> = {
   powersports: [
     u("photo-1558981403-c5f9899a28bc"),
     u("photo-1568772585407-9361f9bf3a87"),
-    u("photo-1517846693597-15a1620c8e60"),
+    u("photo-1558981852-426c6c22a060"),
   ],
   rv: [
     u("photo-1523987355523-c7b5b0dd90a7"),
