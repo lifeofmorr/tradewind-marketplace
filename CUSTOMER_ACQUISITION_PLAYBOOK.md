@@ -140,7 +140,7 @@ fraud screening and the buyer profiles.
 
 **Hook for exotic dealers:** *"Our buyer base skews higher net-worth than
 Cars.com — we're filtering for serious buyers, not lookers. Featured
-pricing is $49 a month per vehicle but I'm comping that for dealers in the
+pricing is $79 a month per vehicle but I'm comping that for dealers in the
 launch group."*
 
 **Hook for diesel-truck dealers:** *"Your customer doesn't shop on
@@ -237,7 +237,7 @@ vehicle they have:
 > 2. I publish the listing on TradeWind (gotradewind.com) within 24
 >    hours, AI-written description, full spec sheet.
 > 3. Inquiries route to your email + phone, AI-screened for fraud.
-> 4. Free for 90 days. After that, $0 to keep listed; $49 to
+> 4. Free for 90 days. After that, $0 to keep listed; $79 to
 >    "Feature" for premium placement, totally optional.
 >
 > Reply with the photos and I'll have it live tomorrow.
@@ -361,7 +361,7 @@ last week").
 | Objection | Response |
 | --------- | -------- |
 | *"I already use YachtWorld/Cars.com."* | "Totally — I'd never ask you to leave them. Most of our dealers run TradeWind in addition to their existing channels. Free for 6 months, you keep every lead, low risk." |
-| *"What's the catch?"* | "Honestly, none for the first six months. We need launch inventory — we're trading free listings for the trust you give us by being on the platform early. After 6 months, dealer subscriptions start at $99/mo for Starter." |
+| *"What's the catch?"* | "Honestly, none for the first six months. We need launch inventory — we're trading free listings for the trust you give us by being on the platform early. After 6 months, dealer subscriptions start at $149/mo for Starter." |
 | *"How do you compete with **[entrenched]**?"* | "We don't, on volume. We compete on lead quality — every inquiry is AI-screened for fraud, so you spend zero time on tire-kickers. We also write the listings for you, which YachtWorld/Cars.com don't." |
 | *"I don't want my prices public."* | "Totally fine — you can mark a listing 'Price on request' and route inquiries through the form. Buyers still see the unit." |
 | *"How many buyers do you actually have?"* | "Honestly, we're new. We launched **[month]**. The early-mover dealers are the ones who'll show up in our buyer-side AI concierge recommendations as we scale. That's the real prize." |
@@ -421,9 +421,9 @@ last week").
 - **Mon**: Cold-call 50 more dealers. By now you have referenceable
   dealers — name-drop them.
 - **Tue**: First paid Featured listings — pitch your existing dealers
-  to feature their best inventory ($49 each, 30 days).
+  to feature their best inventory ($79 each, 30 days).
 - **Wed**: First Dealer Pro subscription. Pitch your 5 launch dealers:
-  "Free trial ends in 30 days, lock in $99/mo before Pro tier increases
+  "Free trial ends in 30 days, lock in $149/mo before Pro tier increases
   to $249."
 - **Thu**: First concierge engagement. You'll get a buyer who's serious.
   $499 upfront. Run them through the AI concierge intake.
@@ -464,9 +464,9 @@ to white-glove imports.
    Show, don't tell.
 3. **Plant 10 truly featured listings on the homepage.** Visual
    density signals "real marketplace" to first-time visitors.
-4. **Charge yourself $49 for a Featured listing** — verifies the
+4. **Charge yourself $79 for a Featured listing** — verifies the
    Stripe webhook end-to-end and gives you a real first transaction.
-5. **Offer the first 3 Dealer Pro subscriptions at half off** ($49/mo
+5. **Offer the first 3 Dealer Pro subscriptions at half off** ($89/mo
    for 6 months) to your launch dealers — converts free trials into
    recurring revenue and gives you 3 testimonials for the next 50
    pitches.

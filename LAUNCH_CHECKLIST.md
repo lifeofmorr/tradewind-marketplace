@@ -41,12 +41,12 @@ Open https://dashboard.stripe.com/test/products. Create 7 products. Mirror
 
 | Kind | Name | Type | Price |
 | ---- | ---- | ---- | ----- |
-| `featured_listing` | Featured listing (30d) | Payment | $49 |
-| `boost_listing` | Boost listing (7d) | Payment | $19 |
-| `dealer_starter` | Dealer · Starter | Subscription | $99/mo |
-| `dealer_pro` | Dealer · Pro | Subscription | $249/mo |
-| `dealer_premier` | Dealer · Premier | Subscription | $599/mo |
-| `service_pro` | Service partner | Subscription | $79/mo |
+| `featured_listing` | Featured listing (30d) | Payment | $79 |
+| `boost_listing` | Boost listing (7d) | Payment | $29 |
+| `dealer_starter` | Dealer · Starter | Subscription | $149/mo |
+| `dealer_pro` | Dealer · Pro | Subscription | $499/mo |
+| `dealer_premier` | Dealer · Premier | Subscription | $1,499/mo |
+| `service_pro` | Service partner | Subscription | $89/mo |
 | `concierge` | Concierge engagement | Payment | $499 |
 
 Copy each `price_…` id.
@@ -360,7 +360,7 @@ before any buyer treats it as real. Two paths run in parallel:
 
 Right after going live:
 
-- [ ] Run a test transaction end-to-end (Featured listing $49)
+- [ ] Run a test transaction end-to-end (Featured listing $79)
 - [ ] Verify the receipt email lands in your inbox
 - [ ] Plant 5 seed reviews on your top 5 partner dealers
 - [ ] Plant 1 blog post + 1 market report

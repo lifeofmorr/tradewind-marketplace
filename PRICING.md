@@ -5,12 +5,12 @@ then drop the `price_…` ids into `.env.local` (frontend) and `supabase secrets
 
 | Kind                | Product name              | Price (USD)          | Type         | Frontend env                            | Backend env                     |
 | ------------------- | ------------------------- | -------------------- | ------------ | --------------------------------------- | ------------------------------- |
-| `featured_listing`  | Featured listing (30d)    | $49 one-off          | Payment      | `VITE_STRIPE_PRICE_FEATURED_LISTING`    | `STRIPE_PRICE_FEATURED_LISTING` |
-| `boost_listing`     | Boost listing (7d)        | $19 one-off          | Payment      | `VITE_STRIPE_PRICE_BOOST_LISTING`       | `STRIPE_PRICE_BOOST_LISTING`    |
-| `dealer_starter`    | Dealer · Starter          | $99/mo               | Subscription | `VITE_STRIPE_PRICE_DEALER_STARTER`      | `STRIPE_PRICE_DEALER_STARTER`   |
-| `dealer_pro`        | Dealer · Pro              | $249/mo              | Subscription | `VITE_STRIPE_PRICE_DEALER_PRO`          | `STRIPE_PRICE_DEALER_PRO`       |
-| `dealer_premier`    | Dealer · Premier          | $599/mo              | Subscription | `VITE_STRIPE_PRICE_DEALER_PREMIER`      | `STRIPE_PRICE_DEALER_PREMIER`   |
-| `service_pro`       | Service partner           | $79/mo               | Subscription | `VITE_STRIPE_PRICE_SERVICE_PROVIDER`    | `STRIPE_PRICE_SERVICE_PROVIDER` |
+| `featured_listing`  | Featured listing (30d)    | $79 one-off          | Payment      | `VITE_STRIPE_PRICE_FEATURED_LISTING`    | `STRIPE_PRICE_FEATURED_LISTING` |
+| `boost_listing`     | Boost listing (7d)        | $29 one-off          | Payment      | `VITE_STRIPE_PRICE_BOOST_LISTING`       | `STRIPE_PRICE_BOOST_LISTING`    |
+| `dealer_starter`    | Dealer · Starter          | $149/mo              | Subscription | `VITE_STRIPE_PRICE_DEALER_STARTER`      | `STRIPE_PRICE_DEALER_STARTER`   |
+| `dealer_pro`        | Dealer · Pro              | $499/mo              | Subscription | `VITE_STRIPE_PRICE_DEALER_PRO`          | `STRIPE_PRICE_DEALER_PRO`       |
+| `dealer_premier`    | Dealer · Premier          | $1,499/mo            | Subscription | `VITE_STRIPE_PRICE_DEALER_PREMIER`      | `STRIPE_PRICE_DEALER_PREMIER`   |
+| `service_pro`       | Service partner           | $89/mo               | Subscription | `VITE_STRIPE_PRICE_SERVICE_PROVIDER`    | `STRIPE_PRICE_SERVICE_PROVIDER` |
 | `concierge`         | Concierge engagement      | $499 one-off         | Payment      | `VITE_STRIPE_PRICE_CONCIERGE`           | `STRIPE_PRICE_CONCIERGE`        |
 
 Suggested billing config:

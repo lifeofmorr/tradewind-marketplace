@@ -98,7 +98,7 @@ const SELLER_TIERS: Tier[] = [
     bullets: [
       "Unlimited photos + AI-written copy",
       "Buyer messaging + saved-listing alerts",
-      "Optional Featured ($49 / 30d) or Boost ($19 / 7d)",
+      "Optional Featured ($79 / 30d) or Boost ($29 / 7d)",
     ],
     cta: { label: "Start a listing", to: "/sell" },
   },
@@ -107,7 +107,7 @@ const SELLER_TIERS: Tier[] = [
 const DEALER_TIERS: Tier[] = [
   {
     name: "Starter",
-    price: "$99",
+    price: "$149",
     cadence: "/month",
     blurb: "Solo dealers and brokers getting their first inventory online.",
     bullets: [
@@ -119,21 +119,21 @@ const DEALER_TIERS: Tier[] = [
   },
   {
     name: "Pro",
-    price: "$249",
+    price: "$499",
     cadence: "/month",
     blurb: "Growing dealerships with multiple sales staff.",
     bullets: [
       "Up to 100 active listings",
       "Team seats + lead assignment",
       "Bulk listing import + AI rewrites",
-      "Featured discount: $29/listing",
+      "Featured discount: $49/listing",
     ],
     cta: { label: "Start as Pro", to: "/signup?role=dealer" },
     highlight: true,
   },
   {
     name: "Premier",
-    price: "$599",
+    price: "$1,499",
     cadence: "/month",
     blurb: "High-volume dealers and brokerages with national reach.",
     bullets: [
@@ -149,7 +149,7 @@ const DEALER_TIERS: Tier[] = [
 const SERVICE_TIERS: Tier[] = [
   {
     name: "Service Partner",
-    price: "$79",
+    price: "$89",
     cadence: "/month",
     blurb: "Lenders, surveyors, transport, insurance — anyone closing high-value deals.",
     bullets: [
