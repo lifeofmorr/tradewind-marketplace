@@ -36,7 +36,7 @@ export function ListingCard({ listing, saved, onToggleSave }: Props) {
             <img
               src={listing.cover_photo_url}
               alt={listing.title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
               loading="lazy"
               onError={() => setImgFailed(true)}
             />

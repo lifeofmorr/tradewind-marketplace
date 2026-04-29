@@ -41,6 +41,11 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 
 // ─── Lazy-loaded surfaces (Phase 2G) ─────────────────────────────────────────
+// Premium expansion surfaces
+const Integrations = lazy(() => import("@/pages/public/Integrations"));
+const Community = lazy(() => import("@/pages/public/Community"));
+const FinancialHub = lazy(() => import("@/pages/buyer/FinancialHub"));
+
 // Onboarding
 const DealerOnboarding = lazy(() => import("@/pages/onboarding/DealerOnboarding"));
 const ServiceProviderOnboarding = lazy(() => import("@/pages/onboarding/ServiceProviderOnboarding"));
@@ -146,6 +151,8 @@ export default function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/trust" element={<TrustCenter />} />
+        <Route path="/integrations" element={<L><Integrations /></L>} />
+        <Route path="/community" element={<L><Community /></L>} />
 
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/checkout/cancel" element={<CheckoutCancel />} />
@@ -189,6 +196,7 @@ export default function App() {
           <Route path="/buyer/requests" element={<L><BuyerRequests /></L>} />
           <Route path="/buyer/reviews" element={<L><BuyerReviews /></L>} />
           <Route path="/buyer/compare" element={<L><BuyerCompare /></L>} />
+          <Route path="/buyer/finance" element={<L><FinancialHub /></L>} />
         </Route>
       </Route>
 

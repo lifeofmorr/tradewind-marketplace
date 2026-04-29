@@ -6,6 +6,7 @@ import { useUnreadConversationCount } from "@/hooks/useConversations";
 import { BRAND } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import AppSwitcher from "@/components/layout/AppSwitcher";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/database";
 
@@ -14,7 +15,9 @@ const NAV_LINKS = [
   { to: "/categories", label: "Categories" },
   { to: "/dealers", label: "Dealers" },
   { to: "/services", label: "Services" },
+  { to: "/community", label: "Community" },
   { to: "/concierge", label: "Concierge" },
+  { to: "/integrations", label: "Integrations" },
   { to: "/sell", label: "Sell" },
 ];
 
@@ -56,6 +59,7 @@ export default function Header() {
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-2">
+          <AppSwitcher />
           {user ? (
             <>
               <Link

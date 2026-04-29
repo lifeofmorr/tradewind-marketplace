@@ -26,20 +26,24 @@ export function EmptyState({ icon: Icon, title, body, cta, secondary, className,
   return (
     <div
       className={cn(
-        "rounded-lg border border-dashed border-border bg-card/40 text-center",
+        "relative overflow-hidden rounded-lg border border-dashed border-border bg-card/40 text-center",
         compact ? "p-6" : "p-12",
         className,
       )}
     >
+      <div
+        aria-hidden
+        className="absolute inset-x-0 -top-16 h-32 bg-gradient-to-b from-brass-500/10 to-transparent pointer-events-none"
+      />
       {Icon && (
-        <div className="mx-auto h-12 w-12 grid place-items-center rounded-full bg-secondary/60 ring-1 ring-border">
-          <Icon className="h-5 w-5 text-brass-400" />
+        <div className="relative mx-auto h-14 w-14 grid place-items-center rounded-full bg-gradient-to-br from-brass-500/20 to-brass-700/5 ring-1 ring-brass-500/20">
+          <Icon className="h-5 w-5 text-brass-300" />
         </div>
       )}
-      <h3 className="font-display text-lg mt-4">{title}</h3>
-      {body && <div className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">{body}</div>}
+      <h3 className="relative font-display text-lg mt-4">{title}</h3>
+      {body && <div className="relative text-sm text-muted-foreground mt-2 max-w-md mx-auto">{body}</div>}
       {(cta || secondary) && (
-        <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
+        <div className="relative mt-5 flex items-center justify-center gap-2 flex-wrap">
           {cta && <ActionButton cta={cta} />}
           {secondary && <ActionButton cta={{ ...secondary, variant: secondary.variant ?? "outline" }} />}
         </div>
