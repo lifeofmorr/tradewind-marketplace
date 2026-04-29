@@ -25,6 +25,10 @@ export interface CommunityPost {
   createdAtLabel: string;
   likes: number;
   comments: number;
+  /** When true, the post is backed by a real database row and supports interaction. */
+  isReal?: boolean;
+  /** Whether the current viewer has liked this post. */
+  likedByMe?: boolean;
 }
 
 const POST_TYPE_META: Record<PostType, { label: string; icon: typeof Anchor; color: string }> = {
@@ -47,17 +51,44 @@ const ROLE_STYLE: Record<PostAuthorRole, string> = {
   service_provider: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/20",
 };
 
-export function PostCard({ post }: { post: CommunityPost }) {
-  const [liked, setLiked] = useState(false);
+interface PostCardProps {
+  post: CommunityPost;
+  /** Toggle a like for a real post. Receives the next desired liked-state. Returns true on success. */
+  onToggleLike?: (postId: string, nextLiked: boolean) => Promise<boolean>;
+  /** Whether like interaction is allowed (e.g. user is authenticated and post is real). */
+  canInteract?: boolean;
+}
+
+export function PostCard({ post, onToggleLike, canInteract = false }: PostCardProps) {
+  const [liked, setLiked] = useState(Boolean(post.likedByMe));
+  const [delta, setDelta] = useState(0);
+  const [pending, setPending] = useState(false);
+
   const meta = POST_TYPE_META[post.postType];
   const Icon = meta.icon;
-  const likes = post.likes + (liked ? 1 : 0);
+  const interactive = canInteract && Boolean(post.isReal) && Boolean(onToggleLike);
+  const likes = Math.max(0, post.likes + delta);
+
   const initials = post.author.name
     .split(" ")
     .map((p) => p[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  async function handleLike() {
+    if (!interactive || pending) return;
+    const next = !liked;
+    setPending(true);
+    setLiked(next);
+    setDelta((d) => d + (next ? 1 : -1));
+    const ok = await onToggleLike!(post.id, next);
+    if (!ok) {
+      setLiked(!next);
+      setDelta((d) => d + (next ? -1 : 1));
+    }
+    setPending(false);
+  }
 
   return (
     <article className="glass-card lift-card overflow-hidden">
@@ -111,12 +142,16 @@ export function PostCard({ post }: { post: CommunityPost }) {
       <footer className="flex items-center gap-1 px-2 py-2 border-t border-white/5">
         <button
           type="button"
-          onClick={() => setLiked((v) => !v)}
+          onClick={handleLike}
+          disabled={!interactive || pending}
+          aria-pressed={liked}
+          title={interactive ? undefined : post.isReal ? "Sign in to like posts" : "Sample content"}
           className={cn(
             "inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-mono uppercase tracking-[0.18em] transition-colors",
-            liked ? "text-brass-300" : "text-muted-foreground hover:text-foreground",
+            liked ? "text-brass-300" : "text-muted-foreground",
+            interactive && "hover:text-foreground",
+            !interactive && "cursor-default",
           )}
-          aria-pressed={liked}
         >
           <Heart className={cn("h-4 w-4", liked && "fill-brass-500 text-brass-500")} />
           {likes}

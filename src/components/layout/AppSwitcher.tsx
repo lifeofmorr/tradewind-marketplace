@@ -14,9 +14,16 @@ export default function AppSwitcher() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
+  const [comingSoon, setComingSoon] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const mac = isMac();
+
+  useEffect(() => {
+    if (!comingSoon) return;
+    const t = setTimeout(() => setComingSoon(null), 2500);
+    return () => clearTimeout(t);
+  }, [comingSoon]);
 
   // Cmd+K / Ctrl+K to toggle
   useEffect(() => {
@@ -48,7 +55,10 @@ export default function AppSwitcher() {
   }, [query]);
 
   function go(app: ConnectedApp) {
-    if (app.status === "coming_soon") return;
+    if (app.status === "coming_soon") {
+      setComingSoon(app.name);
+      return;
+    }
     setOpen(false);
     navigate(app.to);
   }
@@ -116,20 +126,19 @@ export default function AppSwitcher() {
             )}
             {filtered.map((app, i) => {
               const Icon = app.icon;
-              const disabled = app.status === "coming_soon";
+              const isComingSoon = app.status === "coming_soon";
               return (
                 <button
                   key={app.id}
                   type="button"
                   onClick={() => go(app)}
                   onMouseEnter={() => setActiveIdx(i)}
-                  disabled={disabled}
                   className={cn(
                     "group relative flex items-start gap-3 rounded-lg border p-3 text-left transition-all",
                     i === activeIdx
                       ? "border-brass-500/50 bg-brass-500/5"
                       : "border-white/5 bg-background/40 hover:border-brass-500/30",
-                    disabled && "opacity-60 cursor-not-allowed",
+                    isComingSoon && "opacity-70",
                   )}
                 >
                   <div
@@ -143,7 +152,7 @@ export default function AppSwitcher() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <div className="font-display text-sm truncate">{app.name}</div>
-                      {disabled && (
+                      {isComingSoon && (
                         <span className="chip bg-slate-500/15 text-slate-300 ring-slate-400/20 ring-1 ring-inset">
                           Soon
                         </span>
@@ -159,6 +168,14 @@ export default function AppSwitcher() {
             })}
           </div>
 
+          {comingSoon && (
+            <div
+              role="status"
+              className="mx-3 mb-2 rounded-md border border-brass-500/30 bg-brass-500/10 text-brass-200 px-3 py-2 text-xs"
+            >
+              {comingSoon} — coming soon, stay tuned.
+            </div>
+          )}
           <div className="px-4 py-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
             <span>↑ ↓ navigate · ↵ open</span>
             <span>esc to close</span>

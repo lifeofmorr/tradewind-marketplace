@@ -1,10 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
-import { Users2, FlaskConical } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Users2, FlaskConical, LogIn } from "lucide-react";
 import { setMeta } from "@/lib/seo";
 import { BRAND } from "@/lib/brand";
-import { PostCard, type CommunityPost, type PostType } from "@/components/social/PostCard";
+import { Button } from "@/components/ui/button";
+import { PostCard, type CommunityPost, type PostAuthorRole, type PostType } from "@/components/social/PostCard";
 import { PostComposer } from "@/components/social/PostComposer";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import type { UserRole } from "@/types/database";
 
 const FILTERS: Array<{ value: "all" | PostType; label: string }> = [
   { value: "all",               label: "Everything" },
@@ -17,7 +22,7 @@ const FILTERS: Array<{ value: "all" | PostType; label: string }> = [
 
 const DEMO_POSTS: CommunityPost[] = [
   {
-    id: "p1",
+    id: "demo-p1",
     author: { name: "Atlantic Marine Group", role: "dealer", handle: "atlantic_marine", avatarUrl: undefined },
     postType: "inventory_update",
     content:
@@ -28,7 +33,7 @@ const DEMO_POSTS: CommunityPost[] = [
     comments: 6,
   },
   {
-    id: "p2",
+    id: "demo-p2",
     author: { name: "Mara Chen", role: "buyer", handle: "mara_at_sea" },
     postType: "lifestyle",
     content:
@@ -39,7 +44,7 @@ const DEMO_POSTS: CommunityPost[] = [
     comments: 14,
   },
   {
-    id: "p3",
+    id: "demo-p3",
     author: { name: "Northstar Surveyors", role: "service_provider", handle: "northstar_marine" },
     postType: "tip",
     content:
@@ -49,7 +54,7 @@ const DEMO_POSTS: CommunityPost[] = [
     comments: 9,
   },
   {
-    id: "p4",
+    id: "demo-p4",
     author: { name: "TradeWind Market Desk", role: "service_provider", handle: "market_pulse" },
     postType: "market_insight",
     content:
@@ -59,7 +64,7 @@ const DEMO_POSTS: CommunityPost[] = [
     comments: 11,
   },
   {
-    id: "p5",
+    id: "demo-p5",
     author: { name: "Coastal Auto Imports", role: "dealer", handle: "coastal_auto" },
     postType: "dealer_spotlight",
     content:
@@ -70,7 +75,7 @@ const DEMO_POSTS: CommunityPost[] = [
     comments: 28,
   },
   {
-    id: "p6",
+    id: "demo-p6",
     author: { name: "Jordan Vasquez", role: "buyer", handle: "jvasquez" },
     postType: "tip",
     content:
@@ -81,6 +86,64 @@ const DEMO_POSTS: CommunityPost[] = [
   },
 ];
 
+const DAY = 24 * 60 * 60 * 1000;
+
+function relativeLabel(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 0 || ms < 60_000) return "just now";
+  const min = Math.floor(ms / 60_000);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(ms / (60 * 60_000));
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.floor(ms / DAY);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function mapProfileRole(role: UserRole | null | undefined): PostAuthorRole {
+  if (role === "dealer" || role === "dealer_staff") return "dealer";
+  if (role === "service_provider") return "service_provider";
+  return "buyer";
+}
+
+interface RealPostRow {
+  id: string;
+  user_id: string;
+  content: string;
+  post_type: PostType;
+  media_urls: string[] | null;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  profile?: {
+    full_name: string | null;
+    avatar_url: string | null;
+    role: UserRole;
+  } | null;
+}
+
+function rowToPost(row: RealPostRow, likedIds: Set<string>): CommunityPost {
+  const fullName = row.profile?.full_name ?? "TradeWind member";
+  const handle = (fullName || "member").toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) || "member";
+  return {
+    id: row.id,
+    author: {
+      name: fullName,
+      role: mapProfileRole(row.profile?.role),
+      handle,
+      avatarUrl: row.profile?.avatar_url ?? undefined,
+    },
+    postType: row.post_type,
+    content: row.content,
+    mediaUrl: row.media_urls?.[0],
+    createdAtLabel: relativeLabel(row.created_at),
+    likes: row.likes_count,
+    comments: row.comments_count,
+    isReal: true,
+    likedByMe: likedIds.has(row.id),
+  };
+}
+
 export default function Community() {
   useEffect(() => {
     setMeta({
@@ -89,14 +152,110 @@ export default function Community() {
     });
   }, []);
 
+  const { user, profile } = useAuth();
   const [filter, setFilter] = useState<"all" | PostType>("all");
-  const [extraPosts, setExtraPosts] = useState<CommunityPost[]>([]);
+  const [realPosts, setRealPosts] = useState<CommunityPost[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadPosts = useCallback(async () => {
+    const { data, error: postsErr } = await supabase
+      .from("community_posts")
+      .select("id, user_id, content, post_type, media_urls, likes_count, comments_count, created_at, profile:profiles!community_posts_user_id_fkey(full_name, avatar_url, role)")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (postsErr) {
+      console.warn("[community] posts load failed:", postsErr.message);
+      return;
+    }
+    const rows = (data ?? []) as unknown as RealPostRow[];
+
+    let likedIds = new Set<string>();
+    if (user && rows.length > 0) {
+      const { data: likeRows } = await supabase
+        .from("community_likes")
+        .select("post_id")
+        .eq("user_id", user.id)
+        .in("post_id", rows.map((r) => r.id));
+      likedIds = new Set((likeRows ?? []).map((r) => r.post_id as string));
+    }
+
+    setRealPosts(rows.map((r) => rowToPost(r, likedIds)));
+  }, [user]);
+
+  useEffect(() => { void loadPosts(); }, [loadPosts]);
+
+  const submitPost = useCallback(async ({ content, postType }: { content: string; postType: PostType }) => {
+    if (!user) return;
+    setBusy(true);
+    setError(null);
+    const { data, error: insertErr } = await supabase
+      .from("community_posts")
+      .insert({ user_id: user.id, content, post_type: postType })
+      .select("id, user_id, content, post_type, media_urls, likes_count, comments_count, created_at")
+      .single();
+    setBusy(false);
+    if (insertErr || !data) {
+      setError(insertErr?.message ?? "Could not post");
+      return;
+    }
+    const optimistic: CommunityPost = {
+      id: data.id as string,
+      author: {
+        name: profile?.full_name ?? "You",
+        role: mapProfileRole(profile?.role),
+        handle: (profile?.full_name ?? "you").toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) || "you",
+        avatarUrl: profile?.avatar_url ?? undefined,
+      },
+      postType: data.post_type as PostType,
+      content: data.content as string,
+      mediaUrl: (data.media_urls as string[] | null)?.[0],
+      createdAtLabel: relativeLabel(data.created_at as string),
+      likes: 0,
+      comments: 0,
+      isReal: true,
+      likedByMe: false,
+    };
+    setRealPosts((prev) => [optimistic, ...prev]);
+  }, [user, profile]);
+
+  const toggleLike = useCallback(async (postId: string, nextLiked: boolean): Promise<boolean> => {
+    if (!user) return false;
+    if (nextLiked) {
+      const { error: e } = await supabase
+        .from("community_likes")
+        .insert({ post_id: postId, user_id: user.id });
+      // Unique-violation = already liked, treat as success.
+      if (e && e.code !== "23505") {
+        console.warn("[community] like failed:", e.message);
+        return false;
+      }
+      setRealPosts((prev) => prev.map((p) =>
+        p.id === postId ? { ...p, likes: p.likes + 1, likedByMe: true } : p,
+      ));
+      return true;
+    } else {
+      const { error: e } = await supabase
+        .from("community_likes")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", user.id);
+      if (e) {
+        console.warn("[community] unlike failed:", e.message);
+        return false;
+      }
+      setRealPosts((prev) => prev.map((p) =>
+        p.id === postId ? { ...p, likes: Math.max(0, p.likes - 1), likedByMe: false } : p,
+      ));
+      return true;
+    }
+  }, [user]);
 
   const visible = useMemo(() => {
-    const all = [...extraPosts, ...DEMO_POSTS];
+    const all = [...realPosts, ...DEMO_POSTS];
     if (filter === "all") return all;
     return all.filter((p) => p.postType === filter);
-  }, [filter, extraPosts]);
+  }, [filter, realPosts]);
 
   return (
     <>
@@ -121,22 +280,29 @@ export default function Community() {
       <section className="container-pad py-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
           <div className="space-y-4">
-            <PostComposer
-              onPost={({ content, postType }) =>
-                setExtraPosts((prev) => [
-                  {
-                    id: `local-${Date.now()}`,
-                    author: { name: "You", role: "buyer", handle: "you" },
-                    postType,
-                    content,
-                    createdAtLabel: "just now",
-                    likes: 0,
-                    comments: 0,
-                  },
-                  ...prev,
-                ])
-              }
-            />
+            {user ? (
+              <>
+                <PostComposer onPost={submitPost} busy={busy} />
+                {error && (
+                  <div className="rounded-md border border-rose-500/30 bg-rose-500/10 text-rose-200 p-3 text-sm">
+                    {error}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="glass-card p-5 flex items-start gap-3">
+                <LogIn className="h-5 w-5 text-brass-400 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <div className="font-display text-base">Sign in to post</div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Join the conversation — share inventory drops, market takes, and lessons learned.
+                  </p>
+                </div>
+                <Button asChild size="sm">
+                  <Link to={`/login?redirect=${encodeURIComponent("/community")}`}>Sign in</Link>
+                </Button>
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2">
               {FILTERS.map((f) => (
@@ -158,7 +324,12 @@ export default function Community() {
 
             <div className="space-y-4">
               {visible.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onToggleLike={toggleLike}
+                  canInteract={Boolean(user)}
+                />
               ))}
               {visible.length === 0 && (
                 <div className="glass-card p-8 text-center text-sm text-muted-foreground">
@@ -175,8 +346,8 @@ export default function Community() {
                 <div>
                   <div className="font-display text-sm">Demo activity</div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Posts shown here are sample content during the private beta.
-                    The community feed switches to real activity once writes open up.
+                    Sample posts are mixed into the feed during the private beta. Real posts from
+                    signed-in members appear at the top and support likes.
                   </p>
                 </div>
               </div>

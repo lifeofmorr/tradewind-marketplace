@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plug, Check, Sparkles } from "lucide-react";
 import {
   INTEGRATIONS,
@@ -11,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { setMeta } from "@/lib/seo";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 const STATUS_LABEL: Record<IntegrationStatus, string> = {
   connected: "Connected",
@@ -24,9 +27,16 @@ const STATUS_STYLE: Record<IntegrationStatus, string> = {
   coming_soon: "bg-slate-500/15 text-slate-300 ring-slate-400/20",
 };
 
-function IntegrationCard({ integration }: { integration: Integration }) {
+interface CardProps {
+  integration: Integration;
+  requested: boolean;
+  pending: boolean;
+  onRequest: (i: Integration) => void;
+}
+
+function IntegrationCard({ integration, requested, pending, onRequest }: CardProps) {
   const Icon = integration.icon;
-  const disabled = integration.status === "coming_soon";
+  const isConnected = integration.status === "connected";
   return (
     <div className="glass-card lift-card brass-glow p-5 flex flex-col">
       <div className="flex items-start justify-between gap-3">
@@ -39,24 +49,35 @@ function IntegrationCard({ integration }: { integration: Integration }) {
             STATUS_STYLE[integration.status],
           )}
         >
-          {integration.status === "connected" && <Check className="h-3 w-3" />}
+          {isConnected && <Check className="h-3 w-3" />}
           {STATUS_LABEL[integration.status]}
         </span>
       </div>
       <div className="font-display text-lg mt-3">{integration.name}</div>
       <p className="text-sm text-muted-foreground mt-1 flex-1">{integration.description}</p>
       <div className="mt-4">
-        <Button
-          size="sm"
-          variant={integration.status === "connected" ? "outline" : "default"}
-          disabled={disabled}
-        >
-          {integration.status === "connected"
-            ? "Manage"
-            : integration.status === "available"
-              ? "Connect"
-              : "Notify me"}
-        </Button>
+        {isConnected ? (
+          <Button size="sm" variant="outline" disabled>
+            Manage
+          </Button>
+        ) : requested ? (
+          <span className="chip bg-emerald-500/15 text-emerald-300 ring-emerald-400/20 ring-1 ring-inset">
+            <Check className="h-3 w-3" />
+            Requested
+          </span>
+        ) : (
+          <Button
+            size="sm"
+            onClick={() => onRequest(integration)}
+            disabled={pending}
+          >
+            {pending
+              ? "Sending…"
+              : integration.status === "available"
+                ? "Connect"
+                : "Notify me"}
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -70,7 +91,68 @@ export default function Integrations() {
     });
   }, []);
 
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [active, setActive] = useState<IntegrationCategory | "All">("All");
+  const [requestedKeys, setRequestedKeys] = useState<Set<string>>(new Set());
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [flash, setFlash] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setRequestedKeys(new Set());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("integration_requests")
+        .select("integration_key")
+        .eq("user_id", user.id);
+      if (cancelled) return;
+      if (error) {
+        console.warn("[integrations] load failed:", error.message);
+        return;
+      }
+      setRequestedKeys(new Set((data ?? []).map((r) => r.integration_key as string)));
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  useEffect(() => {
+    if (!flash) return;
+    const t = setTimeout(() => setFlash(null), 4000);
+    return () => clearTimeout(t);
+  }, [flash]);
+
+  async function requestIntegration(integration: Integration) {
+    if (!user) {
+      navigate(`/login?redirect=${encodeURIComponent("/integrations")}`);
+      return;
+    }
+    if (requestedKeys.has(integration.id)) return;
+    setPendingKey(integration.id);
+    const { error } = await supabase.from("integration_requests").insert({
+      user_id: user.id,
+      integration_key: integration.id,
+      integration_name: integration.name,
+      category: integration.category,
+    });
+    setPendingKey(null);
+    if (error) {
+      setFlash({ kind: "error", text: `Couldn't capture request: ${error.message}` });
+      return;
+    }
+    setRequestedKeys((prev) => {
+      const next = new Set(prev);
+      next.add(integration.id);
+      return next;
+    });
+    setFlash({
+      kind: "success",
+      text: "Request captured — we'll notify you when this integration is live.",
+    });
+  }
 
   const filtered = useMemo(() => {
     if (active === "All") return INTEGRATIONS;
@@ -112,6 +194,19 @@ export default function Integrations() {
       </section>
 
       <section className="container-pad py-10">
+        {flash && (
+          <div
+            role="status"
+            className={cn(
+              "mb-4 rounded-md border p-3 text-sm",
+              flash.kind === "success"
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                : "border-rose-500/30 bg-rose-500/10 text-rose-200",
+            )}
+          >
+            {flash.text}
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {(["All", ...INTEGRATION_CATEGORIES] as const).map((c) => (
             <button
@@ -132,7 +227,13 @@ export default function Integrations() {
 
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((integration) => (
-            <IntegrationCard key={integration.id} integration={integration} />
+            <IntegrationCard
+              key={integration.id}
+              integration={integration}
+              requested={requestedKeys.has(integration.id)}
+              pending={pendingKey === integration.id}
+              onRequest={requestIntegration}
+            />
           ))}
         </div>
 

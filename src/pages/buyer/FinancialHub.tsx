@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Landmark,
@@ -8,6 +8,7 @@ import {
   Truck,
   ArrowUpRight,
   FlaskConical,
+  Info,
 } from "lucide-react";
 import { setMeta } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
@@ -16,31 +17,45 @@ import {
   type ReadinessItem,
 } from "@/components/finance/FinancialReadinessCard";
 import { BankLinkPanel } from "@/components/finance/BankLinkPanel";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
-const READINESS: ReadinessItem[] = [
+type ReadinessKey = "preapproved" | "insurance" | "bank" | "transport";
+
+interface ReadinessRow {
+  pre_approved: boolean | null;
+  insurance_quoted: boolean | null;
+  bank_verified: boolean | null;
+  transport_arranged: boolean | null;
+}
+
+const COLUMN_BY_KEY: Record<ReadinessKey, keyof ReadinessRow> = {
+  preapproved: "pre_approved",
+  insurance: "insurance_quoted",
+  bank: "bank_verified",
+  transport: "transport_arranged",
+};
+
+const ITEM_META: Array<{ key: ReadinessKey; label: string; description: string }> = [
   {
     key: "preapproved",
     label: "Pre-approved for financing",
     description: "Soft-pull pre-qualification with marine and auto lenders.",
-    done: true,
   },
   {
     key: "insurance",
     label: "Insurance quoted",
     description: "Indicative quote on file, ready to bind on closing day.",
-    done: true,
   },
   {
     key: "bank",
     label: "Bank account verified",
     description: "Verified-funds badge — coming soon via Plaid.",
-    done: false,
   },
   {
     key: "transport",
     label: "Transport arranged",
     description: "Bonded carrier estimate locked for your search radius.",
-    done: false,
   },
 ];
 
@@ -97,6 +112,75 @@ export default function FinancialHub() {
     });
   }, []);
 
+  const { user } = useAuth();
+  const [row, setRow] = useState<ReadinessRow | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) { setRow(null); setLoaded(true); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error: loadErr } = await supabase
+        .from("financial_readiness")
+        .select("pre_approved, insurance_quoted, bank_verified, transport_arranged")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (loadErr) {
+        console.warn("[finance] readiness load failed:", loadErr.message);
+        setError(loadErr.message);
+      }
+      setRow((data as ReadinessRow | null) ?? {
+        pre_approved: false,
+        insurance_quoted: false,
+        bank_verified: false,
+        transport_arranged: false,
+      });
+      setLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const items: ReadinessItem[] = useMemo(() => {
+    return ITEM_META.map((m) => ({
+      key: m.key,
+      label: m.label,
+      description: m.description,
+      done: Boolean(row?.[COLUMN_BY_KEY[m.key]]),
+    }));
+  }, [row]);
+
+  const toggleReadiness = useCallback(async (key: string, next: boolean) => {
+    if (!user) return;
+    const k = key as ReadinessKey;
+    const column = COLUMN_BY_KEY[k];
+    if (!column) return;
+    const optimistic: ReadinessRow = {
+      pre_approved: row?.pre_approved ?? false,
+      insurance_quoted: row?.insurance_quoted ?? false,
+      bank_verified: row?.bank_verified ?? false,
+      transport_arranged: row?.transport_arranged ?? false,
+      [column]: next,
+    };
+    setRow(optimistic);
+    setSaving(true);
+    setError(null);
+    const { error: upsertErr } = await supabase
+      .from("financial_readiness")
+      .upsert(
+        { user_id: user.id, ...optimistic, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" },
+      );
+    setSaving(false);
+    if (upsertErr) {
+      setError(`Couldn't save: ${upsertErr.message}`);
+      // Revert
+      setRow((prev) => prev ? { ...prev, [column]: !next } : prev);
+    }
+  }, [user, row]);
+
   return (
     <div className="space-y-8">
       <header>
@@ -109,15 +193,35 @@ export default function FinancialHub() {
       </header>
 
       <div className="glass-card p-3 flex items-start gap-3 max-w-2xl">
-        <FlaskConical className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
+        <Info className="h-4 w-4 text-brass-400 mt-0.5 shrink-0" />
         <p className="text-xs text-muted-foreground">
-          Demo readiness data shown during the private beta. Real lender connections activate once
-          your account is fully onboarded.
+          TradeWind does not make credit decisions. This is informational only — readiness tracking
+          and partner introductions help you stay organized; lenders make their own determinations.
         </p>
       </div>
 
+      {!user && (
+        <div className="glass-card p-3 flex items-start gap-3 max-w-2xl">
+          <FlaskConical className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            <Link to="/login?redirect=/buyer/finance" className="text-brass-400">Sign in</Link> to
+            track your readiness checklist and request bank-link access.
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-md border border-rose-500/30 bg-rose-500/10 text-rose-200 p-3 text-sm max-w-2xl">
+          {error}
+        </div>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
-        <FinancialReadinessCard items={READINESS} />
+        <FinancialReadinessCard
+          items={items}
+          onToggle={user ? toggleReadiness : undefined}
+          disabled={!loaded || saving}
+        />
         <BankLinkPanel />
       </div>
 
@@ -150,9 +254,11 @@ export default function FinancialHub() {
                   {p.rate}
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">{p.blurb}</p>
-                <Button size="sm" variant="outline" className="mt-4">
-                  Get pre-qualified
-                  <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
+                <Button asChild size="sm" variant="outline" className="mt-4">
+                  <Link to="/financing">
+                    Get pre-qualified
+                    <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
+                  </Link>
                 </Button>
               </div>
             );

@@ -13,17 +13,18 @@ const POST_TYPES: Array<{ value: PostType; label: string }> = [
 ];
 
 interface Props {
-  onPost?: (input: { content: string; postType: PostType }) => void;
+  onPost?: (input: { content: string; postType: PostType }) => Promise<void> | void;
+  busy?: boolean;
 }
 
-export function PostComposer({ onPost }: Props) {
+export function PostComposer({ onPost, busy = false }: Props) {
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState<PostType>("lifestyle");
-  const canPost = content.trim().length > 0;
+  const canPost = content.trim().length > 0 && !busy;
 
-  function submit() {
+  async function submit() {
     if (!canPost) return;
-    onPost?.({ content: content.trim(), postType });
+    await onPost?.({ content: content.trim(), postType });
     setContent("");
   }
 
@@ -34,7 +35,8 @@ export function PostComposer({ onPost }: Props) {
         onChange={(e) => setContent(e.target.value)}
         placeholder="Share an inventory update, sea trial story, or market take…"
         rows={3}
-        className="w-full bg-transparent outline-none text-sm placeholder:text-muted-foreground resize-none"
+        disabled={busy}
+        className="w-full bg-transparent outline-none text-sm placeholder:text-muted-foreground resize-none disabled:opacity-60"
         aria-label="Post content"
       />
       <div className="flex flex-wrap gap-1.5">
@@ -66,7 +68,7 @@ export function PostComposer({ onPost }: Props) {
         </button>
         <Button size="sm" onClick={submit} disabled={!canPost}>
           <Send className="h-4 w-4 mr-1.5" />
-          Post
+          {busy ? "Posting…" : "Post"}
         </Button>
       </div>
     </div>
