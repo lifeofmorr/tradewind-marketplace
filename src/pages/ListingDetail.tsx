@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Calendar, Gauge, MapPin, Anchor, Car as CarIcon, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Calendar, Gauge, MapPin, Anchor, Car as CarIcon, Plane, ShieldAlert, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useListing } from "@/hooks/useListings";
 import { ListingGallery } from "@/components/listings/ListingGallery";
@@ -19,7 +19,9 @@ import { AssetPassport } from "@/components/listings/AssetPassport";
 import { DealScoreCard } from "@/components/listings/DealScoreBadge";
 import { OwnershipCostCard } from "@/components/listings/OwnershipCostCard";
 import { BuyReadyChecklist } from "@/components/listings/BuyReadyChecklist";
+import { AircraftSpecPanel } from "@/components/listings/AircraftSpecPanel";
 import { getListingBadges } from "@/lib/badges";
+import { isAircraftCategory } from "@/lib/categories";
 import { formatCents, formatNumber } from "@/lib/utils";
 import { listingMeta, setMeta } from "@/lib/seo";
 import type { ListingPhoto } from "@/types/database";
@@ -93,6 +95,7 @@ export default function ListingDetail() {
   }
 
   const isBoat = BOAT_CATS.has(listing.category);
+  const isAircraft = isAircraftCategory(listing.category);
   const badges = getListingBadges(listing);
 
   return (
@@ -143,9 +146,11 @@ export default function ListingDetail() {
 
           <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <Spec icon={Calendar} label="Year"  value={listing.year ?? "—"} />
-            <Spec icon={isBoat ? Anchor : CarIcon} label="Make" value={listing.make ?? "—"} />
-            <Spec icon={isBoat ? Anchor : CarIcon} label="Model" value={listing.model ?? "—"} />
-            {isBoat ? (
+            <Spec icon={isAircraft ? Plane : isBoat ? Anchor : CarIcon} label="Make" value={listing.make ?? "—"} />
+            <Spec icon={isAircraft ? Plane : isBoat ? Anchor : CarIcon} label="Model" value={listing.model ?? "—"} />
+            {isAircraft ? (
+              <Spec icon={Gauge} label="Condition" value={listing.condition ?? "—"} />
+            ) : isBoat ? (
               <>
                 <Spec icon={Gauge} label="Length" value={listing.length_ft != null ? `${listing.length_ft} ft` : "—"} />
                 <Spec icon={Gauge} label="Hours"  value={listing.hours != null ? formatNumber(listing.hours) : "—"} />
@@ -163,6 +168,28 @@ export default function ListingDetail() {
               </>
             )}
           </section>
+
+          {isAircraft && <AircraftSpecPanel listingId={listing.id} />}
+
+          {isAircraft && (
+            <div
+              role="note"
+              className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm"
+            >
+              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+              <div className="leading-relaxed">
+                <div className="font-display text-base text-amber-100">
+                  Aviation safety notice
+                </div>
+                <p className="mt-1 text-amber-200/90">
+                  Aircraft details, registration, title, logbooks, maintenance status,
+                  and airworthiness must be independently verified by qualified aviation
+                  professionals before purchase. TradeWind does not verify FAA status,
+                  airworthiness, or maintenance compliance.
+                </p>
+              </div>
+            </div>
+          )}
 
           <DealScoreCard listing={listing} />
 

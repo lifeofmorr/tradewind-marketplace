@@ -52,6 +52,12 @@ const CATEGORY_AVG_PRICE_CENTS: Record<ListingCategory, number> = {
   classic: 8_500_000,
   powersports: 1_200_000,
   rv: 8_500_000,
+  aircraft_single_engine: 45_000_000,
+  aircraft_twin_engine: 75_000_000,
+  aircraft_turboprop: 380_000_000,
+  aircraft_jet: 850_000_000,
+  aircraft_helicopter: 110_000_000,
+  aircraft_vintage: 35_000_000,
 };
 
 const HOURS_RANGE = { fresh: 200, fair: 800, high: 1500 };

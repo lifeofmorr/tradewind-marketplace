@@ -13,6 +13,7 @@ import type { UserRole } from "@/types/database";
 const NAV_LINKS = [
   { to: "/browse", label: "Browse" },
   { to: "/categories", label: "Categories" },
+  { to: "/aircraft", label: "Aircraft" },
   { to: "/dealers", label: "Dealers" },
   { to: "/services", label: "Services" },
   { to: "/community", label: "Community" },

@@ -1,5 +1,6 @@
 import { Check, Clock, ShieldCheck, X } from "lucide-react";
 import type { Listing } from "@/types/database";
+import { isAircraftCategory } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 
 type Status = "verified" | "pending" | "missing";
@@ -88,8 +89,11 @@ function buildSections(listing: Listing): Section[] {
               : "Title not yet on file",
       };
 
+  const isAircraft = isAircraftCategory(listing.category);
   const vinHin: PassportItem = {
-    label: listing.category.includes("boat") ? "HIN decoded" : "VIN decoded",
+    label: isAircraft
+      ? "N-number / serial decoded"
+      : listing.category.includes("boat") ? "HIN decoded" : "VIN decoded",
     status: isDemo
       ? demo![2]
       : listing.vin_hin_decoded
@@ -254,6 +258,16 @@ export function AssetPassport({ listing }: Props) {
         The passport is a snapshot of trust signals on this asset. TradeWind
         concierge can complete any pending check on your behalf.
       </p>
+
+      {isAircraftCategory(listing.category) && (
+        <p className="mt-3 pt-3 border-t border-amber-500/15 text-[11px] leading-relaxed text-amber-200/85">
+          <span className="font-display text-amber-100">Aviation notice.</span>{" "}
+          Aircraft details, registration, title, logbooks, maintenance status,
+          and airworthiness must be independently verified by qualified aviation
+          professionals before purchase. TradeWind does not verify FAA status,
+          airworthiness, or maintenance compliance.
+        </p>
+      )}
     </div>
   );
 }

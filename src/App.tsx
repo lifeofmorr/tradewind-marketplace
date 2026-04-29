@@ -46,6 +46,7 @@ const Integrations = lazy(() => import("@/pages/public/Integrations"));
 const DeveloperHub = lazy(() => import("@/pages/public/DeveloperHub"));
 const Community = lazy(() => import("@/pages/public/Community"));
 const DataDeletion = lazy(() => import("@/pages/public/DataDeletion"));
+const AircraftPage = lazy(() => import("@/pages/public/AircraftPage"));
 const FinancialHub = lazy(() => import("@/pages/buyer/FinancialHub"));
 const TransactionRoom = lazy(() => import("@/pages/TransactionRoom"));
 
@@ -122,6 +123,16 @@ export default function App() {
         <Route path="/browse" element={<BrowsePage />} />
         <Route path="/boats" element={<GroupPage group="boat" />} />
         <Route path="/autos" element={<GroupPage group="auto" />} />
+        <Route path="/aircraft" element={<L><AircraftPage /></L>} />
+        <Route path="/airplanes" element={<L><AircraftPage /></L>} />
+        <Route
+          path="/jets"
+          element={<L><AircraftPage defaultCategory="aircraft_jet" title="Jets for sale" eyebrow="business jets" blurb="Light, midsize, and super-midsize jets from vetted brokers and operators." /></L>}
+        />
+        <Route
+          path="/helicopters"
+          element={<L><AircraftPage defaultCategory="aircraft_helicopter" title="Helicopters for sale" eyebrow="rotorcraft" blurb="Turbine and piston helicopters — Robinson, Bell, Airbus." /></L>}
+        />
         <Route path="/categories" element={<CategoriesIndex />} />
         <Route path="/categories/:category" element={<CategoryPage />} />
         <Route path="/listings/:slug" element={<ListingDetail />} />

@@ -23,6 +23,8 @@ const Schema = z.object({
   category: z.enum([
     "boat", "performance_boat", "yacht", "center_console",
     "car", "truck", "exotic", "classic", "powersports", "rv",
+    "aircraft_single_engine", "aircraft_twin_engine", "aircraft_turboprop",
+    "aircraft_jet", "aircraft_helicopter", "aircraft_vintage",
   ]),
   title: z.string().min(4, "Give it a real title"),
   make: z.string().optional(),

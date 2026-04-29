@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, ShieldCheck, Wrench, Anchor, Car as CarIcon, ArrowRight } from "lucide-react";
+import { Sparkles, ShieldCheck, Wrench, Anchor, Car as CarIcon, Plane, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/Reveal";
 import { ListingGrid } from "@/components/listings/ListingGrid";
@@ -75,7 +75,7 @@ function CategoryGrid() {
               className="group glass-card p-5 lift-card brass-glow block h-full"
             >
               <div className="flex items-center gap-2 text-brass-400">
-                {c.group === "boat" ? <Anchor className="h-4 w-4" /> : <CarIcon className="h-4 w-4" />}
+                {c.group === "boat" ? <Anchor className="h-4 w-4" /> : c.group === "aircraft" ? <Plane className="h-4 w-4" /> : <CarIcon className="h-4 w-4" />}
                 <span className="font-mono text-xs uppercase tracking-wider">{c.group}</span>
               </div>
               <div className="font-display text-xl mt-2">{c.label}</div>

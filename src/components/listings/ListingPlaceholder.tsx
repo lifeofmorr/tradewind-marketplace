@@ -1,4 +1,4 @@
-import { Anchor, Ship, Sailboat, Car, Truck, Bike, Caravan, Sparkles } from "lucide-react";
+import { Anchor, Ship, Sailboat, Car, Truck, Bike, Caravan, Sparkles, Plane } from "lucide-react";
 import type { ListingCategory } from "@/types/database";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,12 @@ const ICONS: Record<ListingCategory, React.ElementType> = {
   classic: Car,
   powersports: Bike,
   rv: Caravan,
+  aircraft_single_engine: Plane,
+  aircraft_twin_engine: Plane,
+  aircraft_turboprop: Plane,
+  aircraft_jet: Plane,
+  aircraft_helicopter: Plane,
+  aircraft_vintage: Plane,
 };
 
 export function ListingPlaceholder({ category, className, label }: Props) {

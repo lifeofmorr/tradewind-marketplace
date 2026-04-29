@@ -12,7 +12,9 @@ export type DealerStaffRole = "owner" | "manager" | "sales" | "finance" | "viewe
 
 export type ListingCategory =
   | "boat" | "performance_boat" | "yacht" | "center_console"
-  | "car" | "truck" | "exotic" | "classic" | "powersports" | "rv";
+  | "car" | "truck" | "exotic" | "classic" | "powersports" | "rv"
+  | "aircraft_single_engine" | "aircraft_twin_engine" | "aircraft_turboprop"
+  | "aircraft_jet" | "aircraft_helicopter" | "aircraft_vintage";
 
 export type ListingStatus =
   | "draft" | "pending_review" | "active" | "sold" | "expired" | "rejected" | "removed";
@@ -606,4 +608,37 @@ export interface MarketReport {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// ─── aircraft_specs ──────────────────────────────────────────────────────────
+
+export type AirworthinessStatus =
+  | "standard" | "experimental" | "special"
+  | "restricted" | "provisional" | "pending";
+
+export interface AircraftSpecs {
+  id: string;
+  listing_id: string;
+  n_number: string | null;
+  serial_number: string | null;
+  total_time_hours: number | null;
+  airframe_hours: number | null;
+  engine_hours: number | null;
+  smoh_hours: number | null;
+  snew: boolean;
+  tbo_hours: number | null;
+  propeller_hours: number | null;
+  logbooks_complete: boolean;
+  annual_inspection_date: string | null;
+  airworthiness_status: AirworthinessStatus | null;
+  avionics_suite: string | null;
+  ads_b: boolean;
+  autopilot: string | null;
+  seats: number | null;
+  range_nm: number | null;
+  cruise_speed_ktas: number | null;
+  useful_load_lbs: number | null;
+  damage_history: string | null;
+  hangared: boolean;
+  created_at: string;
 }

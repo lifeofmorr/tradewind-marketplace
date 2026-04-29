@@ -82,6 +82,48 @@ export const demoMediaMap: Record<ListingCategory, string[]> = {
     u("photo-1533873984035-25970ab07461"),
     u("photo-1601158935942-52255782d322"),
   ],
+  aircraft_single_engine: [
+    u("photo-1540962351504-03099e0a754b"),
+    u("photo-1542296332-2e4473faf563"),
+    u("photo-1522199755839-a2bacb67c546"),
+    u("photo-1499063078284-f78f7d89616a"),
+    u("photo-1505764706515-aa95265c5abc"),
+  ],
+  aircraft_twin_engine: [
+    u("photo-1531642765602-5cae8bbbf285"),
+    u("photo-1546069901-d5bfd2cbfb1f"),
+    u("photo-1517849845537-4d257902454a"),
+    u("photo-1593618998160-e34014e67546"),
+    u("photo-1581262208435-41726149a759"),
+  ],
+  aircraft_turboprop: [
+    u("photo-1474302770737-173ee21bab63"),
+    u("photo-1542296332-2e4473faf563"),
+    u("photo-1522199755839-a2bacb67c546"),
+    u("photo-1505764706515-aa95265c5abc"),
+    u("photo-1517400508447-f8dd518b86db"),
+  ],
+  aircraft_jet: [
+    u("photo-1474302770737-173ee21bab63"),
+    u("photo-1517400508447-f8dd518b86db"),
+    u("photo-1515378791036-0648a3ef77b2"),
+    u("photo-1521587760476-6c12a4b040da"),
+    u("photo-1584433144859-1fc3ab64a957"),
+  ],
+  aircraft_helicopter: [
+    u("photo-1556388158-158ea5ccacbd"),
+    u("photo-1542296332-2e4473faf563"),
+    u("photo-1505764706515-aa95265c5abc"),
+    u("photo-1517849845537-4d257902454a"),
+    u("photo-1499063078284-f78f7d89616a"),
+  ],
+  aircraft_vintage: [
+    u("photo-1559128010-7c1ad6e1b6a5"),
+    u("photo-1531642765602-5cae8bbbf285"),
+    u("photo-1546069901-d5bfd2cbfb1f"),
+    u("photo-1521587760476-6c12a4b040da"),
+    u("photo-1517849845537-4d257902454a"),
+  ],
 };
 
 /**

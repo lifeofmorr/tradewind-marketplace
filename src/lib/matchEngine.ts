@@ -152,6 +152,12 @@ const CATEGORY_TO_SERVICE: Record<ListingCategory, ServiceCategory[]> = {
   classic: ["auto_mechanic", "inspector_surveyor", "transport", "detailer"],
   powersports: ["auto_mechanic", "inspector_surveyor", "transport", "performance_shop"],
   rv: ["auto_mechanic", "inspector_surveyor", "transport", "storage"],
+  aircraft_single_engine: ["inspector_surveyor", "transport", "insurance_agent", "lender", "storage"],
+  aircraft_twin_engine: ["inspector_surveyor", "transport", "insurance_agent", "lender", "storage"],
+  aircraft_turboprop: ["inspector_surveyor", "transport", "insurance_agent", "lender", "storage"],
+  aircraft_jet: ["inspector_surveyor", "transport", "insurance_agent", "lender", "storage"],
+  aircraft_helicopter: ["inspector_surveyor", "transport", "insurance_agent", "lender", "storage"],
+  aircraft_vintage: ["inspector_surveyor", "transport", "insurance_agent", "storage"],
 };
 
 export function matchListingToPartners(

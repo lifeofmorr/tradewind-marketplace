@@ -94,7 +94,7 @@ export function listingMeta(listing: {
   };
 }
 
-export function categoryMeta(group: "boat" | "auto", label: string, blurb: string, count?: number): MetaArgs {
+export function categoryMeta(group: "boat" | "auto" | "aircraft", label: string, blurb: string, count?: number): MetaArgs {
   const title = count ? `${count} ${label} for sale` : `${label} for sale`;
   return { title, description: blurb, ogType: "website" };
 }
