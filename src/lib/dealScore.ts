@@ -23,6 +23,24 @@ export interface DealScoreResult {
   reasons: string[];
 }
 
+function labelForScore(score: number): { label: DealLabel; color: DealScoreResult["color"] } {
+  if (score >= 78) return { label: "Great Deal", color: "emerald" };
+  if (score >= 58) return { label: "Fair Deal", color: "sky" };
+  if (score >= 35) return { label: "High Price", color: "amber" };
+  return { label: "Needs Review", color: "slate" };
+}
+
+function normalizeStoredLabel(raw: string | null | undefined): DealLabel | null {
+  if (!raw) return null;
+  const v = raw.trim().toLowerCase();
+  if (v === "great deal") return "Great Deal";
+  if (v === "fair deal") return "Fair Deal";
+  if (v === "high price") return "High Price";
+  if (v === "needs review") return "Needs Review";
+  if (v === "demo") return "Demo";
+  return null;
+}
+
 const CATEGORY_AVG_PRICE_CENTS: Record<ListingCategory, number> = {
   boat: 5_500_000,
   performance_boat: 14_500_000,
@@ -51,12 +69,31 @@ function depreciationCurve(yearsOld: number) {
 export function calculateDealScore(listing: Listing): DealScoreResult {
   const reasons: string[] = [];
 
-  if (listing.is_demo) {
+  // Prefer a stored score when the backend (or a backfill job) has computed
+  // one. This lets demo / preview listings render real-looking badges and
+  // keeps the buyer-facing UX consistent with what dealers and admins see.
+  if (listing.deal_score != null) {
+    const stored = Math.max(0, Math.min(100, Math.round(listing.deal_score)));
+    const fromLabel = normalizeStoredLabel(listing.deal_score_label);
+    const derived = labelForScore(stored);
+    const label = fromLabel ?? derived.label;
+    const color = label === "Demo" ? "violet" : derived.color;
+    return {
+      score: stored,
+      label,
+      color,
+      reasons: listing.is_demo ? ["Demo listing — score reflects modeled data"] : [],
+    };
+  }
+
+  // No stored score and not enough signal to model: surface a soft
+  // "needs review" rather than hiding the badge entirely.
+  if (listing.year == null && listing.price_cents == null) {
     return {
       score: 0,
-      label: "Demo",
-      color: "violet",
-      reasons: ["Demo listing — not for sale"],
+      label: "Needs Review",
+      color: "slate",
+      reasons: ["Not enough market data yet."],
     };
   }
 
@@ -147,24 +184,7 @@ export function calculateDealScore(listing: Listing): DealScoreResult {
   }
 
   score = Math.max(0, Math.min(100, Math.round(score)));
-
-  let label: DealLabel = "Fair Deal";
-  let color: DealScoreResult["color"] = "sky";
-
-  if (score >= 78) {
-    label = "Great Deal";
-    color = "emerald";
-  } else if (score >= 58) {
-    label = "Fair Deal";
-    color = "sky";
-  } else if (score >= 35) {
-    label = "High Price";
-    color = "amber";
-  } else {
-    label = "Needs Review";
-    color = "slate";
-  }
-
+  const { label, color } = labelForScore(score);
   return { score, label, color, reasons };
 }
 

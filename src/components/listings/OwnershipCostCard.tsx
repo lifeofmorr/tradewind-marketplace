@@ -20,7 +20,24 @@ export function OwnershipCostCard({ listing }: Props) {
   const result = useMemo(() => calculateOwnershipCost(listing, inputs), [listing, inputs]);
 
   if (!listing.price_cents) {
-    return null;
+    return (
+      <div className="glass-card p-5 space-y-3">
+        <div>
+          <div className="eyebrow">Ownership cost</div>
+          <div className="font-display text-2xl mt-1 text-muted-foreground">
+            Estimate unavailable
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          We need a list price to estimate monthly cost-to-own. Typical full-cost ranges for this
+          category include loan payment, insurance, storage or dock fees, maintenance, and fuel —
+          ask the seller for a price and we'll plug in the numbers.
+        </p>
+        <p className="text-[11px] text-muted-foreground/80">
+          Estimates are for planning only. Actual costs vary by lender, region, usage, and condition.
+        </p>
+      </div>
+    );
   }
 
   const rows: { label: string; value: number; muted?: boolean }[] = [

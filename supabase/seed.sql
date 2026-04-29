@@ -66,13 +66,16 @@ begin
   on conflict (slug) do nothing;
 
   -- ── listings ─────────────────────────────────────────────────────────────
-  -- 4 boats, 4 autos. All active. Two featured.
+  -- 4 boats, 4 autos. All active. Two featured. Pre-scored so the buyer
+  -- detail page (Deal Score / Cost-to-Own / Buy-Ready) renders out of the
+  -- box; demo_score_patch.sql does the same for production demo data.
   insert into public.listings (
     slug, category, title, description, ai_summary, make, model, year,
     price_cents, currency, condition, length_ft, hours, engine_count,
     engine_make, engine_hp, mileage, drivetrain, fuel_type,
     city, state, seller_type, seller_id, dealer_id, status,
-    is_featured, published_at, view_count, inquiry_count, save_count
+    is_featured, published_at, view_count, inquiry_count, save_count,
+    deal_score, deal_score_label, quality_score, quality_label
   ) values
     ('2022-boston-whaler-320-outrage', 'center_console',
      '2022 Boston Whaler 320 Outrage',
@@ -82,7 +85,8 @@ begin
      32500000, 'USD', 'used', 32.0, 240, 2, 'Mercury', 400,
      null, null, null,
      'Tampa', 'FL', 'dealer', seed_owner, dealer_one, 'active',
-     true, now() - interval '2 days', 1280, 14, 41),
+     true, now() - interval '2 days', 1280, 14, 41,
+     74, 'Fair Deal', 84, 'Strong'),
 
     ('2024-yellowfin-39-offshore', 'center_console',
      '2024 Yellowfin 39 Offshore',
@@ -92,7 +96,8 @@ begin
      78900000, 'USD', 'used', 39.0, 90, 3, 'Mercury', 600,
      null, null, null,
      'Stuart', 'FL', 'dealer', seed_owner, dealer_one, 'active',
-     true, now() - interval '5 days', 2104, 22, 78),
+     true, now() - interval '5 days', 2104, 22, 78,
+     69, 'Fair Deal', 91, 'Premium'),
 
     ('2018-sea-ray-sundancer-320', 'boat',
      '2018 Sea Ray Sundancer 320',
@@ -102,7 +107,8 @@ begin
      16500000, 'USD', 'used', 32.0, 320, 2, 'MerCruiser', 350,
      null, null, null,
      'Sarasota', 'FL', 'private', seed_owner, null, 'active',
-     false, now() - interval '12 days', 540, 8, 19),
+     false, now() - interval '12 days', 540, 8, 19,
+     71, 'Fair Deal', 78, 'Strong'),
 
     ('2021-grady-white-canyon-326', 'center_console',
      '2021 Grady-White Canyon 326',
@@ -112,7 +118,8 @@ begin
      27800000, 'USD', 'used', 32.0, 410, 2, 'Yamaha', 300,
      null, null, null,
      'Charleston', 'SC', 'private', seed_owner, null, 'active',
-     false, now() - interval '8 days', 770, 11, 22),
+     false, now() - interval '8 days', 770, 11, 22,
+     76, 'Fair Deal', 82, 'Strong'),
 
     ('2023-porsche-911-gt3-touring', 'exotic',
      '2023 Porsche 911 (992) GT3 Touring',
@@ -122,7 +129,8 @@ begin
      27500000, 'USD', 'used', null, null, null, null, null,
      7800, 'rwd', 'gas',
      'Scottsdale', 'AZ', 'dealer', seed_owner, dealer_two, 'active',
-     true, now() - interval '1 day', 3155, 28, 102),
+     true, now() - interval '1 day', 3155, 28, 102,
+     86, 'Great Deal', 94, 'Premium'),
 
     ('2022-ford-f250-tremor-diesel', 'truck',
      '2022 Ford F-250 Tremor 6.7 Powerstroke',
@@ -132,7 +140,8 @@ begin
      7800000, 'USD', 'used', null, null, null, null, null,
      22500, '4wd', 'diesel',
      'Charlotte', 'NC', 'private', seed_owner, null, 'active',
-     false, now() - interval '4 days', 920, 9, 17),
+     false, now() - interval '4 days', 920, 9, 17,
+     81, 'Great Deal', 79, 'Strong'),
 
     ('1971-chevrolet-chevelle-ss-396', 'classic',
      '1971 Chevrolet Chevelle SS 396 (Restomod)',
@@ -142,7 +151,8 @@ begin
      14250000, 'USD', 'restored', null, null, null, null, null,
      1200, 'rwd', 'gas',
      'Austin', 'TX', 'private', seed_owner, null, 'active',
-     false, now() - interval '15 days', 612, 6, 12),
+     false, now() - interval '15 days', 612, 6, 12,
+     63, 'High Price', 80, 'Strong'),
 
     ('2024-airstream-classic-30rb', 'rv',
      '2024 Airstream Classic 30RB',
@@ -152,7 +162,8 @@ begin
      19450000, 'USD', 'used', 30.0, null, null, null, null,
      null, null, null,
      'Jackson Hole', 'WY', 'private', seed_owner, null, 'active',
-     false, now() - interval '3 days', 458, 4, 13)
+     false, now() - interval '3 days', 458, 4, 13,
+     78, 'Fair Deal', 88, 'Strong')
   on conflict (slug) do nothing;
 
   -- backfill cover_photo_url with a stable Unsplash-style placeholder.
