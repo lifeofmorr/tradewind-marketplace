@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PhotoUploader } from "@/components/listings/PhotoUploader";
 import { ListingQualityPanel } from "@/components/listings/ListingQualityPanel";
+import { ListingAutopilot } from "@/components/listings/ListingAutopilot";
 import { setMeta } from "@/lib/seo";
 import type { Listing, ListingPhoto } from "@/types/database";
 
@@ -198,6 +199,7 @@ export default function EditListing() {
       </div>
       <aside className="lg:sticky lg:top-20 lg:self-start space-y-4">
         <ListingQualityPanel listing={listing} photoCount={photos.length} />
+        <ListingAutopilot listing={listing} onApply={(patch) => save(patch)} />
       </aside>
     </div>
   );

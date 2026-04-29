@@ -4,6 +4,7 @@ import {
   LayoutDashboard, ListChecks, Inbox, Save, Users,
   ShieldAlert, CreditCard, FileText, Building2, Wrench, BarChart3,
   MessageSquare, Gavel, Star, Newspaper, BookOpen, Menu, X,
+  Code2, Upload,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,9 +33,11 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
   dealer: [
     { to: "/dealer",            label: "Overview",  icon: LayoutDashboard, end: true },
     { to: "/dealer/inventory",  label: "Inventory", icon: ListChecks },
+    { to: "/dealer/import",     label: "Import",    icon: Upload },
     { to: "/seller/auctions",   label: "Auctions",  icon: Gavel },
     { to: "/dealer/leads",      label: "Leads",     icon: Inbox },
     { to: "/messages",          label: "Messages",  icon: MessageSquare },
+    { to: "/dealer/widgets",    label: "Widgets",   icon: Code2 },
     { to: "/dealer/analytics",  label: "Analytics", icon: BarChart3 },
     { to: "/dealer/profile",    label: "Profile",   icon: Building2 },
   ],

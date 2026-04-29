@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateOfferMessage, type OfferDraft } from "@/lib/offerBuilder";
+import { NegotiationAssistant } from "@/components/listings/NegotiationAssistant";
 import { calculateDealScore } from "@/lib/dealScore";
 import { formatCents } from "@/lib/utils";
 import type { Listing } from "@/types/database";
@@ -225,6 +226,8 @@ export function OfferBuilderPro({ listing }: Props) {
           Non-binding offer draft — not a legal purchase agreement. A formal offer must be executed
           through a TradeWind concierge or your preferred F&amp;I office before it binds either party.
         </p>
+
+        <NegotiationAssistant listing={listing} offerCents={offerCents} />
       </div>
     </div>
   );

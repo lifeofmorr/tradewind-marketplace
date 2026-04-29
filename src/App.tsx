@@ -68,6 +68,7 @@ const DealerLeads = lazy(() => import("@/pages/dashboard/dealer/DealerLeads"));
 const DealerAnalytics = lazy(() => import("@/pages/dashboard/dealer/DealerAnalytics"));
 const DealerProfilePage = lazy(() => import("@/pages/dashboard/dealer/DealerProfilePage"));
 const DealerImport = lazy(() => import("@/pages/dashboard/dealer/DealerImport"));
+const DealerWidgets = lazy(() => import("@/pages/dashboard/dealer/DealerWidgets"));
 
 // Service provider
 const ServiceDashboard = lazy(() => import("@/pages/dashboard/service/ServiceDashboard"));
@@ -226,6 +227,7 @@ export default function App() {
             <Route path="/dealer" element={<L><DealerDashboard /></L>} />
             <Route path="/dealer/inventory" element={<L><DealerInventory /></L>} />
             <Route path="/dealer/import" element={<L><DealerImport /></L>} />
+            <Route path="/dealer/widgets" element={<L><DealerWidgets /></L>} />
             <Route path="/dealer/leads" element={<L><DealerLeads /></L>} />
             <Route path="/dealer/analytics" element={<L><DealerAnalytics /></L>} />
             <Route path="/dealer/profile" element={<L><DealerProfilePage /></L>} />

@@ -60,3 +60,28 @@ export interface ConciergeIntake {
 export const aiConciergeIntake = (messages: AIChatMessage[]) =>
   call<{ messages: AIChatMessage[] }, { intake: ConciergeIntake }>(
     "ai-concierge-intake", { messages });
+
+export interface ListingAutopilotResult {
+  suggested_title: string;
+  suggested_description: string;
+  missing_specs: string[];
+  price_assessment: string;
+  quality_tips: string[];
+  _disclaimer: string;
+}
+export const aiListingAutopilot = (input: {
+  title?: string; description?: string; category: string;
+  price_cents?: number; specs?: Record<string, unknown>;
+}) => call<typeof input, ListingAutopilotResult>("ai-listing-autopilot", input);
+
+export interface NegotiationResult {
+  fair_range: { low_cents: number; high_cents: number; label: string };
+  negotiation_message: string;
+  counteroffer_message: string;
+  deal_analysis: string;
+  _disclaimer: string;
+}
+export const aiNegotiationAssistant = (input: {
+  listing_price_cents: number; offer_amount_cents: number;
+  category: string; deal_score?: number; listing_title?: string;
+}) => call<typeof input, NegotiationResult>("ai-negotiation-assistant", input);

@@ -223,6 +223,7 @@ export interface Listing {
   inquiry_count: number;
   save_count: number;
   cover_photo_url: string | null;
+  video_url: string | null;
   // Advantage scoring (optional persisted snapshot; client recomputes for display)
   deal_score: number | null;
   deal_score_label: string | null;

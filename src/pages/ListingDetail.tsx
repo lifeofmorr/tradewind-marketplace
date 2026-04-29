@@ -5,6 +5,7 @@ import { AlertTriangle, Calendar, Gauge, MapPin, Anchor, Car as CarIcon, ShieldC
 import { supabase } from "@/lib/supabase";
 import { useListing } from "@/hooks/useListings";
 import { ListingGallery } from "@/components/listings/ListingGallery";
+import { VideoWalkaround } from "@/components/listings/VideoWalkaround";
 import { InquiryForm } from "@/components/listings/InquiryForm";
 import { OfferBuilderPro } from "@/components/listings/OfferBuilderPro";
 import { SaveListingButton } from "@/components/listings/SaveListingButton";
@@ -119,6 +120,9 @@ export default function ListingDetail() {
             coverFallback={listing.cover_photo_url}
             category={listing.category}
           />
+          {listing.video_url && (
+            <VideoWalkaround url={listing.video_url} title={listing.title} />
+          )}
           <header className="space-y-3">
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <Badge>{listing.category.replace("_", " ")}</Badge>
