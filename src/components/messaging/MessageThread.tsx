@@ -15,6 +15,7 @@ export function MessageThread({ conversationId }: Props) {
   const send = useSendMessage();
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll on new messages
@@ -37,8 +38,14 @@ export function MessageThread({ conversationId }: Props) {
     e.preventDefault();
     const body = draft.trim();
     if (!body) return;
+    setError(null);
     setDraft("");
-    await send.mutateAsync({ conversation_id: conversationId, body });
+    try {
+      await send.mutateAsync({ conversation_id: conversationId, body });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send message");
+      setDraft(body);
+    }
   }
 
   return (
@@ -68,6 +75,11 @@ export function MessageThread({ conversationId }: Props) {
           })
         )}
       </div>
+      {error && (
+        <div role="alert" className="px-4 py-2 border-t border-red-500/40 bg-red-500/10 text-xs text-red-300">
+          {error}
+        </div>
+      )}
       <form onSubmit={onSubmit} className="p-4 border-t border-border flex items-end gap-2">
         <Textarea
           value={draft}

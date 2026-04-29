@@ -66,12 +66,17 @@ export default function AdminListings() {
   }), [listings]);
 
   async function setStatus(id: string, status: ListingStatus, rejectionReason?: string) {
-    await supabase.from("listings").update({
+    setActionError(null);
+    const { error: updateError } = await supabase.from("listings").update({
       status,
       rejection_reason: rejectionReason ?? null,
       reviewed_at: new Date().toISOString(),
       ...(status === "active" ? { published_at: new Date().toISOString() } : {}),
     }).eq("id", id);
+    if (updateError) {
+      setActionError(`Could not update listing: ${updateError.message}`);
+      return;
+    }
 
     if (status === "active") {
       const { data: row } = await supabase
@@ -190,6 +195,12 @@ export default function AdminListings() {
         <h1 className="section-title">Moderation queue</h1>
         <p className="text-sm text-muted-foreground mt-2">Approve, reject, remove. Convert demo seed listings to real once the seller is verified.</p>
       </div>
+
+      {actionError && (
+        <div role="alert" className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {actionError}
+        </div>
+      )}
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
         <TabsList>

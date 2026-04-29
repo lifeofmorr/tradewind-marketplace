@@ -8,6 +8,7 @@ import DashboardShell from "@/components/layout/DashboardShell";
 // Guards
 import ProtectedRoute from "@/routes/ProtectedRoute";
 import OnboardingGuard from "@/routes/OnboardingGuard";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 // Public pages — eager-loaded so the homepage paints fast
 import Home from "@/pages/Home";
@@ -95,7 +96,11 @@ function PageSpinner() {
 }
 
 function L({ children }: { children: ReactNode }) {
-  return <Suspense fallback={<PageSpinner />}>{children}</Suspense>;
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<PageSpinner />}>{children}</Suspense>
+    </ErrorBoundary>
+  );
 }
 
 export default function App() {

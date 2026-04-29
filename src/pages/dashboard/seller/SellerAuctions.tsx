@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from "@/components/ui/select";
@@ -61,7 +62,21 @@ export default function SellerAuctions() {
         <Button onClick={() => setCreating(true)}><Plus className="h-4 w-4" /> New auction</Button>
       </div>
 
-      {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-12 skeleton rounded" />
+          ))}
+        </div>
+      ) : !auctions.length ? (
+        <EmptyState
+          icon={Gavel}
+          title="No auctions yet"
+          body="Run a timed auction on any of your listings to drive urgency. Buyers see live bids and a countdown."
+          cta={{ label: "Start an auction", onClick: () => setCreating(true) }}
+          secondary={{ label: "View my listings", to: "/seller/listings", variant: "outline" }}
+        />
+      ) : (
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead className="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">
@@ -85,7 +100,6 @@ export default function SellerAuctions() {
                   <td className="px-4 py-3 text-muted-foreground">{timeAgo(a.end_time)}</td>
                 </tr>
               ))}
-              {!auctions.length && <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">No auctions yet.</td></tr>}
             </tbody>
           </table>
         </div>
