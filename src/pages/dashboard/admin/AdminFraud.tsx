@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Mail, MessageSquare, ShieldAlert, ListChecks, ShieldCheck } from "lucide-react";
+import { Mail, MessageSquare, ShieldAlert, ListChecks, ShieldCheck, Flag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { logAuditEvent } from "@/lib/audit";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -14,6 +15,17 @@ import {
 import { setMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
 import type { FraudFlag, FraudSeverity, Inquiry } from "@/types/database";
+
+interface UserReport {
+  id: string;
+  reporter_id: string;
+  target_type: "listing" | "message" | "post" | "user" | "review" | "inquiry";
+  target_id: string;
+  reason: string;
+  details: string | null;
+  status: "open" | "reviewed" | "resolved" | "dismissed";
+  created_at: string;
+}
 
 const VARIANT: Record<FraudSeverity, "default" | "accent" | "good" | "bad"> = {
   low: "default",
@@ -32,8 +44,36 @@ export default function AdminFraud() {
   const [resolving, setResolving] = useState<FlagWithContext | null>(null);
   const [notes, setNotes] = useState("");
   const [tab, setTab] = useState<"open" | "resolved">("open");
+  const [topTab, setTopTab] = useState<"flags" | "reports">("flags");
 
-  useEffect(() => { setMeta({ title: "Admin · fraud", description: "Open fraud flags." }); }, []);
+  useEffect(() => { setMeta({ title: "Admin · fraud", description: "Open fraud flags and user reports." }); }, []);
+
+  const reportsTab = tab === "open" ? "open" : "resolved";
+  const { data: userReports = [], isLoading: reportsLoading } = useQuery({
+    queryKey: ["admin-user-reports", reportsTab],
+    queryFn: async (): Promise<UserReport[]> => {
+      const { data, error } = await supabase
+        .from("reports")
+        .select("*")
+        .in("status", reportsTab === "open" ? ["open", "reviewed"] : ["resolved", "dismissed"])
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as UserReport[];
+    },
+  });
+
+  async function updateReportStatus(report: UserReport, next: "resolved" | "dismissed") {
+    await supabase.from("reports").update({ status: next }).eq("id", report.id);
+    await logAuditEvent({
+      actorId: user?.id ?? null,
+      action: `report.${next}`,
+      targetType: "report",
+      targetId: report.id,
+      metadata: { target_type: report.target_type, target_id: report.target_id, reason: report.reason },
+    });
+    void qc.invalidateQueries({ queryKey: ["admin-user-reports"] });
+  }
 
   const { data: flags = [], isLoading } = useQuery({
     queryKey: ["admin-fraud", tab],
@@ -57,6 +97,13 @@ export default function AdminFraud() {
       resolved_by: user?.id ?? null,
       resolution: notes || "resolved",
     }).eq("id", resolving.id);
+    await logAuditEvent({
+      actorId: user?.id ?? null,
+      action: "fraud_flag.resolve",
+      targetType: "fraud_flag",
+      targetId: resolving.id,
+      metadata: { resolution: notes || "resolved" },
+    });
     setResolving(null);
     setNotes("");
     void qc.invalidateQueries({ queryKey: ["admin-fraud"] });
@@ -66,6 +113,12 @@ export default function AdminFraud() {
     await supabase.from("inquiries")
       .update({ is_spam: true, status: "spam" })
       .eq("id", inquiryId);
+    await logAuditEvent({
+      actorId: user?.id ?? null,
+      action: "inquiry.mark_spam",
+      targetType: "inquiry",
+      targetId: inquiryId,
+    });
     void qc.invalidateQueries({ queryKey: ["admin-fraud"] });
   }
 
@@ -75,9 +128,16 @@ export default function AdminFraud() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <ShieldAlert className="h-6 w-6 text-brass-400" />
-        <h1 className="font-display text-3xl">Fraud flags</h1>
+        <h1 className="font-display text-3xl">Trust &amp; safety</h1>
       </div>
 
+      <Tabs value={topTab} onValueChange={(v) => setTopTab(v as "flags" | "reports")}>
+        <TabsList>
+          <TabsTrigger value="flags">AI fraud flags</TabsTrigger>
+          <TabsTrigger value="reports">User reports · {userReports.length}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="flags" className="space-y-4">
       <Tabs value={tab} onValueChange={(v) => setTab(v as "open" | "resolved")}>
         <TabsList>
           <TabsTrigger value="open">Open · {counts.open}</TabsTrigger>
@@ -157,6 +217,57 @@ export default function AdminFraud() {
                 </div>
               )}
             </>
+          )}
+        </TabsContent>
+      </Tabs>
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-3">
+          {reportsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="h-24 skeleton rounded-lg" />
+              ))}
+            </div>
+          ) : userReports.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border p-12 text-center">
+              <Flag className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+              <div className="font-display text-base">No user reports</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Listing/message/post reports submitted by signed-in users will land here.
+              </p>
+            </div>
+          ) : (
+            userReports.map((r) => (
+              <div key={r.id} className="rounded-lg border border-border bg-card p-5 space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="accent">{r.target_type}</Badge>
+                      <Badge>{r.reason}</Badge>
+                      <Badge variant={r.status === "open" ? "bad" : "good"}>{r.status}</Badge>
+                      <span className="text-xs font-mono text-muted-foreground">{timeAgo(r.created_at)} ago</span>
+                    </div>
+                    <div className="mt-2 text-xs font-mono text-muted-foreground break-all">
+                      target_id: {r.target_id}
+                    </div>
+                    {r.details && (
+                      <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">{r.details}</p>
+                    )}
+                  </div>
+                  {r.status === "open" && (
+                    <div className="flex gap-2 shrink-0">
+                      <Button size="sm" variant="outline" onClick={() => { void updateReportStatus(r, "dismissed"); }}>
+                        Dismiss
+                      </Button>
+                      <Button size="sm" onClick={() => { void updateReportStatus(r, "resolved"); }}>
+                        Resolve
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
           )}
         </TabsContent>
       </Tabs>

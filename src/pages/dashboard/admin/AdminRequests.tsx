@@ -18,6 +18,18 @@ interface AnyReq {
   created_at: string;
 }
 
+interface IntegrationReq {
+  id: string;
+  user_id: string;
+  integration_key: string;
+  integration_name: string;
+  category: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  profile?: { email: string | null; full_name: string | null } | null;
+}
+
 type ReqTable =
   | "financing_requests" | "insurance_requests" | "inspection_requests"
   | "transport_requests" | "concierge_requests" | "service_requests";
@@ -84,6 +96,49 @@ function ConciergeList({ rows }: { rows: AnyReq[] }) {
   );
 }
 
+function useIntegrationReqs() {
+  return useQuery({
+    queryKey: ["admin-req", "integration_requests"],
+    queryFn: async (): Promise<IntegrationReq[]> => {
+      const { data, error } = await supabase
+        .from("integration_requests")
+        .select("*, profile:profiles!integration_requests_user_id_fkey(email, full_name)")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as unknown as IntegrationReq[];
+    },
+  });
+}
+
+function IntegrationList({ rows }: { rows: IntegrationReq[] }) {
+  if (!rows.length) {
+    return (
+      <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+        No integration requests yet. Connect / Notify clicks on /integrations land here.
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {rows.map((r) => (
+        <div key={r.id} className="rounded border border-border bg-card px-4 py-3 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div>{r.integration_name} <span className="text-xs text-muted-foreground">· {r.category}</span></div>
+              <div className="text-xs text-muted-foreground mt-0.5 font-mono">
+                {r.profile?.full_name ?? "—"} · {r.profile?.email ?? "(no email)"} · {timeAgo(r.created_at)} ago
+              </div>
+              {r.notes && <div className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap">{r.notes}</div>}
+            </div>
+            <Badge>{r.status}</Badge>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminRequests() {
   useEffect(() => { setMeta({ title: "Admin · requests", description: "Partner request inboxes." }); }, []);
   const fin = useReqs("financing_requests");
@@ -92,6 +147,7 @@ export default function AdminRequests() {
   const trn = useReqs("transport_requests");
   const con = useReqs("concierge_requests");
   const svc = useReqs("service_requests");
+  const integ = useIntegrationReqs();
   return (
     <div className="space-y-6">
       <div>
@@ -107,9 +163,13 @@ export default function AdminRequests() {
           <TabsTrigger value="insp">Inspections</TabsTrigger>
           <TabsTrigger value="trn">Transport</TabsTrigger>
           <TabsTrigger value="svc">Service</TabsTrigger>
+          <TabsTrigger value="integ">Integrations</TabsTrigger>
         </TabsList>
         <TabsContent value="con">
           <ConciergeList rows={con.data ?? []} />
+        </TabsContent>
+        <TabsContent value="integ">
+          <IntegrationList rows={integ.data ?? []} />
         </TabsContent>
         <TabsContent value="fin">
           <ReqList rows={fin.data ?? []} table="financing_requests" category="financing" />

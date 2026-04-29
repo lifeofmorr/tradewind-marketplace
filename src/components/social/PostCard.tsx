@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Heart, MessageCircle, Share2, Anchor, TrendingUp, Lightbulb, Award, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Heart, MessageCircle, Share2, Anchor, TrendingUp, Lightbulb, Award, Sparkles, UserPlus, Check, Loader2 } from "lucide-react";
 import { ReportButton } from "@/components/ui/ReportButton";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 export type PostType =
@@ -15,6 +17,7 @@ export type PostAuthorRole = "buyer" | "dealer" | "service_provider";
 export interface CommunityPost {
   id: string;
   author: {
+    id?: string;
     name: string;
     role: PostAuthorRole;
     avatarUrl?: string;
@@ -30,6 +33,14 @@ export interface CommunityPost {
   isReal?: boolean;
   /** Whether the current viewer has liked this post. */
   likedByMe?: boolean;
+}
+
+interface CommentRow {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  profile?: { full_name: string | null } | null;
 }
 
 const POST_TYPE_META: Record<PostType, { label: string; icon: typeof Anchor; color: string }> = {
@@ -61,14 +72,94 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, onToggleLike, canInteract = false }: PostCardProps) {
+  const { user } = useAuth();
   const [liked, setLiked] = useState(Boolean(post.likedByMe));
   const [delta, setDelta] = useState(0);
   const [pending, setPending] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [comments, setComments] = useState<CommentRow[] | null>(null);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [commentBusy, setCommentBusy] = useState(false);
+  const [commentDelta, setCommentDelta] = useState(0);
+  const [following, setFollowing] = useState<boolean | null>(null);
+  const [followBusy, setFollowBusy] = useState(false);
 
   const meta = POST_TYPE_META[post.postType];
   const Icon = meta.icon;
   const interactive = canInteract && Boolean(post.isReal) && Boolean(onToggleLike);
   const likes = Math.max(0, post.likes + delta);
+  const commentCount = Math.max(0, post.comments + commentDelta);
+  const canFollow = Boolean(user) && Boolean(post.isReal) && Boolean(post.author.id) && post.author.id !== user?.id;
+
+  useEffect(() => {
+    if (!canFollow || !user || !post.author.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("community_follows")
+        .select("follower_id")
+        .eq("follower_id", user.id)
+        .eq("following_id", post.author.id!)
+        .maybeSingle();
+      if (!cancelled) setFollowing(Boolean(data));
+    })();
+    return () => { cancelled = true; };
+  }, [canFollow, user, post.author.id]);
+
+  async function loadComments() {
+    if (!post.isReal) return;
+    setCommentsLoading(true);
+    const { data } = await supabase
+      .from("community_comments")
+      .select("id, user_id, content, created_at, profile:profiles!community_comments_user_id_fkey(full_name)")
+      .eq("post_id", post.id)
+      .order("created_at", { ascending: true });
+    setComments((data ?? []) as unknown as CommentRow[]);
+    setCommentsLoading(false);
+  }
+
+  async function toggleComments() {
+    const next = !commentsOpen;
+    setCommentsOpen(next);
+    if (next && comments === null) await loadComments();
+  }
+
+  async function submitComment() {
+    if (!user || !post.isReal) return;
+    const body = commentDraft.trim();
+    if (!body) return;
+    setCommentBusy(true);
+    const { data, error } = await supabase
+      .from("community_comments")
+      .insert({ post_id: post.id, user_id: user.id, content: body })
+      .select("id, user_id, content, created_at, profile:profiles!community_comments_user_id_fkey(full_name)")
+      .single();
+    setCommentBusy(false);
+    if (error || !data) return;
+    setComments((prev) => [...(prev ?? []), data as unknown as CommentRow]);
+    setCommentDelta((d) => d + 1);
+    setCommentDraft("");
+  }
+
+  async function toggleFollow() {
+    if (!canFollow || !user || !post.author.id || followBusy) return;
+    setFollowBusy(true);
+    if (following) {
+      const { error } = await supabase
+        .from("community_follows")
+        .delete()
+        .eq("follower_id", user.id)
+        .eq("following_id", post.author.id);
+      if (!error) setFollowing(false);
+    } else {
+      const { error } = await supabase
+        .from("community_follows")
+        .insert({ follower_id: user.id, following_id: post.author.id });
+      if (!error || error.code === "23505") setFollowing(true);
+    }
+    setFollowBusy(false);
+  }
 
   const initials = post.author.name
     .split(" ")
@@ -119,6 +210,22 @@ export function PostCard({ post, onToggleLike, canInteract = false }: PostCardPr
             @{post.author.handle} · {post.createdAtLabel}
           </div>
         </div>
+        {canFollow && (
+          <button
+            type="button"
+            onClick={() => { void toggleFollow(); }}
+            disabled={followBusy || following === null}
+            className={cn(
+              "chip ring-1 ring-inset transition-colors",
+              following
+                ? "bg-emerald-500/15 text-emerald-300 ring-emerald-400/20"
+                : "bg-secondary text-muted-foreground ring-border hover:text-foreground",
+            )}
+            title={following ? "Unfollow" : "Follow"}
+          >
+            {following ? <><Check className="h-3 w-3" /> Following</> : <><UserPlus className="h-3 w-3" /> Follow</>}
+          </button>
+        )}
         <div className={cn("inline-flex items-center gap-1 text-xs font-mono uppercase tracking-[0.18em]", meta.color)}>
           <Icon className="h-3.5 w-3.5" />
           {meta.label}
@@ -159,10 +266,18 @@ export function PostCard({ post, onToggleLike, canInteract = false }: PostCardPr
         </button>
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => { void toggleComments(); }}
+          disabled={!post.isReal}
+          title={post.isReal ? undefined : "Sample content"}
+          className={cn(
+            "inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-mono uppercase tracking-[0.18em] transition-colors",
+            commentsOpen ? "text-foreground" : "text-muted-foreground",
+            post.isReal && "hover:text-foreground",
+            !post.isReal && "cursor-default",
+          )}
         >
           <MessageCircle className="h-4 w-4" />
-          {post.comments}
+          {commentCount}
         </button>
         <button
           type="button"
@@ -180,6 +295,51 @@ export function PostCard({ post, onToggleLike, canInteract = false }: PostCardPr
           />
         )}
       </footer>
+
+      {commentsOpen && post.isReal && (
+        <div className="border-t border-white/5 px-4 py-3 space-y-3">
+          {commentsLoading ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+            </div>
+          ) : (
+            (comments ?? []).map((c) => (
+              <div key={c.id} className="text-sm">
+                <span className="font-display text-xs">{c.profile?.full_name ?? "Member"}</span>
+                <span className="ml-2 text-muted-foreground">{c.content}</span>
+              </div>
+            ))
+          )}
+          {!commentsLoading && (comments ?? []).length === 0 && (
+            <p className="text-xs text-muted-foreground">No comments yet — be first.</p>
+          )}
+          {user ? (
+            <form
+              onSubmit={(e) => { e.preventDefault(); void submitComment(); }}
+              className="flex items-center gap-2"
+            >
+              <input
+                type="text"
+                value={commentDraft}
+                onChange={(e) => setCommentDraft(e.target.value)}
+                placeholder="Add a comment…"
+                maxLength={500}
+                className="flex-1 h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-brass-400/50"
+                disabled={commentBusy}
+              />
+              <button
+                type="submit"
+                disabled={commentBusy || !commentDraft.trim()}
+                className="h-9 px-3 rounded-md bg-brass-500 text-navy-950 text-xs font-display disabled:opacity-50"
+              >
+                {commentBusy ? "…" : "Post"}
+              </button>
+            </form>
+          ) : (
+            <p className="text-xs text-muted-foreground">Sign in to comment.</p>
+          )}
+        </div>
+      )}
     </article>
   );
 }

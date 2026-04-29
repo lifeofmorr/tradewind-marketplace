@@ -128,6 +128,7 @@ function rowToPost(row: RealPostRow, likedIds: Set<string>): CommunityPost {
   return {
     id: row.id,
     author: {
+      id: row.user_id,
       name: fullName,
       role: mapProfileRole(row.profile?.role),
       handle,
@@ -162,6 +163,7 @@ export default function Community() {
     const { data, error: postsErr } = await supabase
       .from("community_posts")
       .select("id, user_id, content, post_type, media_urls, likes_count, comments_count, created_at, profile:profiles!community_posts_user_id_fkey(full_name, avatar_url, role)")
+      .eq("hidden", false)
       .order("created_at", { ascending: false })
       .limit(50);
     if (postsErr) {
@@ -202,6 +204,7 @@ export default function Community() {
     const optimistic: CommunityPost = {
       id: data.id as string,
       author: {
+        id: user.id,
         name: profile?.full_name ?? "You",
         role: mapProfileRole(profile?.role),
         handle: (profile?.full_name ?? "you").toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) || "you",

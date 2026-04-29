@@ -45,6 +45,7 @@ import Signup from "@/pages/Signup";
 const Integrations = lazy(() => import("@/pages/public/Integrations"));
 const DeveloperHub = lazy(() => import("@/pages/public/DeveloperHub"));
 const Community = lazy(() => import("@/pages/public/Community"));
+const DataDeletion = lazy(() => import("@/pages/public/DataDeletion"));
 const FinancialHub = lazy(() => import("@/pages/buyer/FinancialHub"));
 const TransactionRoom = lazy(() => import("@/pages/TransactionRoom"));
 
@@ -66,6 +67,7 @@ const DealerInventory = lazy(() => import("@/pages/dashboard/dealer/DealerInvent
 const DealerLeads = lazy(() => import("@/pages/dashboard/dealer/DealerLeads"));
 const DealerAnalytics = lazy(() => import("@/pages/dashboard/dealer/DealerAnalytics"));
 const DealerProfilePage = lazy(() => import("@/pages/dashboard/dealer/DealerProfilePage"));
+const DealerImport = lazy(() => import("@/pages/dashboard/dealer/DealerImport"));
 
 // Service provider
 const ServiceDashboard = lazy(() => import("@/pages/dashboard/service/ServiceDashboard"));
@@ -152,6 +154,7 @@ export default function App() {
 
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/delete-my-data" element={<L><DataDeletion /></L>} />
         <Route path="/trust" element={<TrustCenter />} />
         <Route path="/integrations" element={<L><Integrations /></L>} />
         <Route path="/integrations/developer" element={<L><DeveloperHub /></L>} />
@@ -222,6 +225,7 @@ export default function App() {
           <Route element={<DashboardShell />}>
             <Route path="/dealer" element={<L><DealerDashboard /></L>} />
             <Route path="/dealer/inventory" element={<L><DealerInventory /></L>} />
+            <Route path="/dealer/import" element={<L><DealerImport /></L>} />
             <Route path="/dealer/leads" element={<L><DealerLeads /></L>} />
             <Route path="/dealer/analytics" element={<L><DealerAnalytics /></L>} />
             <Route path="/dealer/profile" element={<L><DealerProfilePage /></L>} />

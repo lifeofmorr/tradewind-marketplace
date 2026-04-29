@@ -241,6 +241,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (!ok) return new Response("bad signature", { status: 400 });
   let event: StripeEvent;
   try { event = JSON.parse(payload) as StripeEvent; } catch { return new Response("bad json", { status: 400 }); }
+
+  // Idempotency: Stripe retries on any non-2xx, so we ack-and-skip already-seen
+  // events. The unique violation on webhook_events.id is the dedup signal.
+  if (event.id) {
+    const { error: insErr } = await admin.from("webhook_events").insert({
+      id: event.id,
+      type: event.type,
+    });
+    if (insErr && insErr.code === "23505") {
+      // already processed — ack so Stripe stops retrying
+      return new Response(JSON.stringify({ received: true, deduped: true }), {
+        status: 200, headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (insErr) {
+      console.warn("[webhook] dedup insert failed", insErr.message);
+      // fall through; better to risk a duplicate handler run than to drop the event
+    }
+  }
+
   try {
     await handle(event);
     return new Response(JSON.stringify({ received: true }), {

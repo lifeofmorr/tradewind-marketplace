@@ -5,6 +5,7 @@ import { useMessages, useSendMessage, markRead } from "@/hooks/useConversations"
 import { useQueryClient } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { ReportButton } from "@/components/ui/ReportButton";
 import { cn, timeAgo } from "@/lib/utils";
 
 interface Props { conversationId: string }
@@ -59,7 +60,7 @@ export function MessageThread({ conversationId }: Props) {
           messages.map((m) => {
             const mine = m.sender_id === user?.id;
             return (
-              <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+              <div key={m.id} className={cn("group flex items-center gap-1", mine ? "justify-end" : "justify-start")}>
                 <div className={cn(
                   "max-w-[75%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap",
                   mine ? "bg-brass-500 text-navy-950" : "bg-secondary text-foreground",
@@ -70,6 +71,14 @@ export function MessageThread({ conversationId }: Props) {
                     mine ? "text-navy-950/60" : "text-muted-foreground",
                   )}>{timeAgo(m.created_at)}</div>
                 </div>
+                {!mine && (
+                  <ReportButton
+                    targetType="message"
+                    targetId={m.id}
+                    variant="icon"
+                    className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+                  />
+                )}
               </div>
             );
           })

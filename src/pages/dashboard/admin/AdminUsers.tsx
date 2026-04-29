@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { logAuditEvent } from "@/lib/audit";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -11,6 +13,7 @@ import type { Profile } from "@/types/database";
 
 export default function AdminUsers() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   useEffect(() => { setMeta({ title: "Admin · users", description: "Search and moderate users." }); }, []);
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -23,6 +26,12 @@ export default function AdminUsers() {
 
   async function setBan(id: string, banned: boolean) {
     await supabase.from("profiles").update({ banned }).eq("id", id);
+    await logAuditEvent({
+      actorId: user?.id ?? null,
+      action: banned ? "user.ban" : "user.unban",
+      targetType: "profile",
+      targetId: id,
+    });
     void qc.invalidateQueries({ queryKey: ["admin-users"] });
   }
 

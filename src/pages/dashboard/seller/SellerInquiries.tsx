@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LeadQualityBadge } from "@/components/listings/LeadQualityBadge";
+import { ReportButton } from "@/components/ui/ReportButton";
 import { setMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
 import type { Inquiry, LeadStatus } from "@/types/database";
@@ -77,6 +78,9 @@ export default function SellerInquiries() {
                 </div>
               </div>
               <p className="mt-3 text-sm whitespace-pre-wrap text-muted-foreground">{q.message}</p>
+              <div className="mt-3 pt-3 border-t border-border flex justify-end">
+                <ReportButton targetType="inquiry" targetId={q.id} />
+              </div>
             </div>
           ))}
         </div>

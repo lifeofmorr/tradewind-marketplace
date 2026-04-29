@@ -24,7 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
-export type ReportTargetType = "listing" | "message" | "post" | "user" | "review";
+export type ReportTargetType = "listing" | "message" | "post" | "user" | "review" | "inquiry";
 
 const REASONS: { value: string; label: string }[] = [
   { value: "suspicious", label: "Suspicious listing" },

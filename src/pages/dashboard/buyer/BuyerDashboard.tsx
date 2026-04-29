@@ -5,6 +5,7 @@ import { useSavedListings } from "@/hooks/useSavedListings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BuyerReadinessCard } from "@/components/buyer/BuyerReadinessCard";
+import { TrustScoreCard } from "@/components/buyer/TrustScoreCard";
 import { WatchlistCard } from "@/components/buyer/WatchlistCard";
 import { setMeta } from "@/lib/seo";
 
@@ -18,7 +19,14 @@ export default function BuyerDashboard() {
         <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">Buyer</div>
         <h1 className="font-display text-3xl mt-1">Welcome, {profile?.full_name?.split(" ")[0] ?? "there"}</h1>
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <TrustScoreCard
+          profile={(profile ?? {}) as {
+            verification_level?: string | null;
+            buyer_readiness_score?: number | null;
+            banned?: boolean | null;
+          }}
+        />
         <BuyerReadinessCard />
         <WatchlistCard />
       </div>

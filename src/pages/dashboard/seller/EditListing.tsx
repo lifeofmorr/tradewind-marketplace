@@ -14,6 +14,13 @@ import { ListingQualityPanel } from "@/components/listings/ListingQualityPanel";
 import { setMeta } from "@/lib/seo";
 import type { Listing, ListingPhoto } from "@/types/database";
 
+interface ListingVideoRow {
+  id: string;
+  listing_id: string;
+  url: string | null;
+  storage_path: string | null;
+}
+
 export default function EditListing() {
   const { id } = useParams<{ id: string }>();
   const { user, profile } = useAuth();
@@ -44,6 +51,36 @@ export default function EditListing() {
       return (data ?? []) as ListingPhoto[];
     },
   });
+
+  const { data: videos = [] } = useQuery({
+    queryKey: ["seller-listing-videos", id],
+    enabled: !!id,
+    queryFn: async (): Promise<ListingVideoRow[]> => {
+      const { data, error: e } = await supabase
+        .from("listing_videos")
+        .select("id, listing_id, url, storage_path")
+        .eq("listing_id", id ?? "")
+        .order("position", { ascending: true });
+      if (e) throw e;
+      return (data ?? []) as ListingVideoRow[];
+    },
+  });
+
+  async function saveVideoUrl(url: string) {
+    if (!listing) return;
+    const trimmed = url.trim();
+    const existing = videos[0];
+    if (!trimmed) {
+      if (existing) await supabase.from("listing_videos").delete().eq("id", existing.id);
+    } else if (existing) {
+      await supabase.from("listing_videos").update({ url: trimmed }).eq("id", existing.id);
+    } else {
+      await supabase.from("listing_videos").insert({ listing_id: listing.id, url: trimmed });
+    }
+    void qc.invalidateQueries({ queryKey: ["seller-listing-videos", listing.id] });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1600);
+  }
 
   useEffect(() => {
     if (listing) setMeta({ title: `Edit · ${listing.title}`, description: "Edit your listing." });
@@ -138,6 +175,25 @@ export default function EditListing() {
           initial={photos.map((p) => ({ storage_path: p.storage_path, url: p.url }))}
           onChange={(next) => { void persistPhotos(next); }}
         />
+      </section>
+
+      <Separator />
+
+      <section className="rounded-lg border border-border bg-card p-6 space-y-3">
+        <div className="font-display text-xl">Video walkaround</div>
+        <p className="text-xs text-muted-foreground">
+          Paste a YouTube or Vimeo link. Listings with video book ~30% more inspections.
+        </p>
+        <div>
+          <Label htmlFor="video-url">Video URL</Label>
+          <Input
+            id="video-url"
+            type="url"
+            placeholder="https://youtube.com/watch?v=…"
+            defaultValue={videos[0]?.url ?? ""}
+            onBlur={(e) => { void saveVideoUrl(e.target.value); }}
+          />
+        </div>
       </section>
       </div>
       <aside className="lg:sticky lg:top-20 lg:self-start space-y-4">

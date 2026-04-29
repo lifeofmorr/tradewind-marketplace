@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, X, FileSearch, Copy, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { logAuditEvent } from "@/lib/audit";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -29,6 +31,7 @@ type Filter = "all" | "real" | "demo";
 
 export default function AdminListings() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [rejecting, setRejecting] = useState<{ id: string; title: string } | null>(null);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -77,6 +80,14 @@ export default function AdminListings() {
       setActionError(`Could not update listing: ${updateError.message}`);
       return;
     }
+
+    void logAuditEvent({
+      actorId: user?.id ?? null,
+      action: `listing.${status}`,
+      targetType: "listing",
+      targetId: id,
+      metadata: rejectionReason ? { reason: rejectionReason } : {},
+    });
 
     if (status === "active") {
       const { data: row } = await supabase

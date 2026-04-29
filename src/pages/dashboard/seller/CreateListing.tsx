@@ -33,6 +33,7 @@ const Schema = z.object({
   state: z.string().max(2).optional(),
   description: z.string().optional(),
   ai_summary: z.string().optional(),
+  video_url: z.string().url("Use a YouTube/Vimeo URL").optional().or(z.literal("")),
 });
 type Values = z.infer<typeof Schema>;
 
@@ -113,7 +114,14 @@ export default function CreateListing() {
       .select("id")
       .maybeSingle();
     if (e || !data) { setError(e?.message ?? "Could not create listing"); return; }
-    navigate(`/seller/listings/${(data as { id: string }).id}`, { replace: true });
+    const newListingId = (data as { id: string }).id;
+    if (v.video_url && v.video_url.trim()) {
+      await supabase.from("listing_videos").insert({
+        listing_id: newListingId,
+        url: v.video_url.trim(),
+      });
+    }
+    navigate(`/seller/listings/${newListingId}`, { replace: true });
   }
 
   return (
@@ -201,6 +209,11 @@ export default function CreateListing() {
         </div>
         <div><Label htmlFor="description">Description</Label><Textarea id="description" rows={6} placeholder="Trim, options, condition, recent service. Our AI will polish this into a listing." {...register("description")} /></div>
         <div><Label htmlFor="ai_summary">AI summary</Label><Textarea id="ai_summary" rows={3} placeholder="Short auto-generated highlight reel. Editable." {...register("ai_summary")} /></div>
+        <div>
+          <Label htmlFor="video_url">Video walkaround URL <span className="text-muted-foreground">(optional)</span></Label>
+          <Input id="video_url" type="url" placeholder="https://youtube.com/watch?v=… or https://vimeo.com/…" {...register("video_url")} />
+          {errors.video_url && <p className="text-xs text-red-400 mt-1">{errors.video_url.message}</p>}
+        </div>
         {error && <p className="text-xs text-red-400" role="alert">{error}</p>}
         <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creating…" : "Save as draft"}</Button>
       </form>

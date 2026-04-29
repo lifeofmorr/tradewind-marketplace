@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Copy, Check, FileText, Sparkles } from "lucide-react";
+import { Copy, Check, FileText, Sparkles, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,10 +9,36 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateOfferMessage, type OfferDraft } from "@/lib/offerBuilder";
+import { calculateDealScore } from "@/lib/dealScore";
 import { formatCents } from "@/lib/utils";
 import type { Listing } from "@/types/database";
 
 interface Props { listing: Listing }
+
+interface FairBand { low: number; high: number; label: string }
+
+function fairBandForListing(listing: Listing): FairBand | null {
+  const ask = listing.price_cents ?? 0;
+  if (ask <= 0) return null;
+  const score = calculateDealScore(listing).score;
+  let lowPct: number;
+  let highPct: number;
+  let label: string;
+  if (score >= 78) {
+    lowPct = 0.95; highPct = 0.99; label = "Already a great deal — open near asking";
+  } else if (score >= 58) {
+    lowPct = 0.90; highPct = 0.95; label = "Fair deal — modest room to negotiate";
+  } else if (score >= 35) {
+    lowPct = 0.80; highPct = 0.88; label = "High price for the segment — meaningful room";
+  } else {
+    lowPct = 0.75; highPct = 0.85; label = "Stale or overpriced — start lower";
+  }
+  return {
+    low: Math.round((ask / 100) * lowPct),
+    high: Math.round((ask / 100) * highPct),
+    label,
+  };
+}
 
 const TIMELINES = [
   "Close within 1 week",
@@ -25,6 +51,7 @@ const TIMELINES = [
 export function OfferBuilderPro({ listing }: Props) {
   const { profile } = useAuth();
   const askingCents = listing.price_cents ?? 0;
+  const fairBand = useMemo(() => fairBandForListing(listing), [listing]);
   const [offerPrice, setOfferPrice] = useState<string>(
     askingCents ? Math.round((askingCents / 100) * 0.95).toString() : "",
   );
@@ -95,6 +122,22 @@ export function OfferBuilderPro({ listing }: Props) {
               value={offerPrice}
               onChange={(e) => setOfferPrice(e.target.value)}
             />
+            {fairBand && (
+              <div className="mt-1.5 inline-flex flex-wrap items-center gap-2 text-[11px]">
+                <span className="inline-flex items-center gap-1 text-brass-300">
+                  <Lightbulb className="h-3 w-3" />
+                  Suggested range: {formatCents(fairBand.low * 100)}–{formatCents(fairBand.high * 100)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOfferPrice(String(Math.round((fairBand.low + fairBand.high) / 2)))}
+                  className="underline text-muted-foreground hover:text-foreground"
+                >
+                  use midpoint
+                </button>
+                <span className="text-muted-foreground">· {fairBand.label}</span>
+              </div>
+            )}
             {askingCents > 0 && offerCents > 0 && (
               <div className="mt-1 text-[11px] font-mono text-muted-foreground">
                 {Math.abs(deltaPct).toFixed(1)}% {deltaPct < 0 ? "below" : deltaPct > 0 ? "above" : "at"} asking ({formatCents(askingCents)})
