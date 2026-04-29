@@ -13,6 +13,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TrustBadgeList } from "@/components/ui/TrustBadge";
+import { ReportButton } from "@/components/ui/ReportButton";
+import { AssetPassport } from "@/components/listings/AssetPassport";
 import { DealScoreCard } from "@/components/listings/DealScoreBadge";
 import { OwnershipCostCard } from "@/components/listings/OwnershipCostCard";
 import { BuyReadyChecklist } from "@/components/listings/BuyReadyChecklist";
@@ -199,6 +201,10 @@ export default function ListingDetail() {
               </div>
             </div>
           </div>
+
+          <div className="flex justify-end">
+            <ReportButton targetType="listing" targetId={listing.id} />
+          </div>
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
@@ -216,6 +222,7 @@ export default function ListingDetail() {
           {user && !listing.is_demo && user.id !== listing.seller_id && (
             <OfferBuilder listing={listing} />
           )}
+          <AssetPassport listing={listing} />
           <OwnershipCostCard listing={listing} />
           <BuyReadyChecklist listing={listing} />
         </aside>

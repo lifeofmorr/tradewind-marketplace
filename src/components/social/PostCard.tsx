@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Heart, MessageCircle, Share2, Anchor, TrendingUp, Lightbulb, Award, Sparkles } from "lucide-react";
+import { ReportButton } from "@/components/ui/ReportButton";
 import { cn } from "@/lib/utils";
 
 export type PostType =
@@ -170,6 +171,14 @@ export function PostCard({ post, onToggleLike, canInteract = false }: PostCardPr
           <Share2 className="h-4 w-4" />
           Share
         </button>
+        {post.isReal && (
+          <ReportButton
+            targetType="post"
+            targetId={post.id}
+            variant="icon"
+            className="ml-1"
+          />
+        )}
       </footer>
     </article>
   );
