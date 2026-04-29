@@ -5,6 +5,7 @@ import { useSavedListings } from "@/hooks/useSavedListings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BuyerReadinessCard } from "@/components/buyer/BuyerReadinessCard";
+import { WatchlistCard } from "@/components/buyer/WatchlistCard";
 import { setMeta } from "@/lib/seo";
 
 export default function BuyerDashboard() {
@@ -17,7 +18,10 @@ export default function BuyerDashboard() {
         <div className="font-mono text-xs uppercase tracking-[0.32em] text-brass-400">Buyer</div>
         <h1 className="font-display text-3xl mt-1">Welcome, {profile?.full_name?.split(" ")[0] ?? "there"}</h1>
       </div>
-      <BuyerReadinessCard />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <BuyerReadinessCard />
+        <WatchlistCard />
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="lift-card brass-glow">
           <CardHeader><CardTitle>Saved listings</CardTitle></CardHeader>

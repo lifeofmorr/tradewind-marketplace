@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useListing } from "@/hooks/useListings";
 import { ListingGallery } from "@/components/listings/ListingGallery";
 import { InquiryForm } from "@/components/listings/InquiryForm";
-import { OfferBuilder } from "@/components/listings/OfferBuilder";
+import { OfferBuilderPro } from "@/components/listings/OfferBuilderPro";
 import { SaveListingButton } from "@/components/listings/SaveListingButton";
 import { StartConversation } from "@/components/messaging/StartConversation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -220,7 +220,7 @@ export default function ListingDetail() {
           )}
           <InquiryForm listing={listing} />
           {user && !listing.is_demo && user.id !== listing.seller_id && (
-            <OfferBuilder listing={listing} />
+            <OfferBuilderPro listing={listing} />
           )}
           <AssetPassport listing={listing} />
           <OwnershipCostCard listing={listing} />

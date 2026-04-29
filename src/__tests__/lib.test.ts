@@ -6,8 +6,13 @@ import {
   calculateOwnershipCost,
   DEFAULT_FINANCING,
 } from "@/lib/ownershipCost";
+import {
+  matchBuyerToListings,
+  matchListingToPartners,
+  matchDealerToLeads,
+} from "@/lib/matchEngine";
 import { formatCents, formatNumber, slugify, cn } from "@/lib/utils";
-import type { Listing } from "@/types/database";
+import type { Listing, ServiceProvider } from "@/types/database";
 
 const baseListing: Listing = {
   id: "test-1",
@@ -267,5 +272,93 @@ describe("calculateOwnershipCost", () => {
     });
     expect(result.storageMonthly).toBe(0);
     expect(result.fuelMonthly).toBeGreaterThan(0);
+  });
+});
+
+describe("matchEngine", () => {
+  const inBudget: Listing = {
+    ...baseListing,
+    id: "match-1",
+    category: "boat",
+    state: "FL",
+    city: "Miami",
+    price_cents: 30_000_00,
+    make: "Boston Whaler",
+    is_verified: true,
+  };
+  const wrongCat: Listing = { ...baseListing, id: "match-2", category: "car", state: "FL" };
+  const farAway: Listing = { ...baseListing, id: "match-3", category: "boat", state: "WA" };
+
+  it("matchBuyerToListings ranks category + location matches highest", () => {
+    const ranked = matchBuyerToListings(
+      {
+        categories: ["boat"],
+        state: "FL",
+        priceMaxCents: 50_000_00,
+      },
+      [wrongCat, farAway, inBudget],
+    );
+    expect(ranked[0].item.id).toBe("match-1");
+    expect(ranked[0].reasons.length).toBeGreaterThan(0);
+    expect(ranked[0].score).toBeGreaterThan(70);
+  });
+
+  it("matchBuyerToListings only considers active listings", () => {
+    const ranked = matchBuyerToListings(
+      { categories: ["boat"] },
+      [{ ...inBudget, status: "draft" }],
+    );
+    expect(ranked.length).toBe(0);
+  });
+
+  it("matchListingToPartners filters out unrelated services", () => {
+    const partners: ServiceProvider[] = [
+      {
+        id: "p1", slug: "p1", name: "Marine Mech", category: "marine_mechanic",
+        description: null, logo_url: null, hero_image_url: null, website: null,
+        phone: null, email: null, address_line1: null, city: "Miami", state: "FL",
+        zip: null, lat: null, lng: null, service_radius_mi: null,
+        rating_avg: 4.8, rating_count: 50, is_verified: true, is_featured: false,
+        subscription_tier: null, subscription_status: null, stripe_customer_id: null,
+        stripe_subscription_id: null, owner_id: "o", created_at: "", updated_at: "",
+      },
+      {
+        id: "p2", slug: "p2", name: "Wrap Shop", category: "wrap_shop",
+        description: null, logo_url: null, hero_image_url: null, website: null,
+        phone: null, email: null, address_line1: null, city: "Miami", state: "FL",
+        zip: null, lat: null, lng: null, service_radius_mi: null,
+        rating_avg: 0, rating_count: 0, is_verified: false, is_featured: false,
+        subscription_tier: null, subscription_status: null, stripe_customer_id: null,
+        stripe_subscription_id: null, owner_id: "o", created_at: "", updated_at: "",
+      },
+    ];
+    const out = matchListingToPartners({ category: "boat", state: "FL", city: "Miami" }, partners);
+    expect(out[0].item.id).toBe("p1");
+    expect(out.find((m) => m.item.id === "p2")).toBeUndefined();
+  });
+
+  it("matchDealerToLeads boosts fresh, high-quality leads", () => {
+    const fresh = new Date().toISOString();
+    const old = new Date(Date.now() - 7 * 24 * 36e5).toISOString();
+    const ranked = matchDealerToLeads(
+      { primary_category: "boat", state: "FL", city: "Miami" },
+      [
+        { id: "a", lead_quality_score: 30, status: "new", created_at: old, listing_category: "car", listing_state: "TX" },
+        { id: "b", lead_quality_score: 90, status: "new", created_at: fresh, listing_category: "boat", listing_state: "FL" },
+      ],
+    );
+    expect(ranked[0].item.id).toBe("b");
+    expect(ranked[0].score).toBeGreaterThan(ranked[1].score);
+  });
+
+  it("matchDealerToLeads excludes spam / closed_lost", () => {
+    const ranked = matchDealerToLeads(
+      { primary_category: "boat", state: "FL", city: "Miami" },
+      [
+        { id: "a", lead_quality_score: 90, status: "spam", created_at: new Date().toISOString() },
+        { id: "b", lead_quality_score: 90, status: "closed_lost", created_at: new Date().toISOString() },
+      ],
+    );
+    expect(ranked.length).toBe(0);
   });
 });

@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MarketPulseCard } from "@/components/market/MarketPulseCard";
+import { GrowthCommandCenter } from "@/components/dealer/GrowthCommandCenter";
+import { DealerResponseScore } from "@/components/dealer/DealerResponseScore";
 import { setMeta } from "@/lib/seo";
 import { formatNumber } from "@/lib/utils";
 import type { Dealer } from "@/types/database";
@@ -70,6 +72,10 @@ export default function DealerDashboard() {
           <p className="text-xs text-muted-foreground mt-1">A complete profile lifts buyer trust.</p>
         </Link>
       </div>
+      <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        <GrowthCommandCenter dealerId={dealerId} listings={listings} />
+        <DealerResponseScore dealer={dealer ?? null} listings={listings} />
+      </section>
       <section>
         <h2 className="font-display text-xl mb-3">Your inventory pulse</h2>
         <MarketPulseCard scope="dealer" dealerId={dealerId} />
