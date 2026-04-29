@@ -52,6 +52,9 @@ export function BuyReadyChecklist({ listing }: Props) {
         <div>
           <div className="eyebrow">Buy-ready checklist</div>
           <div className="font-display text-2xl mt-1">Ready to close?</div>
+          <p className="mt-1 text-xs text-muted-foreground/90">
+            A buyer's guide for serious shoppers — track each step or just use it as a reference.
+          </p>
         </div>
         <div className="text-xs font-mono text-muted-foreground">
           {completed}/{ITEMS.length}

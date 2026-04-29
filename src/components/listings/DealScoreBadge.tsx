@@ -49,8 +49,9 @@ export function DealScoreBadge({ listing, size = "sm", showLabel = false, classN
   const stroke = size === "lg" ? 4 : size === "md" ? 3 : 2.5;
   const r = (dim - stroke * 2) / 2;
   const c = 2 * Math.PI * r;
-  const isDemo = result.label === "Demo";
-  const dash = isDemo ? c : c * (result.score / 100);
+  // "Demo" or a zero-score stub (no signal yet) renders as a hollow ring.
+  const isPlaceholder = result.label === "Demo" || result.score === 0;
+  const dash = isPlaceholder ? c : c * (result.score / 100);
   return (
     <div className={cn("inline-flex items-center gap-2", className)}>
       <div
@@ -71,7 +72,7 @@ export function DealScoreBadge({ listing, size = "sm", showLabel = false, classN
             strokeWidth={stroke}
             className="stroke-white/10"
           />
-          {!isDemo && (
+          {!isPlaceholder && (
             <circle
               cx={dim / 2}
               cy={dim / 2}
@@ -85,7 +86,7 @@ export function DealScoreBadge({ listing, size = "sm", showLabel = false, classN
           )}
         </svg>
         <span className={cn("relative font-mono text-[10px]", tone.text)}>
-          {isDemo ? "—" : result.score}
+          {isPlaceholder ? "—" : result.score}
         </span>
       </div>
       {showLabel && (
@@ -100,6 +101,7 @@ export function DealScoreBadge({ listing, size = "sm", showLabel = false, classN
 export function DealScoreCard({ listing }: { listing: Listing }) {
   const result = calculateDealScore(listing);
   const tone = TONE[result.color];
+  const isStub = result.label === "Needs Review" && result.score === 0;
   return (
     <div className="glass-card p-5">
       <div className="flex items-center gap-4">
@@ -109,7 +111,12 @@ export function DealScoreCard({ listing }: { listing: Listing }) {
           <div className={cn("font-display text-2xl mt-1", tone.text)}>{result.label}</div>
         </div>
       </div>
-      {result.reasons.length > 0 && (
+      {isStub ? (
+        <p className="mt-4 text-xs text-muted-foreground">
+          Not enough market data yet. We'll score this listing once year, price, and condition
+          signals are filled in.
+        </p>
+      ) : result.reasons.length > 0 ? (
         <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
           {result.reasons.slice(0, 4).map((r) => (
             <li key={r} className="flex items-start gap-2">
@@ -117,7 +124,7 @@ export function DealScoreCard({ listing }: { listing: Listing }) {
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
       <p className="mt-4 text-[11px] text-muted-foreground/80">
         Heuristic estimate based on year, price, mileage/hours, and condition. Not financial advice.
       </p>

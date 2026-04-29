@@ -158,7 +158,7 @@ export default function ListingDetail() {
             )}
           </section>
 
-          {!listing.is_demo && <DealScoreCard listing={listing} />}
+          <DealScoreCard listing={listing} />
 
           {listing.ai_summary && (
             <>
@@ -216,8 +216,8 @@ export default function ListingDetail() {
           {user && !listing.is_demo && user.id !== listing.seller_id && (
             <OfferBuilder listing={listing} />
           )}
-          {!listing.is_demo && <OwnershipCostCard listing={listing} />}
-          {user && !listing.is_demo && <BuyReadyChecklist listing={listing} />}
+          <OwnershipCostCard listing={listing} />
+          <BuyReadyChecklist listing={listing} />
         </aside>
       </div>
     </div>
