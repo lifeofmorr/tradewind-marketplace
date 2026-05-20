@@ -1,4 +1,4 @@
-import { Anchor, Ship, Sailboat, Car, Truck, Bike, Caravan, Sparkles, Plane } from "lucide-react";
+import { Anchor, Ship, Sailboat, Car, Truck, Bike, Caravan, Sparkles, Plane, Wrench } from "lucide-react";
 import type { ListingCategory } from "@/types/database";
 import { cn } from "@/lib/utils";
 
@@ -23,8 +23,14 @@ const ICONS: Record<ListingCategory, React.ElementType> = {
   aircraft_twin_engine: Plane,
   aircraft_turboprop: Plane,
   aircraft_jet: Plane,
+  aircraft_very_light_jet: Plane,
   aircraft_helicopter: Plane,
   aircraft_vintage: Plane,
+  aircraft_experimental: Plane,
+  aircraft_amphibious: Plane,
+  aircraft_lsa: Plane,
+  aircraft_parts: Wrench,
+  aviation_services: Wrench,
 };
 
 export function ListingPlaceholder({ category, className, label }: Props) {

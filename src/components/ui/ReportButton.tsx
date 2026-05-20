@@ -31,6 +31,13 @@ const REASONS: { value: string; label: string }[] = [
   { value: "spam", label: "Spam" },
   { value: "inappropriate", label: "Inappropriate content" },
   { value: "scam", label: "Scam / fraud" },
+  // Aviation-specific reasons (visible for all reports — moderators triage)
+  { value: "aviation_suspicious_listing", label: "Aviation — suspicious aircraft listing" },
+  { value: "aviation_fake_escrow", label: "Aviation — fake escrow request" },
+  { value: "aviation_unverifiable_registration", label: "Aviation — unverifiable N-number / registration" },
+  { value: "aviation_missing_logbooks", label: "Aviation — missing logbooks" },
+  { value: "aviation_misleading_damage", label: "Aviation — misleading damage history" },
+  { value: "aviation_suspicious_wire", label: "Aviation — suspicious wire / funds request" },
   { value: "other", label: "Other" },
 ];
 

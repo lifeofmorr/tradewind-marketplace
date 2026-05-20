@@ -20,6 +20,8 @@ import { DealScoreCard } from "@/components/listings/DealScoreBadge";
 import { OwnershipCostCard } from "@/components/listings/OwnershipCostCard";
 import { BuyReadyChecklist } from "@/components/listings/BuyReadyChecklist";
 import { AircraftSpecPanel } from "@/components/listings/AircraftSpecPanel";
+import { AircraftPrebuyRequestCard } from "@/components/listings/AircraftPrebuyRequest";
+import { AircraftWalkaroundCard } from "@/components/listings/AircraftWalkaroundCard";
 import { getListingBadges } from "@/lib/badges";
 import { isAircraftCategory } from "@/lib/categories";
 import { formatCents, formatNumber } from "@/lib/utils";
@@ -168,6 +170,10 @@ export default function ListingDetail() {
               </>
             )}
           </section>
+
+          {isAircraft && <AircraftPrebuyRequestCard listingId={listing.id} />}
+
+          {isAircraft && <AircraftWalkaroundCard listing={listing} />}
 
           {isAircraft && <AircraftSpecPanel listingId={listing.id} />}
 

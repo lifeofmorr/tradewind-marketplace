@@ -14,7 +14,10 @@ export type ListingCategory =
   | "boat" | "performance_boat" | "yacht" | "center_console"
   | "car" | "truck" | "exotic" | "classic" | "powersports" | "rv"
   | "aircraft_single_engine" | "aircraft_twin_engine" | "aircraft_turboprop"
-  | "aircraft_jet" | "aircraft_helicopter" | "aircraft_vintage";
+  | "aircraft_jet" | "aircraft_very_light_jet"
+  | "aircraft_helicopter" | "aircraft_vintage"
+  | "aircraft_experimental" | "aircraft_amphibious" | "aircraft_lsa"
+  | "aircraft_parts" | "aviation_services";
 
 export type ListingStatus =
   | "draft" | "pending_review" | "active" | "sold" | "expired" | "rejected" | "removed";
@@ -34,7 +37,12 @@ export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded";
 export type ServiceCategory =
   | "marine_mechanic" | "auto_mechanic" | "detailer" | "transport"
   | "inspector_surveyor" | "insurance_agent" | "lender" | "storage"
-  | "marina" | "wrap_shop" | "audio_shop" | "performance_shop" | "dock_service";
+  | "marina" | "wrap_shop" | "audio_shop" | "performance_shop" | "dock_service"
+  // Aviation
+  | "ap_mechanic" | "ia_inspector" | "aviation_maintenance_shop"
+  | "aircraft_broker" | "aircraft_lender" | "aviation_insurance"
+  | "aircraft_title_company" | "aircraft_escrow" | "ferry_pilot"
+  | "avionics_shop" | "hangar_storage";
 
 export type RequestStatus =
   | "submitted" | "assigned" | "in_progress" | "quoted" | "completed" | "canceled";
@@ -619,26 +627,81 @@ export type AirworthinessStatus =
 export interface AircraftSpecs {
   id: string;
   listing_id: string;
-  n_number: string | null;
+
+  // Identification
+  n_number: string | null;                 // legacy column
+  registration_number: string | null;      // canonical N-number / tail
   serial_number: string | null;
-  total_time_hours: number | null;
+
+  // Time / cycles
+  total_time_hours: number | null;         // legacy
+  total_time: number | null;
   airframe_hours: number | null;
+  landings: number | null;
+
+  // Engine
+  engine_make: string | null;
+  engine_model: string | null;
+  engine_count: number | null;
   engine_hours: number | null;
-  smoh_hours: number | null;
-  snew: boolean;
-  tbo_hours: number | null;
+  smoh_hours: number | null;               // legacy
+  smoh: number | null;
+  snew: boolean | number | null;
+  tbo_hours: number | null;                // legacy
+  tbo: number | null;
   propeller_hours: number | null;
-  logbooks_complete: boolean;
+
+  // Inspection / logs / certificate
   annual_inspection_date: string | null;
-  airworthiness_status: AirworthinessStatus | null;
+  logbooks_complete: boolean;
+  airworthiness_status: AirworthinessStatus | null;          // legacy
+  airworthiness_certificate_status: string | null;
+
+  // Avionics & equipment
   avionics_suite: string | null;
-  ads_b: boolean;
+  ads_b: boolean;                          // legacy
+  adsb: boolean | null;
   autopilot: string | null;
+  ad_sb_compliance: string | null;
+
+  // Performance / payload
   seats: number | null;
   range_nm: number | null;
   cruise_speed_ktas: number | null;
   useful_load_lbs: number | null;
+
+  // Condition / readiness
   damage_history: string | null;
   hangared: boolean;
+  hangar_status: string | null;
+  pre_buy_inspection_status: string | null;
+  ferry_ready: boolean | null;
+
   created_at: string;
+  updated_at?: string;
+}
+
+// ─── aircraft_prebuy_requests ────────────────────────────────────────────────
+
+export type AircraftPrebuyStatus =
+  | "submitted" | "assigned" | "in_progress" | "completed" | "canceled";
+
+export interface AircraftPrebuyRequest {
+  id: string;
+  listing_id: string;
+  buyer_id: string | null;
+  assigned_provider_id: string | null;
+  inspection_type: string;
+  scope_logbook: boolean;
+  scope_airframe: boolean;
+  scope_engine: boolean;
+  scope_avionics: boolean;
+  scope_corrosion: boolean;
+  scope_ad_sb: boolean;
+  status: AircraftPrebuyStatus | string;
+  notes: string | null;
+  report_url: string | null;
+  report_uploaded_at: string | null;
+  created_at: string;
+  updated_at: string;
 }

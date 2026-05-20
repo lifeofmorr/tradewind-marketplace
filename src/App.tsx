@@ -47,6 +47,7 @@ const DeveloperHub = lazy(() => import("@/pages/public/DeveloperHub"));
 const Community = lazy(() => import("@/pages/public/Community"));
 const DataDeletion = lazy(() => import("@/pages/public/DataDeletion"));
 const AircraftPage = lazy(() => import("@/pages/public/AircraftPage"));
+const AviationServicesPage = lazy(() => import("@/pages/public/AviationServicesPage"));
 const FinancialHub = lazy(() => import("@/pages/buyer/FinancialHub"));
 const TransactionRoom = lazy(() => import("@/pages/TransactionRoom"));
 
@@ -133,6 +134,7 @@ export default function App() {
           path="/helicopters"
           element={<L><AircraftPage defaultCategory="aircraft_helicopter" title="Helicopters for sale" eyebrow="rotorcraft" blurb="Turbine and piston helicopters — Robinson, Bell, Airbus." /></L>}
         />
+        <Route path="/aviation-services" element={<L><AviationServicesPage /></L>} />
         <Route path="/categories" element={<CategoriesIndex />} />
         <Route path="/categories/:category" element={<CategoryPage />} />
         <Route path="/listings/:slug" element={<ListingDetail />} />

@@ -12,6 +12,8 @@ import { Separator } from "@/components/ui/separator";
 import { PhotoUploader } from "@/components/listings/PhotoUploader";
 import { ListingQualityPanel } from "@/components/listings/ListingQualityPanel";
 import { ListingAutopilot } from "@/components/listings/ListingAutopilot";
+import { AircraftSpecsForm } from "@/components/listings/AircraftSpecsForm";
+import { isAircraftCategory } from "@/lib/categories";
 import { setMeta } from "@/lib/seo";
 import type { Listing, ListingPhoto } from "@/types/database";
 
@@ -179,6 +181,13 @@ export default function EditListing() {
       </section>
 
       <Separator />
+
+      {isAircraftCategory(listing.category) && (
+        <>
+          <AircraftSpecsForm listingId={listing.id} />
+          <Separator />
+        </>
+      )}
 
       <section className="rounded-lg border border-border bg-card p-6 space-y-3">
         <div className="font-display text-xl">Video walkaround</div>

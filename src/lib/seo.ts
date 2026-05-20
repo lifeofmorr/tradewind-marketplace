@@ -61,13 +61,15 @@ export function listingMeta(listing: {
   cover_photo_url?: string | null;
 }): MetaArgs {
   const isBoat = ["boat","performance_boat","yacht","center_console"].includes(listing.category);
+  const isAircraft = listing.category.startsWith("aircraft_") || listing.category === "aviation_services";
   const description =
     listing.ai_summary ??
     listing.description?.slice(0, 160) ??
     `${listing.title} for sale on ${BRAND.name}.`;
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": isBoat ? "Product" : "Vehicle",
+    "@type": isAircraft ? "Product" : isBoat ? "Product" : "Vehicle",
+    additionalType: isAircraft ? "https://schema.org/Vehicle" : undefined,
     name: listing.title,
     description,
     brand: listing.make,

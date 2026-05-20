@@ -1,5 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { Check, Clock, ShieldCheck, X } from "lucide-react";
-import type { Listing } from "@/types/database";
+import { ReportButton } from "@/components/ui/ReportButton";
+import { supabase } from "@/lib/supabase";
+import type { Listing, AircraftSpecs } from "@/types/database";
 import { isAircraftCategory } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +44,157 @@ function hashBucket(seed: string): Status[] {
   return DEMO_BUCKETS[h % DEMO_BUCKETS.length];
 }
 
-function buildSections(listing: Listing): Section[] {
+function aircraftStatus(value: unknown, truthy?: string): Status {
+  if (value === true) return "verified";
+  if (truthy && value === truthy) return "verified";
+  if (value === false || value == null || value === "") return "missing";
+  return "pending";
+}
+
+function buildAircraftSections(
+  listing: Listing,
+  spec: AircraftSpecs | null,
+): Section[] {
+  const isDemo = listing.is_demo;
+  const demo = isDemo ? hashBucket(listing.id) : null;
+
+  // Identification
+  const reg = spec?.registration_number ?? spec?.n_number ?? null;
+  const registration: PassportItem = {
+    label: "N-number on file",
+    status: reg ? "verified" : isDemo ? demo![0] : "missing",
+    detail: reg ? `Registration ${reg} (verify against FAA registry)` : "Seller has not provided",
+  };
+  const serial: PassportItem = {
+    label: "Serial number on file",
+    status: spec?.serial_number ? "verified" : "missing",
+    detail: spec?.serial_number ?? "Seller has not provided",
+  };
+  const ownership: PassportItem = isDemo
+    ? {
+        label: "Identity & title-readiness",
+        status: demo![0],
+        detail: demo![0] === "verified"
+          ? "Demo: seller KYC complete, title research recommended"
+          : "Demo: pending KYC review",
+      }
+    : {
+        label: "Identity & title-readiness",
+        status: listing.is_verified ? "verified" : "pending",
+        detail: listing.is_verified
+          ? "Seller KYC complete — title research required separately"
+          : "Seller verification pending",
+      };
+  const titleStatus: PassportItem = {
+    label: "Title research (independent)",
+    status: "missing",
+    detail: "TradeWind does not perform title research. Use an aircraft title company.",
+  };
+
+  // Certificate / inspection
+  const airworth: PassportItem = {
+    label: "Airworthiness certificate",
+    status: aircraftStatus(
+      spec?.airworthiness_certificate_status ?? spec?.airworthiness_status,
+      "standard",
+    ),
+    detail: spec?.airworthiness_certificate_status
+      ?? spec?.airworthiness_status
+      ?? "Not provided — verify with FAA",
+  };
+  const annual: PassportItem = {
+    label: "Annual inspection",
+    status: spec?.annual_inspection_date
+      ? (() => {
+          const d = new Date(spec.annual_inspection_date!);
+          const months = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 30);
+          if (months < 12) return "verified";
+          if (months < 14) return "pending";
+          return "missing";
+        })()
+      : "missing",
+    detail: spec?.annual_inspection_date
+      ? `Last annual: ${new Date(spec.annual_inspection_date).toLocaleDateString()}`
+      : "No annual date provided",
+  };
+  const logbooks: PassportItem = {
+    label: "Logbooks complete",
+    status: spec?.logbooks_complete ? "verified" : isDemo ? demo![1] : "missing",
+    detail: spec?.logbooks_complete
+      ? "Seller states logbooks are complete (buyer to verify)"
+      : "Logbooks partial / unverified",
+  };
+  const adsb: PassportItem = {
+    label: "ADS-B in/out",
+    status: (spec?.adsb ?? spec?.ads_b) ? "verified" : "missing",
+    detail: (spec?.adsb ?? spec?.ads_b)
+      ? "Equipped (Out — Rule 91.225 compliance)"
+      : "Not equipped",
+  };
+  const adsb_compliance: PassportItem = {
+    label: "AD/SB compliance notes",
+    status: spec?.ad_sb_compliance ? "pending" : "missing",
+    detail: spec?.ad_sb_compliance
+      ? "Notes on file — independent A&P/IA verification required"
+      : "Verify with A&P/IA — TradeWind does not check AD/SB compliance",
+  };
+  const prebuy: PassportItem = {
+    label: "Pre-buy inspection",
+    status: spec?.pre_buy_inspection_status
+      ? (spec.pre_buy_inspection_status === "passed" || spec.pre_buy_inspection_status === "completed"
+          ? "verified"
+          : "pending")
+      : isDemo ? demo![2] : "missing",
+    detail: spec?.pre_buy_inspection_status
+      ? `Status: ${spec.pre_buy_inspection_status.replace(/_/g, " ")}`
+      : "Schedule via TradeWind pre-buy request",
+  };
+
+  // Financing / insurance / escrow / ferry / hangar
+  const financing: PassportItem = {
+    label: "Financing partners ready",
+    status: listing.is_finance_partner ? "verified" : "pending",
+    detail: listing.is_finance_partner
+      ? "Aviation lenders available via buyer hub"
+      : "Request a quote from aviation lenders",
+  };
+  const insurance: PassportItem = {
+    label: "Insurance partners ready",
+    status: listing.is_insurance_partner ? "verified" : "pending",
+    detail: listing.is_insurance_partner
+      ? "Aviation insurance brokers available"
+      : "Request a quote from an aviation insurance broker",
+  };
+  const escrow: PassportItem = {
+    label: "Escrow partner identified",
+    status: "pending",
+    detail: "Escrow must be handled by an aircraft escrow/title company",
+  };
+  const ferry: PassportItem = {
+    label: "Ferry / delivery planning",
+    status: spec?.ferry_ready ? "verified" : "pending",
+    detail: spec?.ferry_ready
+      ? "Aircraft is ferry-ready (insurance + permits required)"
+      : "Coordinate with a ferry pilot",
+  };
+  const hangar: PassportItem = {
+    label: "Hangar / storage at destination",
+    status: spec?.hangared || spec?.hangar_status === "hangared"
+      ? "verified"
+      : "pending",
+    detail: spec?.hangar_status
+      ? `Current status: ${spec.hangar_status.replace(/_/g, " ")}`
+      : "Confirm destination hangar/tie-down before closing",
+  };
+
+  return [
+    { title: "Identification", items: [registration, serial, ownership, titleStatus] },
+    { title: "Certificate & inspections", items: [airworth, annual, logbooks, adsb, adsb_compliance, prebuy] },
+    { title: "Closing readiness", items: [financing, insurance, escrow, ferry, hangar] },
+  ];
+}
+
+function buildVehicleSections(listing: Listing): Section[] {
   const isDemo = listing.is_demo;
   const demo = isDemo ? hashBucket(listing.id) : null;
 
@@ -89,11 +242,8 @@ function buildSections(listing: Listing): Section[] {
               : "Title not yet on file",
       };
 
-  const isAircraft = isAircraftCategory(listing.category);
   const vinHin: PassportItem = {
-    label: isAircraft
-      ? "N-number / serial decoded"
-      : listing.category.includes("boat") ? "HIN decoded" : "VIN decoded",
+    label: listing.category.includes("boat") ? "HIN decoded" : "VIN decoded",
     status: isDemo
       ? demo![2]
       : listing.vin_hin_decoded
@@ -130,18 +280,9 @@ function buildSections(listing: Listing): Section[] {
       };
 
   return [
-    {
-      title: "Verification",
-      items: [verification, vinHin],
-    },
-    {
-      title: "Documents",
-      items: [documents],
-    },
-    {
-      title: "Inspection readiness",
-      items: [inspection],
-    },
+    { title: "Verification", items: [verification, vinHin] },
+    { title: "Documents", items: [documents] },
+    { title: "Inspection readiness", items: [inspection] },
     {
       title: "Financial readiness",
       items: [
@@ -190,7 +331,26 @@ const STATUS_LABEL: Record<Status, string> = {
 };
 
 export function AssetPassport({ listing }: Props) {
-  const sections = buildSections(listing);
+  const isAircraft = isAircraftCategory(listing.category);
+
+  const { data: spec } = useQuery({
+    queryKey: ["aircraft-specs", listing.id],
+    enabled: isAircraft,
+    queryFn: async (): Promise<AircraftSpecs | null> => {
+      const { data, error } = await supabase
+        .from("aircraft_specs")
+        .select("*")
+        .eq("listing_id", listing.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as AircraftSpecs | null) ?? null;
+    },
+  });
+
+  const sections = isAircraft
+    ? buildAircraftSections(listing, spec ?? null)
+    : buildVehicleSections(listing);
+
   const total = sections.reduce((acc, s) => acc + s.items.length, 0);
   const verified = sections.reduce(
     (acc, s) => acc + s.items.filter((i) => i.status === "verified").length,
@@ -207,12 +367,20 @@ export function AssetPassport({ listing }: Props) {
           <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-brass-400">
             TradeWind
           </div>
-          <h3 className="font-display text-lg leading-tight">Asset Passport</h3>
+          <h3 className="font-display text-lg leading-tight">
+            {isAircraft ? "Aircraft Asset Passport" : "Asset Passport"}
+          </h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {verified}/{total} checks verified
             {listing.is_demo && " · demo data"}
           </p>
         </div>
+        <ReportButton
+          targetType="listing"
+          targetId={listing.id}
+          variant="icon"
+          className="self-start"
+        />
       </header>
 
       <div className="space-y-4 pt-4">
@@ -254,18 +422,22 @@ export function AssetPassport({ listing }: Props) {
         ))}
       </div>
 
-      <p className="mt-4 pt-3 border-t border-brass-500/10 text-[11px] text-muted-foreground/80">
-        The passport is a snapshot of trust signals on this asset. TradeWind
-        concierge can complete any pending check on your behalf.
-      </p>
+      <div className="mt-4 pt-3 border-t border-brass-500/10 flex items-center justify-between gap-3">
+        <p className="text-[11px] text-muted-foreground/80 flex-1">
+          The passport is a snapshot of trust signals on this asset. TradeWind
+          concierge can complete any pending check on your behalf.
+        </p>
+        <ReportButton targetType="listing" targetId={listing.id} variant="inline" />
+      </div>
 
-      {isAircraftCategory(listing.category) && (
+      {isAircraft && (
         <p className="mt-3 pt-3 border-t border-amber-500/15 text-[11px] leading-relaxed text-amber-200/85">
           <span className="font-display text-amber-100">Aviation notice.</span>{" "}
           Aircraft details, registration, title, logbooks, maintenance status,
-          and airworthiness must be independently verified by qualified aviation
-          professionals before purchase. TradeWind does not verify FAA status,
-          airworthiness, or maintenance compliance.
+          AD/SB compliance, and airworthiness must be independently verified by
+          qualified aviation professionals (A&amp;P / IA / aircraft title
+          company) before purchase. TradeWind does not verify FAA status,
+          airworthiness, title chain, escrow, ferry, insurance, or financing.
         </p>
       )}
     </div>

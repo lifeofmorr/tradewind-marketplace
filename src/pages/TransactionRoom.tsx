@@ -34,6 +34,20 @@ const DEMO_STEPS: Step[] = [
   { key: "closing",   label: "Closing",     status: "pending",     detail: "Target: May 12" },
 ];
 
+/** Aircraft transactions follow a 10-step closing flow. */
+const AIRCRAFT_STEPS: Step[] = [
+  { key: "inquiry",        label: "Inquiry",                       status: "complete",    detail: "Buyer reached out" },
+  { key: "offer",          label: "Offer",                         status: "complete",    detail: "Initial offer presented" },
+  { key: "loi",            label: "LOI / purchase agreement",       status: "in_progress", detail: "Draft LOI in legal review" },
+  { key: "escrow",         label: "Escrow request",                 status: "in_progress", detail: "Aircraft escrow company opening file" },
+  { key: "prebuy",         label: "Pre-buy inspection",             status: "pending",     detail: "A&P/IA assignment via TradeWind" },
+  { key: "logbook_title",  label: "Logbook / title review",         status: "pending",     detail: "Title company performing FAA registry search" },
+  { key: "financing",      label: "Financing",                      status: "pending",     detail: "Aviation lender pre-approval" },
+  { key: "insurance",      label: "Insurance",                      status: "pending",     detail: "Hull + liability binder" },
+  { key: "ferry",          label: "Ferry / delivery planning",      status: "pending",     detail: "Ferry pilot + permits" },
+  { key: "closing",        label: "Closing",                        status: "pending",     detail: "Funds release at title transfer" },
+];
+
 const BOAT_DOCS = [
   { key: "title",       label: "Title (clean / lien release)" },
   { key: "bill_of_sale",label: "Bill of sale" },
@@ -56,14 +70,42 @@ const AUTO_DOCS = [
   { key: "insurance",   label: "Proof of insurance binder" },
 ];
 
+const AIRCRAFT_DOCS = [
+  { key: "loi",                  label: "Letter of intent / purchase agreement" },
+  { key: "title_search",         label: "FAA title search (aircraft title company)" },
+  { key: "bill_of_sale",         label: "FAA Bill of Sale (AC Form 8050-2)" },
+  { key: "registration",         label: "Aircraft registration (AC Form 8050-1)" },
+  { key: "airworthiness_cert",   label: "Airworthiness certificate (Form 8100-2)" },
+  { key: "logbook_review",       label: "Logbook review — airframe, engine, prop" },
+  { key: "annual",               label: "Most recent annual inspection sign-off" },
+  { key: "ad_sb",                label: "AD / SB compliance status (A&P/IA)" },
+  { key: "wb",                   label: "Current weight & balance" },
+  { key: "337s",                 label: "FAA Form 337s (major repairs / alterations)" },
+  { key: "prebuy_report",        label: "Pre-buy inspection report" },
+  { key: "escrow_instructions",  label: "Escrow & funds-flow instructions" },
+  { key: "lien_release",         label: "Lien release (if applicable)" },
+  { key: "insurance_binder",     label: "Hull + liability insurance binder" },
+  { key: "ferry_permit",         label: "Ferry permit (if non-airworthy)" },
+];
+
 export default function TransactionRoom() {
   const { id } = useParams<{ id: string }>();
+  const [docCategory, setDocCategory] = useState<"boat" | "auto" | "aircraft">("boat");
   const [steps, setSteps] = useState<Step[]>(DEMO_STEPS);
-  const [docCategory, setDocCategory] = useState<"boat" | "auto">("boat");
   const [checked, setChecked] = useState<Record<string, boolean>>({
     title: true,
     bill_of_sale: false,
   });
+
+  // When the user toggles to aircraft, swap in the 10-step aviation timeline.
+  useEffect(() => {
+    if (docCategory === "aircraft") {
+      setSteps(AIRCRAFT_STEPS);
+    } else if (steps === AIRCRAFT_STEPS || steps.some((s) => s.key === "loi" || s.key === "ferry")) {
+      setSteps(DEMO_STEPS);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docCategory]);
 
   useEffect(() => {
     setMeta({
@@ -90,7 +132,11 @@ export default function TransactionRoom() {
     );
   }
 
-  const docs = docCategory === "boat" ? BOAT_DOCS : AUTO_DOCS;
+  const docs = docCategory === "boat"
+    ? BOAT_DOCS
+    : docCategory === "auto"
+      ? AUTO_DOCS
+      : AIRCRAFT_DOCS;
 
   return (
     <div className="container-pad py-10 space-y-8">
@@ -200,10 +246,12 @@ function Timeline({ steps, onAdvance }: { steps: Step[]; onAdvance: (key: string
   );
 }
 
+type TxnDocCategory = "boat" | "auto" | "aircraft";
+
 interface DocChecklistProps {
   docs: { key: string; label: string }[];
-  category: "boat" | "auto";
-  onCategory: (c: "boat" | "auto") => void;
+  category: TxnDocCategory;
+  onCategory: (c: TxnDocCategory) => void;
   checked: Record<string, boolean>;
   onToggle: (key: string) => void;
 }
@@ -219,7 +267,7 @@ function DocumentChecklist({ docs, category, onCategory, checked, onToggle }: Do
           <span className="text-xs font-mono text-muted-foreground">— {done}/{docs.length}</span>
         </div>
         <div className="flex gap-1 rounded-md border border-border p-1">
-          {(["boat", "auto"] as const).map((c) => (
+          {(["boat", "auto", "aircraft"] as const).map((c) => (
             <button
               key={c}
               type="button"

@@ -30,6 +30,18 @@ const CATEGORIES: { value: ServiceCategory; label: string }[] = [
   { value: "audio_shop", label: "Audio shop" },
   { value: "performance_shop", label: "Performance shop" },
   { value: "dock_service", label: "Dock service" },
+  // Aviation
+  { value: "ap_mechanic", label: "Aviation — A&P mechanic" },
+  { value: "ia_inspector", label: "Aviation — IA inspector" },
+  { value: "aviation_maintenance_shop", label: "Aviation — Maintenance shop" },
+  { value: "aircraft_broker", label: "Aviation — Aircraft broker" },
+  { value: "aircraft_lender", label: "Aviation — Aircraft lender" },
+  { value: "aviation_insurance", label: "Aviation — Insurance broker" },
+  { value: "aircraft_title_company", label: "Aviation — Title company" },
+  { value: "aircraft_escrow", label: "Aviation — Escrow partner" },
+  { value: "ferry_pilot", label: "Aviation — Ferry pilot" },
+  { value: "avionics_shop", label: "Aviation — Avionics shop" },
+  { value: "hangar_storage", label: "Aviation — Hangar / storage" },
 ];
 
 const Schema = z.object({
@@ -38,6 +50,10 @@ const Schema = z.object({
     "marine_mechanic", "auto_mechanic", "detailer", "transport",
     "inspector_surveyor", "insurance_agent", "lender", "storage",
     "marina", "wrap_shop", "audio_shop", "performance_shop", "dock_service",
+    "ap_mechanic", "ia_inspector", "aviation_maintenance_shop",
+    "aircraft_broker", "aircraft_lender", "aviation_insurance",
+    "aircraft_title_company", "aircraft_escrow", "ferry_pilot",
+    "avionics_shop", "hangar_storage",
   ]),
   description: z.string().optional(),
   website: z.string().url().optional().or(z.literal("")),

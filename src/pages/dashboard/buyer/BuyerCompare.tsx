@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { X, Anchor, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import type { Listing } from "@/types/database";
+import type { Listing, AircraftSpecs } from "@/types/database";
 import { useCompare } from "@/contexts/CompareContext";
 import { Button } from "@/components/ui/button";
 import { ListingPlaceholder } from "@/components/listings/ListingPlaceholder";
@@ -11,6 +11,7 @@ import { DealScoreBadge } from "@/components/listings/DealScoreBadge";
 import { TrustBadgeList } from "@/components/ui/TrustBadge";
 import { getListingBadges } from "@/lib/badges";
 import { calculateOwnershipCost } from "@/lib/ownershipCost";
+import { isAircraftCategory } from "@/lib/categories";
 import { setMeta } from "@/lib/seo";
 import { formatCents, formatNumber } from "@/lib/utils";
 
@@ -39,6 +40,27 @@ export default function BuyerCompare() {
     },
   });
 
+  // Aircraft specs for any aviation listings in the compare set
+  const aircraftIds = listings.filter((l) => isAircraftCategory(l.category)).map((l) => l.id);
+  const { data: aircraftSpecsList = [] } = useQuery<AircraftSpecs[]>({
+    queryKey: ["buyer-compare-aircraft-specs", aircraftIds.sort().join(",")],
+    enabled: aircraftIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("aircraft_specs")
+        .select("*")
+        .in("listing_id", aircraftIds);
+      if (error) throw error;
+      return (data ?? []) as AircraftSpecs[];
+    },
+  });
+  const specsByListing = new Map<string, AircraftSpecs>();
+  for (const s of aircraftSpecsList) specsByListing.set(s.listing_id, s);
+  function spec(l: Listing): AircraftSpecs | undefined {
+    return specsByListing.get(l.id);
+  }
+  const hasAircraft = aircraftIds.length > 0;
+
   if (ids.length === 0) {
     return (
       <div className="container-pad py-16 text-center">
@@ -61,22 +83,127 @@ export default function BuyerCompare() {
     { label: "Make", values: listings.map((l) => l.make) },
     { label: "Model", values: listings.map((l) => l.model) },
     {
-      label: "Hours / Mileage",
-      values: listings.map((l) =>
-        BOAT_CATS.has(l.category)
-          ? l.hours != null
-            ? `${formatNumber(l.hours)} hrs`
-            : null
-          : l.mileage != null
-          ? `${formatNumber(l.mileage)} mi`
-          : null,
-      ),
+      label: "Hours / Mileage / TT",
+      values: listings.map((l) => {
+        if (isAircraftCategory(l.category)) {
+          const s = spec(l);
+          const tt = s?.total_time ?? s?.total_time_hours;
+          return tt != null ? `${formatNumber(tt)} hrs TT` : null;
+        }
+        return BOAT_CATS.has(l.category)
+          ? l.hours != null ? `${formatNumber(l.hours)} hrs` : null
+          : l.mileage != null ? `${formatNumber(l.mileage)} mi` : null;
+      }),
     },
     {
       label: "Length",
       values: listings.map((l) => (l.length_ft != null ? `${l.length_ft} ft` : null)),
     },
     { label: "Engine HP", values: listings.map((l) => l.engine_hp) },
+    ...(hasAircraft
+      ? [
+          {
+            label: "Engine hours",
+            values: listings.map((l) => {
+              if (!isAircraftCategory(l.category)) return null;
+              const s = spec(l);
+              return s?.engine_hours != null
+                ? `${formatNumber(s.engine_hours)} hrs`
+                : null;
+            }),
+          },
+          {
+            label: "SMOH",
+            values: listings.map((l) => {
+              if (!isAircraftCategory(l.category)) return null;
+              const s = spec(l);
+              const smoh = s?.smoh ?? s?.smoh_hours;
+              return smoh != null ? `${formatNumber(smoh)} hrs` : null;
+            }),
+          },
+          {
+            label: "Seats",
+            values: listings.map((l) =>
+              isAircraftCategory(l.category) ? spec(l)?.seats ?? null : null,
+            ),
+          },
+          {
+            label: "Range (nm)",
+            values: listings.map((l) => {
+              const s = isAircraftCategory(l.category) ? spec(l) : undefined;
+              return s?.range_nm != null ? formatNumber(s.range_nm) : null;
+            }),
+          },
+          {
+            label: "Cruise (ktas)",
+            values: listings.map((l) => {
+              const s = isAircraftCategory(l.category) ? spec(l) : undefined;
+              return s?.cruise_speed_ktas != null ? formatNumber(s.cruise_speed_ktas) : null;
+            }),
+          },
+          {
+            label: "Useful load (lbs)",
+            values: listings.map((l) => {
+              const s = isAircraftCategory(l.category) ? spec(l) : undefined;
+              return s?.useful_load_lbs != null ? formatNumber(s.useful_load_lbs) : null;
+            }),
+          },
+          {
+            label: "Avionics",
+            values: listings.map((l) =>
+              isAircraftCategory(l.category) ? spec(l)?.avionics_suite ?? null : null,
+            ),
+          },
+          {
+            label: "Annual inspection",
+            values: listings.map((l) => {
+              const s = isAircraftCategory(l.category) ? spec(l) : undefined;
+              return s?.annual_inspection_date
+                ? new Date(s.annual_inspection_date).toLocaleDateString()
+                : null;
+            }),
+          },
+          {
+            label: "Logbooks complete",
+            values: listings.map((l) => {
+              if (!isAircraftCategory(l.category)) return null;
+              return spec(l)?.logbooks_complete ? "Yes" : "No";
+            }),
+          },
+          {
+            label: "Hangared",
+            values: listings.map((l) => {
+              if (!isAircraftCategory(l.category)) return null;
+              return spec(l)?.hangared ? "Yes" : "No";
+            }),
+          },
+          {
+            label: "Pre-buy ready",
+            values: listings.map((l) => {
+              if (!isAircraftCategory(l.category)) return null;
+              const v = spec(l)?.pre_buy_inspection_status;
+              if (!v) return "No";
+              return v.replace(/_/g, " ");
+            }),
+          },
+        ] as Row[]
+      : []),
+    ...(hasAircraft
+      ? [
+          {
+            label: "Financing partner ready",
+            values: listings.map((l) => (l.is_finance_partner ? "Yes" : "—")),
+          },
+          {
+            label: "Insurance partner ready",
+            values: listings.map((l) => (l.is_insurance_partner ? "Yes" : "—")),
+          },
+          {
+            label: "Escrow / title ready",
+            values: listings.map(() => "Verify with partner"),
+          },
+        ] as Row[]
+      : []),
     {
       label: "Location",
       values: listings.map((l) => [l.city, l.state].filter(Boolean).join(", ") || null),

@@ -21,7 +21,7 @@ function HeroFallback() {
           <span className="font-mono text-xs uppercase tracking-[0.32em]">{BRAND.name} marketplace</span>
         </div>
         <h1 className="mt-2 font-display text-4xl sm:text-5xl md:text-7xl leading-[1.05]">
-          Boats. Autos.
+          Boats. Autos. Aircraft.
           <br />
           <span className="text-brass-gradient">Serious buyers.</span>
         </h1>

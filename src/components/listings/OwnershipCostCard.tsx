@@ -3,8 +3,10 @@ import type { Listing } from "@/types/database";
 import {
   calculateOwnershipCost,
   DEFAULT_FINANCING,
+  AIRCRAFT_DEFAULT_FINANCING,
   type FinancingInputs,
 } from "@/lib/ownershipCost";
+import { isAircraftCategory } from "@/lib/categories";
 import { formatCents } from "@/lib/utils";
 
 function fmt(usd: number) {
@@ -16,7 +18,10 @@ interface Props {
 }
 
 export function OwnershipCostCard({ listing }: Props) {
-  const [inputs, setInputs] = useState<FinancingInputs>(DEFAULT_FINANCING);
+  const isAircraft = isAircraftCategory(listing.category);
+  const [inputs, setInputs] = useState<FinancingInputs>(
+    isAircraft ? AIRCRAFT_DEFAULT_FINANCING : DEFAULT_FINANCING,
+  );
   const result = useMemo(() => calculateOwnershipCost(listing, inputs), [listing, inputs]);
 
   if (!listing.price_cents) {
@@ -40,13 +45,24 @@ export function OwnershipCostCard({ listing }: Props) {
     );
   }
 
-  const rows: { label: string; value: number; muted?: boolean }[] = [
-    { label: "Loan payment", value: result.monthlyPayment },
-    { label: "Insurance", value: result.insuranceMonthly },
-    { label: "Storage / dock", value: result.storageMonthly, muted: result.storageMonthly === 0 },
-    { label: "Maintenance", value: result.maintenanceMonthly },
-    { label: "Fuel", value: result.fuelMonthly, muted: result.fuelMonthly === 0 },
-  ].filter((r) => r.value > 0 || !r.muted);
+  const rows: { label: string; value: number; muted?: boolean }[] = isAircraft
+    ? [
+        { label: "Loan payment", value: result.monthlyPayment },
+        { label: "Insurance (hull + liability)", value: result.insuranceMonthly },
+        { label: "Hangar / tie-down", value: result.storageMonthly },
+        { label: "Annual inspection", value: result.aircraft?.annualInspectionMonthly ?? 0 },
+        { label: "Maintenance reserve", value: result.maintenanceMonthly },
+        { label: "Engine reserve", value: result.aircraft?.engineReserveMonthly ?? 0 },
+        { label: "Avionics reserve", value: result.aircraft?.avionicsReserveMonthly ?? 0 },
+        { label: "Fuel", value: result.fuelMonthly },
+      ]
+    : [
+        { label: "Loan payment", value: result.monthlyPayment },
+        { label: "Insurance", value: result.insuranceMonthly },
+        { label: "Storage / dock", value: result.storageMonthly, muted: result.storageMonthly === 0 },
+        { label: "Maintenance", value: result.maintenanceMonthly },
+        { label: "Fuel", value: result.fuelMonthly, muted: result.fuelMonthly === 0 },
+      ].filter((r) => r.value > 0 || !r.muted);
 
   return (
     <div className="glass-card p-5 space-y-4">
@@ -120,8 +136,36 @@ export function OwnershipCostCard({ listing }: Props) {
         ))}
       </ul>
 
+      {isAircraft && result.aircraft && (
+        <div className="rounded-md border border-border bg-secondary/30 p-3 space-y-1.5">
+          <div className="eyebrow !text-[10px]">One-time costs (not in monthly)</div>
+          <ul className="text-xs space-y-1">
+            <li className="flex items-center justify-between">
+              <span className="text-muted-foreground">Pre-buy inspection</span>
+              <span className="font-mono">{fmt(result.aircraft.prebuyOneTime)}</span>
+            </li>
+            <li className="flex items-center justify-between">
+              <span className="text-muted-foreground">Ferry / delivery</span>
+              <span className="font-mono">{fmt(result.aircraft.ferryOneTime)}</span>
+            </li>
+            {result.aircraft.transitionTrainingOneTime > 0 && (
+              <li className="flex items-center justify-between">
+                <span className="text-muted-foreground">Transition training (placeholder)</span>
+                <span className="font-mono">{fmt(result.aircraft.transitionTrainingOneTime)}</span>
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
       <p className="text-[11px] text-muted-foreground/80">
         Estimates are for planning only. Actual costs vary by lender, region, usage, and condition.
+        {isAircraft && (
+          <>
+            {" "}TradeWind does not verify insurance, hangar contracts, or financing —
+            confirm rates with a real aviation broker / lender.
+          </>
+        )}{" "}
         Get a real quote via <span className="text-brass-400">Financing</span>,{" "}
         <span className="text-brass-400">Insurance</span>, and{" "}
         <span className="text-brass-400">Inspection</span> partners.

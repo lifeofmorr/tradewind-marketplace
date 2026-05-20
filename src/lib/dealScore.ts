@@ -1,4 +1,4 @@
-import type { Listing, ListingCategory } from "@/types/database";
+import type { Listing, ListingCategory, AircraftSpecs } from "@/types/database";
 
 /**
  * Heuristic deal-score model. Pure function — runs client-side.
@@ -56,8 +56,14 @@ const CATEGORY_AVG_PRICE_CENTS: Record<ListingCategory, number> = {
   aircraft_twin_engine: 75_000_000,
   aircraft_turboprop: 380_000_000,
   aircraft_jet: 850_000_000,
+  aircraft_very_light_jet: 290_000_000,
   aircraft_helicopter: 110_000_000,
   aircraft_vintage: 35_000_000,
+  aircraft_experimental: 18_000_000,
+  aircraft_amphibious: 35_000_000,
+  aircraft_lsa: 18_000_000,
+  aircraft_parts: 1_500_000,
+  aviation_services: 0,
 };
 
 const HOURS_RANGE = { fresh: 200, fair: 800, high: 1500 };
@@ -194,3 +200,103 @@ export function calculateDealScore(listing: Listing): DealScoreResult {
   return { score, label, color, reasons };
 }
 
+
+// ─── Aircraft-aware deal score ───────────────────────────────────────────────
+
+/**
+ * Aircraft-aware deal score — layers aviation-specific signals on top of the
+ * base heuristic. Total time, engine hours, annual inspection currency,
+ * logbook completeness, and avionics modernity all materially affect aircraft
+ * resale value.
+ *
+ * Falls back to calculateDealScore() if no specs are provided so this stays
+ * safe to call from anywhere.
+ */
+export function calculateAircraftDealScore(
+  listing: Listing,
+  spec: AircraftSpecs | null | undefined,
+): DealScoreResult {
+  const base = calculateDealScore(listing);
+  if (!spec) return base;
+
+  let { score } = base;
+  const reasons = [...base.reasons];
+
+  // Total time — vintage / experimental excluded from these heuristics
+  const tt = spec.total_time ?? spec.total_time_hours;
+  if (tt != null) {
+    if (tt < 1500) {
+      score += 6;
+      reasons.push("Low total time");
+    } else if (tt > 7500) {
+      score -= 6;
+      reasons.push("High total time");
+    }
+  }
+
+  // Engine hours vs TBO
+  const tbo = spec.tbo ?? spec.tbo_hours;
+  if (tbo && spec.engine_hours != null) {
+    const remaining = 1 - spec.engine_hours / tbo;
+    if (remaining > 0.6) {
+      score += 8;
+      reasons.push("Lots of engine life remaining");
+    } else if (remaining < 0.2) {
+      score -= 10;
+      reasons.push("Engine near or past TBO");
+    }
+  }
+
+  // Annual inspection currency
+  if (spec.annual_inspection_date) {
+    const months = (Date.now() - new Date(spec.annual_inspection_date).getTime())
+      / (1000 * 60 * 60 * 24 * 30);
+    if (months < 12) {
+      score += 4;
+      reasons.push("Annual current");
+    } else if (months >= 14) {
+      score -= 8;
+      reasons.push("Annual overdue");
+    }
+  }
+
+  // Logbooks
+  if (spec.logbooks_complete) {
+    score += 4;
+    reasons.push("Logbooks complete");
+  } else {
+    score -= 6;
+    reasons.push("Logbooks partial / unverified");
+  }
+
+  // Avionics modernity (rough heuristic — names + ADS-B)
+  const av = (spec.avionics_suite ?? "").toLowerCase();
+  if (av.includes("g1000") || av.includes("g3000") || av.includes("g3x") || av.includes("nxi") || av.includes("perspective")) {
+    score += 5;
+    reasons.push("Modern glass panel");
+  }
+  if (spec.adsb || spec.ads_b) {
+    score += 2;
+  } else {
+    score -= 6;
+    reasons.push("No ADS-B Out");
+  }
+
+  // Damage history
+  if (spec.damage_history && spec.damage_history.trim().length > 0
+      && !/none|no known/i.test(spec.damage_history)) {
+    score -= 10;
+    reasons.push("Damage history disclosed");
+  }
+
+  // Pre-buy already passed bumps confidence
+  if (spec.pre_buy_inspection_status === "passed"
+      || spec.pre_buy_inspection_status === "completed") {
+    score += 6;
+    reasons.push("Pre-buy completed");
+  }
+
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  const { label, color } = labelForScore(score);
+  return { score, label, color, reasons };
+}

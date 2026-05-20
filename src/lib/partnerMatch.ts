@@ -13,14 +13,20 @@ export interface MatchedProvider {
 }
 
 const REQUEST_CATEGORY_MAP: Record<string, ServiceCategory[]> = {
-  financing: ["lender"],
-  insurance: ["insurance_agent"],
-  inspection: ["inspector_surveyor"],
-  transport: ["transport"],
+  financing: ["lender", "aircraft_lender"],
+  insurance: ["insurance_agent", "aviation_insurance"],
+  inspection: ["inspector_surveyor", "ia_inspector", "ap_mechanic"],
+  transport: ["transport", "ferry_pilot"],
   service: [
     "marine_mechanic", "auto_mechanic", "detailer", "wrap_shop",
     "audio_shop", "performance_shop", "dock_service", "storage", "marina",
+    "ap_mechanic", "aviation_maintenance_shop", "avionics_shop", "hangar_storage",
   ],
+  aviation_prebuy: ["ia_inspector", "ap_mechanic", "aviation_maintenance_shop"],
+  aviation_escrow: ["aircraft_escrow", "aircraft_title_company"],
+  aviation_ferry:  ["ferry_pilot"],
+  aviation_avionics: ["avionics_shop"],
+  aviation_hangar: ["hangar_storage"],
   concierge: [],
 };
 
