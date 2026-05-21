@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getAuthedUser } from "../_shared/auth.ts";
 
 /**
  * Partner Quote Request handler.
@@ -8,10 +9,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  * and title_verification partner types. Stores in partner_quote_requests table.
  * In sandbox mode (default), simulates a partner quote response.
  * When real partner APIs are connected, routes to the appropriate provider.
+ *
+ * Auth: requires a valid Supabase JWT. The authenticated user is recorded as
+ * the request owner — body-supplied user_id is ignored.
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  const user = await getAuthedUser(req);
+  if (!user) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized — sign in to request a partner quote." }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
   try {
@@ -19,19 +31,29 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, serviceKey);
 
-    const { partner_type, listing_id, user_id, details } = await req.json();
+    const { partner_type, listing_id, details } = await req.json();
 
-    if (!partner_type || !user_id) {
+    if (!partner_type) {
       return new Response(
-        JSON.stringify({ error: "partner_type and user_id required" }),
+        JSON.stringify({ error: "partner_type required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Insert request
+    const ALLOWED_TYPES = new Set([
+      "lender", "insurance", "transport", "inspector", "escrow", "title_verification",
+    ]);
+    if (!ALLOWED_TYPES.has(partner_type)) {
+      return new Response(
+        JSON.stringify({ error: `Unknown partner_type '${partner_type}'.` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Insert request — use authenticated user id, never trust body
     const { data: request, error } = await sb
       .from("partner_quote_requests")
-      .insert({ user_id, listing_id, partner_type, details: details ?? {} })
+      .insert({ user_id: user.id, listing_id, partner_type, details: details ?? {} })
       .select()
       .single();
 
