@@ -25,7 +25,7 @@ Extract a structured intake the human concierge can act on, and propose the next
 
 Output ONLY JSON:
 {
-  "category": "boat|performance_boat|yacht|center_console|car|truck|exotic|classic|powersports|rv",
+  "category": "boat|performance_boat|yacht|center_console|car|truck|exotic|classic|powersports|rv|aircraft_single_engine|aircraft_twin_engine|aircraft_turboprop|aircraft_very_light_jet|aircraft_jet|aircraft_helicopter|aircraft_vintage|aircraft_experimental|aircraft_amphibious|aircraft_lsa",
   "budget_min_cents": int,
   "budget_max_cents": int,
   "desired_features": [string],

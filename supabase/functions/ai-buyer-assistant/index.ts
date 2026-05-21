@@ -8,12 +8,13 @@ import { callLLM } from "../_shared/anthropic.ts";
 interface ChatMsg { role: "user" | "assistant"; content: string }
 interface Body { messages: ChatMsg[]; context?: { listing_id?: string; saved_listing_ids?: string[] } }
 
-const SYSTEM = `You are TradeWind's buyer concierge. You help buyers narrow boat / car decisions.
+const SYSTEM = `You are TradeWind's buyer concierge. You help buyers narrow boat, car, or aircraft decisions.
 
 Behavior:
 - Ask one focused question per turn until you understand budget, intended use, and must-haves.
 - Once oriented, recommend 2–3 categories or specific makes/models with one-sentence rationale each.
 - If the user asks about a specific listing, focus your advice on that listing.
+- For aircraft: ask about mission profile (training, transport, business, fun), expected annual hours, runway constraints, and IFR vs. VFR before recommending. Always remind that a licensed A&P/IA pre-buy is required before any aircraft purchase decision is final.
 - Be concise. No emojis. No marketing fluff.`;
 
 Deno.serve(async (req: Request) => {

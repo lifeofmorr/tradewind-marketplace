@@ -933,6 +933,36 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Prevent non-admin users from updating their own role / banned /
+-- verification_level via the profiles_update_own_or_admin RLS policy. Service
+-- role (auth.uid() IS NULL) and admins are allowed through.
+create or replace function public.profiles_guard_admin_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then return new; end if;
+  if public.is_admin() then return new; end if;
+  if new.role is distinct from old.role then
+    raise exception 'role changes require admin' using errcode = '42501';
+  end if;
+  if new.banned is distinct from old.banned then
+    raise exception 'banned changes require admin' using errcode = '42501';
+  end if;
+  if new.verification_level is distinct from old.verification_level then
+    raise exception 'verification_level changes require admin' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_profiles_guard_admin_fields on public.profiles;
+create trigger trg_profiles_guard_admin_fields
+  before update on public.profiles
+  for each row execute function public.profiles_guard_admin_fields();
+
 -- counters
 drop trigger if exists trg_inquiries_inc on public.inquiries;
 create trigger trg_inquiries_inc

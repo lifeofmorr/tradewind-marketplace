@@ -22,7 +22,7 @@ interface Estimate {
   rationale: string;
 }
 
-const SYSTEM = `You are TradeWind's pricing estimator for boats and autos.
+const SYSTEM = `You are TradeWind's pricing estimator for boats, autos, and aircraft.
 
 Use your knowledge of typical US private/dealer pricing as of the model year through today.
 Output a single JSON object with realistic CENTS values:
@@ -33,6 +33,7 @@ Output a single JSON object with realistic CENTS values:
 - rationale (1–2 sentence explanation of the range and key drivers)
 
 For boats older than 10 years, condition and engine hours dominate. For autos older than 5 years, mileage dominates. State affects salt/no-salt for boats and tax/regulation for exotics.
+For aircraft, the key drivers are total airframe time, SMOH (since major overhaul) on engine(s), avionics suite (G1000/G3000, Garmin GTN, NXi upgrades), damage history, and annual / AD compliance currency. Engine time and avionics matter far more than calendar age. Treat the mileage_or_hours field as airframe TT for aircraft.
 
 Output ONLY JSON.`;
 
@@ -46,8 +47,10 @@ Deno.serve(async (req: Request) => {
   }
 
   const isBoat = ["boat","performance_boat","yacht","center_console"].includes(body.category);
+  const isAircraft = body.category.startsWith("aircraft_");
+  const hoursLabel = isAircraft ? "Total time (hrs)" : isBoat ? "Hours" : "Mileage";
   const user = `Category: ${body.category}\nMake: ${body.make}\nModel: ${body.model}\nYear: ${body.year}\n` +
-    (body.mileage_or_hours != null ? `${isBoat ? "Hours" : "Mileage"}: ${body.mileage_or_hours}\n` : "") +
+    (body.mileage_or_hours != null ? `${hoursLabel}: ${body.mileage_or_hours}\n` : "") +
     (body.state ? `State: ${body.state}\n` : "");
 
   try {

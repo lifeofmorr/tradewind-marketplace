@@ -33,6 +33,12 @@ Common fraud signals on a high-ticket marketplace:
 - Offers above asking price sight-unseen
 - Shipper/agent intermediary scams
 
+For aircraft inquiries specifically, also weigh:
+- Refusal to use a licensed aircraft escrow / title company
+- Resistance to a pre-buy inspection by an independent A&P/IA
+- Vague or missing N-number / serial, or asking only about logbooks
+- "I'll fly out tomorrow" sight-unseen with same-day wire
+
 Recommended action: allow (score < 30), review (30–70), block (> 70).
 
 Output ONLY JSON: { "score": int, "signals": [string], "recommended_action": "allow"|"review"|"block" }.`;
