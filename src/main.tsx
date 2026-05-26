@@ -6,7 +6,10 @@ import App from "./App";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CompareProvider } from "./contexts/CompareContext";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
+import { initTelemetry } from "./lib/telemetry";
 import "./index.css";
+
+initTelemetry();
 
 const queryClient = new QueryClient({
   defaultOptions: {
