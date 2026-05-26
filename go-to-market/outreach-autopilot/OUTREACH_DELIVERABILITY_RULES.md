@@ -10,10 +10,42 @@ deliverability rule wins**.
 
 ---
 
+## 0. CURRENT STATUS — PAUSED for new unverified sends (as of 2026-05-26)
+
+After the 2026-05-26 batch (6 sent, 2 bounced) hit a **33% bounce rate**,
+the outreach system is on **a verified-only footing** until further notice.
+
+**What is paused:**
+- All NEW sends to leads whose `email_verification_status` is
+  `unverified`, `bounced`, `invalid`, or `do_not_email`.
+- The daily build queue (`build-daily-queue`) is filtered to
+  `email_verification_status IN ('verified','likely_valid')` — un-verified
+  leads cannot enter the queue.
+
+**What is still allowed (heavily capped):**
+| Track | Daily cap | Notes |
+|-------|-----------|-------|
+| New verified-lead sends | **3 / day, max** | Only `verified` or `likely_valid` rows. Founder approves each draft. |
+| Follow-ups to delivered leads | **4 / day, max** | Only to leads with `status='contacted'`, no reply received, not opted out. |
+
+**Resume criteria (must hold ALL of the following before lifting the pause):**
+1. **All target contacts verified.** Every lead in the queue has
+   `email_verification_status IN ('verified','likely_valid')`. No exceptions.
+2. **7-day bounce rate < 10%.** Measured by the rolling SQL in Rule 7.
+3. **No new bounces for 5 consecutive send days.**
+4. Founder has reviewed at least one batch of corrected contacts (Bounce
+   Recovery Pack) and signed off.
+
+Once those four are true, we step back into the "Warm-up" lane below (3–5
+emails/day) — **not** straight back to steady-state.
+
+---
+
 ## 1. Daily send limits
 
 | Phase | Daily limit | When |
 |-------|-------------|------|
+| **Verified-only (current)** | **3 verified new + 4 follow-ups / day** | Active as of 2026-05-26 after the 33% bounce-rate incident. See Rule 0. |
 | Warm-up | 3–5 emails / day | First 2 weeks from `don@lifeofmorr.com` or any new sender domain. |
 | Steady-state | 10–15 emails / day | Only after 2 weeks of clean delivery (bounce rate < 5%, no spam complaints). |
 | Scale review | 25 / day max | Only with founder approval and a documented reply rate baseline. |
@@ -23,23 +55,37 @@ is no business reason to push higher during private beta.
 
 ---
 
-## 2. Email verification before sending
+## 2. Email verification before sending — REQUIRED
 
-Every email address gets verified before it is queued for send. Verification
-means at least ONE of:
+Every email address must be verified **before any send**. Verification is
+tracked explicitly in `outreach_leads.email_verification_status`:
 
-1. The address appears on the company's own public website (contact page,
-   team page, footer). This is the gold standard.
-2. The address was confirmed live by a reply on a prior touch (LinkedIn,
-   phone, contact form).
+| Status | Meaning | Can the queue send? |
+|--------|---------|---------------------|
+| `verified` | Replied to a prior message, or confirmed live by a paid verification service. | Yes. |
+| `likely_valid` | Address appears on the company's own public website (contact, team, or footer page). Gold standard for cold leads. | Yes. |
+| `unverified` | Sourced from a third-party aggregator / guess pattern / unknown. | **No.** Queue refuses to draft. |
+| `bounced` | Hard-bounced on a prior send. Address itself is poison forever. | **No.** Queue refuses to draft. |
+| `invalid` | Known-invalid (syntax error, parked domain, role address we won't ethically send to). | **No.** Queue refuses to draft. |
+| `do_not_email` | Opted out, legal hold, or any other ethical / compliance hold. | **No.** Queue refuses to draft. |
+
+The `build-daily-queue` edge function enforces this with an explicit REST
+filter (`email_verification_status=in.(verified,likely_valid)`) **and** a
+defensive client-side re-check. There is no legitimate path that drafts a
+message for an un-verified address.
 
 Addresses sourced from third-party data aggregators (RocketReach, ZoomInfo,
 Apollo, Hunter "guess" formats) are **not enough** on their own. They are
 acceptable as a *starting point* for a website-verification or LinkedIn
 check, but never a direct send target.
 
-If verification fails, the lead goes to `next_action='verify_contact'` and
-out of the queue.
+If a lead is added without verification, its row gets the default
+`email_verification_status='unverified'`. It stays out of the queue until
+a human:
+
+1. Confirms the address on the company's own site → set to `likely_valid`.
+2. Confirms via a reply → set to `verified`.
+3. Determines the address is bad → set to `invalid` or `do_not_email`.
 
 ---
 

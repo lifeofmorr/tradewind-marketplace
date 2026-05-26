@@ -74,6 +74,18 @@ interface OutreachLead {
   do_not_contact: boolean;
   notes: string | null;
   next_action: string | null;
+  email_verification_status:
+    | "verified"
+    | "likely_valid"
+    | "unverified"
+    | "bounced"
+    | "invalid"
+    | "do_not_email"
+    | null;
+  email_verification_source: string | null;
+  email_verified_at: string | null;
+  bounce_reason: string | null;
+  invalid_email_address: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -193,13 +205,49 @@ function priorityBadge(p: number) {
 
 function statusBadge(lead: OutreachLead) {
   if (lead.do_not_contact) return <Badge variant="bad">DNC</Badge>;
+  if (lead.status === "bounced") return <Badge variant="bad">Bounced</Badge>;
   if (lead.beta_invited) return <Badge variant="accent">Beta invited</Badge>;
   if (lead.demo_booked) return <Badge variant="accent">Demo booked</Badge>;
   if (lead.status === "replied") return <Badge variant="good">Replied</Badge>;
+  if (lead.status === "contacted") return <Badge variant="good">Contacted</Badge>;
   if (lead.status === "sent") return <Badge>Sent</Badge>;
   if (lead.status === "approved") return <Badge variant="accent">Approved</Badge>;
   if (lead.status === "drafted") return <Badge>Draft</Badge>;
   return <Badge>New</Badge>;
+}
+
+function verificationBadge(lead: OutreachLead) {
+  const v = lead.email_verification_status ?? "unverified";
+  switch (v) {
+    case "verified":
+      return <Badge variant="good" title="Address replied or paid-verified">Verified</Badge>;
+    case "likely_valid":
+      return <Badge variant="good" title="Published on the company's own website">Likely valid</Badge>;
+    case "bounced":
+      return <Badge variant="bad" title="Previously bounced — do not resend">Bounced</Badge>;
+    case "invalid":
+      return <Badge variant="bad" title="Known-invalid address">Invalid</Badge>;
+    case "do_not_email":
+      return <Badge variant="bad" title="Opted out or compliance hold">Do not email</Badge>;
+    default:
+      return <Badge variant="accent" title="Unverified — manual approval required before send">Unverified</Badge>;
+  }
+}
+
+function bouncedWarningBadge() {
+  return (
+    <Badge variant="bad" className="gap-1" title="This address bounced previously. Do not resend.">
+      <AlertTriangle className="h-3 w-3" /> Previously bounced — do not resend
+    </Badge>
+  );
+}
+
+function unverifiedWarningBadge() {
+  return (
+    <Badge variant="accent" className="gap-1" title="Unverified address — manual approval required before send.">
+      <AlertTriangle className="h-3 w-3" /> Unverified — manual approval required
+    </Badge>
+  );
 }
 
 function todayIso() { return new Date().toISOString().slice(0, 10); }
@@ -261,6 +309,32 @@ export default function AdminOutreach() {
         .limit(200);
       if (error) throw error;
       return (data ?? []) as OutreachMessage[];
+    },
+  });
+
+  // Delivery / bounce metrics — separate query because draftMessages only
+  // pulls drafted+approved. Bounce rate needs sent/bounced/replied counts.
+  const { data: deliveryStats = { delivered: 0, bounced: 0 } } = useQuery({
+    queryKey: ["outreach-delivery-stats"],
+    queryFn: async (): Promise<{ delivered: number; bounced: number }> => {
+      const [deliveredRes, bouncedRes] = await Promise.all([
+        supabase
+          .from("outreach_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("direction", "outbound")
+          .in("status", ["sent", "replied"]),
+        supabase
+          .from("outreach_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("direction", "outbound")
+          .eq("status", "bounced"),
+      ]);
+      if (deliveredRes.error) throw deliveredRes.error;
+      if (bouncedRes.error) throw bouncedRes.error;
+      return {
+        delivered: deliveredRes.count ?? 0,
+        bounced: bouncedRes.count ?? 0,
+      };
     },
   });
 
@@ -350,8 +424,31 @@ export default function AdminOutreach() {
     const beta = leads.filter((l) => l.beta_invited).length;
     const replied = leads.filter((l) => l.status === "replied").length;
     const dnc = leads.filter((l) => l.do_not_contact).length;
-    return { total, highPriority, draftsPending, followUpsDue, demos, beta, replied, dnc };
-  }, [leads, draftMessages, followups]);
+
+    // ── Deliverability + verification KPIs ───────────────────────────────────
+    // Delivered = sent OR replied (the message landed). Bounced is bounced.
+    // Bounce rate is bounced / (delivered + bounced).
+    const delivered = deliveryStats.delivered;
+    const bounced = deliveryStats.bounced;
+    const denom = delivered + bounced;
+    const bounceRatePct = denom > 0 ? Math.round((bounced / denom) * 1000) / 10 : 0;
+
+    const verifiedLeads = leads.filter(
+      (l) => l.email_verification_status === "verified" || l.email_verification_status === "likely_valid",
+    ).length;
+    const unverifiedLeads = leads.filter(
+      (l) => !l.email_verification_status || l.email_verification_status === "unverified",
+    ).length;
+    const bouncedLeads = leads.filter((l) => l.email_verification_status === "bounced").length;
+
+    return {
+      total, highPriority, draftsPending, followUpsDue, demos, beta, replied, dnc,
+      delivered, bounced, bounceRatePct,
+      verified: verifiedLeads, unverified: unverifiedLeads, bouncedLeads,
+    };
+  }, [leads, deliveryStats, followups, draftMessages]);
+
+  const bounceRateHigh = stats.bounceRatePct > 15;
 
   async function updateLead(id: string, patch: Partial<OutreachLead>) {
     setActionBusy(true);
@@ -397,6 +494,7 @@ export default function AdminOutreach() {
       void qc.invalidateQueries({ queryKey: ["outreach-drafts"] });
       void qc.invalidateQueries({ queryKey: ["outreach-leads"] });
       void qc.invalidateQueries({ queryKey: ["outreach-followups"] });
+      void qc.invalidateQueries({ queryKey: ["outreach-delivery-stats"] });
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "Build queue failed");
     } finally {
@@ -423,6 +521,22 @@ export default function AdminOutreach() {
 
       <ComplianceBanner />
 
+      {bounceRateHigh && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300 flex items-start gap-2"
+        >
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <div>
+            <div className="font-display">Bounce rate is high ({stats.bounceRatePct}%).</div>
+            <div className="text-xs opacity-90 mt-0.5">
+              Verify contacts before sending. The daily queue is filtered to verified / likely-valid
+              leads only — see OUTREACH_DELIVERABILITY_RULES.md §0.
+            </div>
+          </div>
+        </div>
+      )}
+
       {actionError && (
         <div role="alert" className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           {actionError}
@@ -444,6 +558,24 @@ export default function AdminOutreach() {
         <Kpi label="Demos" value={stats.demos} />
         <Kpi label="Beta" value={stats.beta} />
         <Kpi label="DNC" value={stats.dnc} />
+      </div>
+
+      {/* Deliverability + verification KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        <Kpi label="Delivered" value={stats.delivered} />
+        <Kpi label="Bounced" value={stats.bounced} tone={stats.bounced > 0 ? "bad" : undefined} />
+        <Kpi
+          label="Bounce rate"
+          value={stats.bounceRatePct}
+          suffix="%"
+          tone={bounceRateHigh ? "bad" : stats.bounceRatePct > 5 ? "warn" : undefined}
+        />
+        <Kpi label="Verified" value={stats.verified} tone={stats.verified > 0 ? "good" : undefined} />
+        <Kpi
+          label="Unverified"
+          value={stats.unverified}
+          tone={stats.unverified > 0 ? "warn" : undefined}
+        />
       </div>
 
       {/* Top-level actions */}
@@ -577,11 +709,44 @@ function ComplianceBanner() {
 
 // ── small UI primitives ──────────────────────────────────────────────────────
 
-function Kpi({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+function Kpi({
+  label,
+  value,
+  highlight,
+  tone,
+  suffix,
+}: {
+  label: string;
+  value: number;
+  highlight?: boolean;
+  tone?: "good" | "warn" | "bad";
+  suffix?: string;
+}) {
+  const toneClasses =
+    tone === "good"
+      ? "border-emerald-500/40 bg-emerald-500/5"
+      : tone === "warn"
+        ? "border-brass-500/40 bg-brass-500/5"
+        : tone === "bad"
+          ? "border-red-500/40 bg-red-500/5"
+          : highlight
+            ? "border-brass-500/40 bg-brass-500/5"
+            : "border-border";
+  const valueColor =
+    tone === "good"
+      ? "text-emerald-300"
+      : tone === "warn"
+        ? "text-brass-400"
+        : tone === "bad"
+          ? "text-red-300"
+          : "";
   return (
-    <div className={`rounded-md border ${highlight ? "border-brass-500/40 bg-brass-500/5" : "border-border"} px-3 py-2`}>
+    <div className={`rounded-md border ${toneClasses} px-3 py-2`}>
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="font-mono text-lg">{value}</div>
+      <div className={`font-mono text-lg ${valueColor}`}>
+        {value}
+        {suffix ?? ""}
+      </div>
     </div>
   );
 }
@@ -669,6 +834,7 @@ function LeadsTable({ leads, loading, onOpen }: {
             <th className="text-left px-4 py-3">Priority</th>
             <th className="text-left px-4 py-3">Score</th>
             <th className="text-left px-4 py-3">Status</th>
+            <th className="text-left px-4 py-3">Verification</th>
             <th className="text-left px-4 py-3">Next action</th>
             <th className="text-left px-4 py-3">Follow-up</th>
             <th className="px-4 py-3 text-right">Actions</th>
@@ -678,18 +844,31 @@ function LeadsTable({ leads, loading, onOpen }: {
           {leads.map((l) => {
             const followUpDue = l.follow_up_date &&
               l.follow_up_date <= todayIso() && !l.do_not_contact && l.status !== "replied";
+            const v = l.email_verification_status ?? "unverified";
+            const rowTone =
+              v === "bounced" || v === "invalid" || v === "do_not_email"
+                ? "bg-red-500/5"
+                : v === "unverified"
+                  ? "bg-secondary/30"
+                  : "";
             return (
-              <tr key={l.id} className="border-t border-border hover:bg-secondary/40">
+              <tr key={l.id} className={`border-t border-border hover:bg-secondary/40 ${rowTone}`}>
                 <td className="px-4 py-3">
                   <div className="font-display">{l.company}</div>
                   <div className="text-xs text-muted-foreground">
                     {l.contact_name ?? "—"}{l.contact_role ? ` · ${l.contact_role}` : ""}
                   </div>
+                  {(v === "bounced" || v === "unverified") && (
+                    <div className="mt-1">
+                      {v === "bounced" ? bouncedWarningBadge() : unverifiedWarningBadge()}
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-xs text-muted-foreground">{l.vertical}</td>
                 <td className="px-4 py-3">{priorityBadge(l.priority)}</td>
                 <td className="px-4 py-3">{scoreBadge(l.lead_score)}</td>
                 <td className="px-4 py-3">{statusBadge(l)}</td>
+                <td className="px-4 py-3">{verificationBadge(l)}</td>
                 <td className="px-4 py-3 text-xs text-muted-foreground max-w-[180px] truncate">{l.next_action ?? "—"}</td>
                 <td className="px-4 py-3 text-xs">
                   {l.follow_up_date ? (

@@ -40,6 +40,7 @@ interface Lead {
   priority: number;
   lead_score: number;
   do_not_contact: boolean;
+  email_verification_status: string | null;
 }
 
 interface BuildOpts {
@@ -103,12 +104,16 @@ Deno.serve(async (req: Request) => {
 
   // 1) Pull candidates. RLS will enforce admin.
   // Skip leads contacted in the last 5 days (date_contacted) and DNC/replied/etc.
+  // VERIFIED-ONLY GATE: after the 2026-05-26 bounce rate of 33%, the queue
+  // refuses to draft for un-verified contacts. Only addresses confirmed on
+  // the company's own site (likely_valid) or replied-to (verified) qualify.
   const cutoff = daysFromNow(-5);
   const q = new URLSearchParams({
     select: "*",
     do_not_contact: "eq.false",
     or: `(date_contacted.is.null,date_contacted.lt.${cutoff})`,
     status: "in.(new,drafted,sent)",
+    email_verification_status: "in.(verified,likely_valid)",
     order: "priority.desc,lead_score.desc,updated_at.desc",
     limit: String(limit * 3),
   });
@@ -125,12 +130,22 @@ Deno.serve(async (req: Request) => {
   let drafted = 0;
   let followUpsCreated = 0;
   let skipped = 0;
+  let skippedUnverified = 0;
   let aiUsed = 0;
   let fallbackUsed = 0;
+
+  const VERIFIED_STATES = new Set(["verified", "likely_valid"]);
 
   const picked: Lead[] = [];
   for (const lead of allLeads) {
     if (picked.length >= limit) break;
+    // Defensive re-check of the verification gate. The REST filter above is
+    // the authoritative gate, but this guards against the column being
+    // missing on a stale deployment.
+    if (!VERIFIED_STATES.has(lead.email_verification_status ?? "")) {
+      skippedUnverified++;
+      continue;
+    }
     // skip if there's already a drafted message
     const draftCheck = await authedFetch(
       req,
@@ -308,8 +323,10 @@ Deno.serve(async (req: Request) => {
       fallback_used: fallbackUsed,
       follow_ups_created: followUpsCreated,
       skipped,
+      skipped_unverified: skippedUnverified,
       considered: allLeads.length,
       picked: picked.length,
+      verification_gate: "verified,likely_valid",
       errors,
       built_at: todayIso(),
     },
