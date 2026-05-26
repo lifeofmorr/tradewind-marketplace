@@ -112,6 +112,15 @@ export const TRADEWIND_APPS: ConnectedApp[] = [
     status: "active",
     accent: "from-slate-500/25 to-slate-700/10",
   },
+  {
+    id: "outreach-autopilot",
+    name: "Outreach Autopilot",
+    description: "Founder-led outreach: leads, drafts, demos, beta conversions.",
+    icon: Mail,
+    to: "/admin/outreach",
+    status: "active",
+    accent: "from-fuchsia-500/25 to-fuchsia-700/10",
+  },
 ];
 
 export type IntegrationCategory =

@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ListChecks, Inbox, Save, Users,
   ShieldAlert, CreditCard, FileText, Building2, Wrench, BarChart3,
   MessageSquare, Gavel, Star, Newspaper, BookOpen, Menu, X,
-  Code2, Upload,
+  Code2, Upload, Mail,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -64,6 +64,7 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { to: "/admin/content",        label: "Content",      icon: FileText },
     { to: "/admin/blog",           label: "Blog",         icon: BookOpen },
     { to: "/admin/market-reports", label: "Reports",      icon: Newspaper },
+    { to: "/admin/outreach",       label: "Outreach",     icon: Mail },
     { to: "/messages",             label: "Messages",     icon: MessageSquare },
   ],
 };
