@@ -16,6 +16,7 @@
 // JWT through to Supabase so RLS does the access check.
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { generateFallbackMessage } from "../_shared/outreach-fallback.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -52,6 +53,16 @@ function todayIso(): string {
 
 function daysFromNow(n: number): string {
   return new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Promise<Response> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function authedFetch(req: Request, path: string, init: RequestInit = {}): Promise<Response> {
@@ -114,6 +125,8 @@ Deno.serve(async (req: Request) => {
   let drafted = 0;
   let followUpsCreated = 0;
   let skipped = 0;
+  let aiUsed = 0;
+  let fallbackUsed = 0;
 
   const picked: Lead[] = [];
   for (const lead of allLeads) {
@@ -134,34 +147,75 @@ Deno.serve(async (req: Request) => {
   }
 
   // 2) For each picked lead, generate a message and insert as draft.
+  //    Try AI generator first; on any failure (network, no credits, 5xx,
+  //    timeout, empty body), fall back to the deterministic template. The
+  //    queue must never end the day empty just because the AI was down.
   for (const lead of picked) {
     try {
-      const genRes = await fetch(`${SUPABASE_URL}/functions/v1/generate-outreach-message`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: auth,
-          apikey: SUPABASE_ANON,
-        },
-        body: JSON.stringify({
-          lead,
-          channel,
-          vertical: lead.vertical,
-        }),
-      });
-      if (!genRes.ok) {
-        const txt = await genRes.text();
-        errors.push(`${lead.company}: generate failed (${genRes.status}) ${txt.slice(0, 200)}`);
-        continue;
-      }
-      const gen = await genRes.json() as {
+      let gen: {
         subject?: string;
         body: string;
         personalization_note?: string;
         cta?: string;
         quality_score?: number;
         ai_tone_risk_score?: number;
-      };
+      } | null = null;
+      let generation_source: "ai" | "fallback_template" = "ai";
+      let aiFallbackReason: string | null = null;
+
+      try {
+        const genRes = await fetchWithTimeout(
+          `${SUPABASE_URL}/functions/v1/generate-outreach-message`,
+          {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              authorization: auth,
+              apikey: SUPABASE_ANON,
+            },
+            body: JSON.stringify({ lead, channel, vertical: lead.vertical }),
+          },
+          20_000,
+        );
+        if (!genRes.ok) {
+          const txt = await genRes.text();
+          aiFallbackReason = `AI generator returned ${genRes.status}: ${txt.slice(0, 200)}`;
+        } else {
+          const ai = await genRes.json() as typeof gen;
+          if (!ai || !ai.body || ai.body.trim().length === 0) {
+            aiFallbackReason = "AI generator returned empty body";
+          } else {
+            gen = ai;
+          }
+        }
+      } catch (aiErr) {
+        aiFallbackReason = `AI generator threw: ${(aiErr as Error).message}`;
+      }
+
+      if (!gen) {
+        // Fallback path — deterministic templates, no network needed.
+        const fb = generateFallbackMessage(
+          {
+            company: lead.company,
+            contact_name: lead.contact_name,
+            contact_role: lead.contact_role,
+            vertical: lead.vertical,
+            location: lead.location,
+            website: lead.website,
+            personalization_angle: lead.personalization_angle,
+            pain_point: lead.pain_point,
+            recommended_offer: lead.recommended_offer,
+          },
+          channel,
+        );
+        gen = {
+          subject: fb.subject,
+          body: fb.body,
+          personalization_note: fb.personalization_note,
+          cta: fb.cta,
+        };
+        generation_source = "fallback_template";
+      }
 
       const insertRes = await authedFetch(req, "/rest/v1/outreach_messages", {
         method: "POST",
@@ -177,6 +231,10 @@ Deno.serve(async (req: Request) => {
           cta: gen.cta ?? null,
           quality_score: gen.quality_score ?? null,
           ai_tone_risk_score: gen.ai_tone_risk_score ?? null,
+          generation_source,
+          meta: aiFallbackReason
+            ? { ai_fallback_reason: aiFallbackReason }
+            : {},
         }),
       });
       if (!insertRes.ok) {
@@ -225,11 +283,19 @@ Deno.serve(async (req: Request) => {
           metadata: {
             channel,
             message_id: messageId,
+            generation_source,
+            ai_fallback_reason: aiFallbackReason,
             ai_tone_risk_score: gen.ai_tone_risk_score ?? null,
             quality_score: gen.quality_score ?? null,
           },
         }),
       });
+
+      if (generation_source === "fallback_template") {
+        fallbackUsed++;
+      } else {
+        aiUsed++;
+      }
     } catch (e) {
       errors.push(`${lead.company}: ${(e as Error).message}`);
     }
@@ -238,6 +304,8 @@ Deno.serve(async (req: Request) => {
   return jsonResponse(
     {
       drafted,
+      ai_used: aiUsed,
+      fallback_used: fallbackUsed,
       follow_ups_created: followUpsCreated,
       skipped,
       considered: allLeads.length,
