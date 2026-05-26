@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
@@ -10,6 +10,14 @@ import {
   CircleSlash,
   Send,
   StickyNote,
+  Plus,
+  Upload,
+  Sparkles,
+  AlertTriangle,
+  ShieldCheck,
+  Linkedin,
+  Instagram,
+  X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,11 +27,22 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { setMeta } from "@/lib/seo";
+import { checkMessageQuality } from "@/lib/outreach/messageQuality";
+import {
+  previewOutreachCsv,
+  formatLinkedInDM,
+  formatInstagramDM,
+  type ParsedLead,
+  type ImportPreview,
+} from "@/lib/outreach/csvImport";
+
+// ── types ────────────────────────────────────────────────────────────────────
 
 interface OutreachLead {
   id: string;
@@ -39,6 +58,7 @@ interface OutreachLead {
   location: string | null;
   lead_source: string | null;
   lead_score: number;
+  priority: number;
   personalization_angle: string | null;
   pain_point: string | null;
   recommended_offer: string | null;
@@ -67,10 +87,54 @@ interface OutreachMessage {
   body: string;
   status: "drafted" | "approved" | "sent" | "bounced" | "replied" | "failed";
   approved: boolean;
+  approved_at: string | null;
+  personalization_note: string | null;
+  cta: string | null;
+  quality_score: number | null;
+  ai_tone_risk_score: number | null;
   sent_at: string | null;
   received_at: string | null;
   created_at: string;
 }
+
+interface OutreachFollowup {
+  id: string;
+  lead_id: string;
+  message_id: string | null;
+  followup_number: number;
+  due_date: string;
+  body: string | null;
+  status: "due" | "sent" | "skipped" | "cancelled";
+  created_at: string;
+}
+
+interface OutreachReply {
+  id: string;
+  lead_id: string;
+  channel: string;
+  reply_text: string;
+  reply_type: string | null;
+  recommended_response: string | null;
+  status: "new" | "reviewed" | "responded" | "archived";
+  created_at: string;
+}
+
+interface BetaPipelineRow {
+  id: string;
+  lead_id: string;
+  beta_type: string | null;
+  stage: "interested" | "demo_booked" | "demo_completed" | "beta_invited" | "onboarded" | "paid_candidate" | "declined";
+  demo_date: string | null;
+  feedback_notes: string | null;
+  real_listing_candidate: boolean;
+  partner_candidate: boolean;
+  interested_in_paying: boolean;
+  next_step: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── constants ────────────────────────────────────────────────────────────────
 
 const VERTICALS = [
   "all",
@@ -91,22 +155,40 @@ const VERTICALS = [
 ] as const;
 
 const STATUSES = [
-  "all",
-  "new",
-  "drafted",
-  "approved",
-  "sent",
-  "replied",
-  "demo_booked",
-  "beta_invited",
-  "do_not_contact",
+  "all", "new", "drafted", "approved", "sent", "replied",
+  "demo_booked", "beta_invited", "do_not_contact",
 ] as const;
+
+const PRIORITIES = ["all", "1", "2", "3", "4", "5"] as const;
+
+const BETA_STAGES = [
+  "interested", "demo_booked", "demo_completed",
+  "beta_invited", "onboarded", "paid_candidate", "declined",
+] as const;
+
+const BETA_OFFER = [
+  "60-day free beta access",
+  "Free public business profile",
+  "First 10 listings free",
+  "Founder support (text/email Don directly)",
+  "Influence the roadmap",
+  "Locked-in early-adopter rate after beta",
+];
+
+// ── helpers ──────────────────────────────────────────────────────────────────
 
 function scoreBadge(score: number) {
   if (score === 5) return <Badge variant="accent">Score 5</Badge>;
   if (score === 4) return <Badge variant="good">Score 4</Badge>;
   if (score === 3) return <Badge>Score 3</Badge>;
   return <Badge variant="bad">Score {score}</Badge>;
+}
+
+function priorityBadge(p: number) {
+  if (p >= 5) return <Badge variant="accent">P1</Badge>;
+  if (p === 4) return <Badge variant="good">P2</Badge>;
+  if (p === 3) return <Badge>P3</Badge>;
+  return <Badge variant="bad">P{6 - p}</Badge>;
 }
 
 function statusBadge(lead: OutreachLead) {
@@ -120,16 +202,28 @@ function statusBadge(lead: OutreachLead) {
   return <Badge>New</Badge>;
 }
 
+function todayIso() { return new Date().toISOString().slice(0, 10); }
+function daysFromNow(n: number) { return new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10); }
+
+// ── main component ───────────────────────────────────────────────────────────
+
 export default function AdminOutreach() {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const [tab, setTab] = useState<"leads" | "queue" | "followups" | "replies" | "beta">("leads");
   const [vertical, setVertical] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [hideDnc, setHideDnc] = useState(true);
   const [search, setSearch] = useState("");
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [copyHint, setCopyHint] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [buildingQueue, setBuildingQueue] = useState(false);
+  const [buildSummary, setBuildSummary] = useState<string | null>(null);
 
   useEffect(() => {
     setMeta({ title: "Admin · outreach", description: "TradeWind outreach autopilot." });
@@ -147,17 +241,84 @@ export default function AdminOutreach() {
       const { data, error } = await supabase
         .from("outreach_leads")
         .select("*")
+        .order("priority", { ascending: false })
         .order("lead_score", { ascending: false })
         .order("updated_at", { ascending: false })
-        .limit(500);
+        .limit(1000);
       if (error) throw error;
       return (data ?? []) as OutreachLead[];
     },
   });
 
+  const { data: draftMessages = [] } = useQuery({
+    queryKey: ["outreach-drafts"],
+    queryFn: async (): Promise<OutreachMessage[]> => {
+      const { data, error } = await supabase
+        .from("outreach_messages")
+        .select("*")
+        .in("status", ["drafted", "approved"])
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as OutreachMessage[];
+    },
+  });
+
+  const { data: followups = [] } = useQuery({
+    queryKey: ["outreach-followups"],
+    queryFn: async (): Promise<OutreachFollowup[]> => {
+      const { data, error } = await supabase
+        .from("outreach_followups")
+        .select("*")
+        .eq("status", "due")
+        .order("due_date", { ascending: true })
+        .limit(200);
+      if (error) {
+        // table may not exist yet on the running env — return empty
+        console.warn("[outreach] followups query failed:", error.message);
+        return [];
+      }
+      return (data ?? []) as OutreachFollowup[];
+    },
+  });
+
+  const { data: replies = [] } = useQuery({
+    queryKey: ["outreach-replies"],
+    queryFn: async (): Promise<OutreachReply[]> => {
+      const { data, error } = await supabase
+        .from("outreach_replies")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) {
+        console.warn("[outreach] replies query failed:", error.message);
+        return [];
+      }
+      return (data ?? []) as OutreachReply[];
+    },
+  });
+
+  const { data: betaRows = [] } = useQuery({
+    queryKey: ["outreach-beta"],
+    queryFn: async (): Promise<BetaPipelineRow[]> => {
+      const { data, error } = await supabase
+        .from("beta_pipeline")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(200);
+      if (error) {
+        console.warn("[outreach] beta_pipeline query failed:", error.message);
+        return [];
+      }
+      return (data ?? []) as BetaPipelineRow[];
+    },
+  });
+
   const filtered = useMemo(() => {
     return leads.filter((l) => {
+      if (hideDnc && l.do_not_contact) return false;
       if (vertical !== "all" && l.vertical !== vertical) return false;
+      if (priorityFilter !== "all" && l.priority !== Number(priorityFilter)) return false;
       if (status !== "all") {
         if (status === "do_not_contact" && !l.do_not_contact) return false;
         if (status === "demo_booked" && !l.demo_booked) return false;
@@ -172,28 +333,25 @@ export default function AdminOutreach() {
       if (search.trim()) {
         const q = search.toLowerCase();
         const haystack = [
-          l.company, l.contact_name, l.email, l.vertical, l.personalization_angle, l.notes,
+          l.company, l.contact_name, l.email, l.vertical, l.personalization_angle, l.notes, l.location,
         ].filter(Boolean).join(" ").toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
     });
-  }, [leads, vertical, status, search]);
+  }, [leads, vertical, status, priorityFilter, hideDnc, search]);
 
   const stats = useMemo(() => {
-    const all = leads.length;
-    const sent = leads.filter((l) => l.status === "sent" || l.status === "replied").length;
-    const replied = leads.filter((l) => l.status === "replied").length;
+    const total = leads.length;
+    const highPriority = leads.filter((l) => l.priority >= 4 && !l.do_not_contact).length;
+    const draftsPending = draftMessages.filter((m) => m.status === "drafted").length;
+    const followUpsDue = followups.filter((f) => f.due_date <= todayIso()).length;
     const demos = leads.filter((l) => l.demo_booked).length;
     const beta = leads.filter((l) => l.beta_invited).length;
+    const replied = leads.filter((l) => l.status === "replied").length;
     const dnc = leads.filter((l) => l.do_not_contact).length;
-    const followUpDue = leads.filter((l) => {
-      if (l.do_not_contact || l.status === "replied") return false;
-      if (!l.follow_up_date) return false;
-      return l.follow_up_date <= new Date().toISOString().slice(0, 10);
-    }).length;
-    return { all, sent, replied, demos, beta, dnc, followUpDue };
-  }, [leads]);
+    return { total, highPriority, draftsPending, followUpsDue, demos, beta, replied, dnc };
+  }, [leads, draftMessages, followups]);
 
   async function updateLead(id: string, patch: Partial<OutreachLead>) {
     setActionBusy(true);
@@ -208,6 +366,12 @@ export default function AdminOutreach() {
         targetId: id,
         metadata: { fields: Object.keys(patch) },
       });
+      // also log to outreach_activity_log (best-effort)
+      void supabase.from("outreach_activity_log").insert({
+        lead_id: id,
+        action: "lead_updated",
+        metadata: { fields: Object.keys(patch) },
+      });
       void qc.invalidateQueries({ queryKey: ["outreach-leads"] });
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "Could not update lead");
@@ -216,9 +380,33 @@ export default function AdminOutreach() {
     }
   }
 
-  function copy(text: string) {
+  async function buildTodaysQueue() {
+    setBuildingQueue(true);
+    setBuildSummary(null);
+    setActionError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("build-daily-queue", {
+        body: { limit: 10, channel: "email" },
+      });
+      if (error) throw error;
+      const r = data as { drafted: number; follow_ups_created: number; skipped: number; errors: string[] };
+      setBuildSummary(
+        `Drafted ${r.drafted} · Skipped ${r.skipped} · Follow-ups ${r.follow_ups_created}` +
+        (r.errors?.length ? ` · Errors ${r.errors.length}` : ""),
+      );
+      void qc.invalidateQueries({ queryKey: ["outreach-drafts"] });
+      void qc.invalidateQueries({ queryKey: ["outreach-leads"] });
+      void qc.invalidateQueries({ queryKey: ["outreach-followups"] });
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Build queue failed");
+    } finally {
+      setBuildingQueue(false);
+    }
+  }
+
+  function copy(text: string, label = "Copied to clipboard") {
     void navigator.clipboard.writeText(text);
-    setCopyHint("Copied to clipboard");
+    setCopyHint(label);
   }
 
   const openLead = leads.find((l) => l.id === openLeadId) ?? null;
@@ -229,145 +417,110 @@ export default function AdminOutreach() {
         <div className="eyebrow">Admin · outreach autopilot</div>
         <h1 className="section-title">Outreach</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          Founder-led outreach: find leads, score them, write personalized messages, approve, track, convert to beta.
-          Voice rules and sequences live in <span className="font-mono">go-to-market/outreach-autopilot/</span>.
+          Founder-led outreach: find leads, draft personalized messages, approve, send, track replies, convert to beta.
         </p>
       </div>
+
+      <ComplianceBanner />
 
       {actionError && (
         <div role="alert" className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           {actionError}
         </div>
       )}
-
-      {/* Stats strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-        <Stat label="Leads" value={stats.all} />
-        <Stat label="Sent" value={stats.sent} />
-        <Stat label="Replied" value={stats.replied} />
-        <Stat label="Demos" value={stats.demos} />
-        <Stat label="Beta" value={stats.beta} />
-        <Stat label="Follow-up due" value={stats.followUpDue} highlight={stats.followUpDue > 0} />
-        <Stat label="DNC" value={stats.dnc} />
-      </div>
-
-      {/* Filters */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <Label htmlFor="search" className="text-xs">Search</Label>
-          <Input
-            id="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Company, contact, angle…"
-          />
-        </div>
-        <div>
-          <Label htmlFor="vertical" className="text-xs">Vertical</Label>
-          <select
-            id="vertical"
-            value={vertical}
-            onChange={(e) => setVertical(e.target.value)}
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-          >
-            {VERTICALS.map((v) => (
-              <option key={v} value={v}>{v === "all" ? "All verticals" : v}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <Label htmlFor="status" className="text-xs">Status</Label>
-          <select
-            id="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>{s === "all" ? "Any status" : s.replace(/_/g, " ")}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-end">
-          <p className="text-xs text-muted-foreground">
-            Showing <span className="text-foreground font-mono">{filtered.length}</span> of {leads.length}
-          </p>
-        </div>
-      </div>
-
-      {/* Table */}
-      {isLoading ? (
-        <div className="rounded-lg border border-border overflow-hidden">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-14 skeleton border-b border-border last:border-0" />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <EmptyState
-          icon={Mail}
-          title="No outreach leads yet"
-          body="Add leads via Supabase (outreach_leads table) or run the daily Claude prompt to populate the CRM."
-        />
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="text-left px-4 py-3">Company</th>
-                <th className="text-left px-4 py-3">Vertical</th>
-                <th className="text-left px-4 py-3">Score</th>
-                <th className="text-left px-4 py-3">Status</th>
-                <th className="text-left px-4 py-3">Follow-up</th>
-                <th className="text-left px-4 py-3">Angle</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((l) => {
-                const followUpDue =
-                  l.follow_up_date && l.follow_up_date <= new Date().toISOString().slice(0, 10) &&
-                  !l.do_not_contact && l.status !== "replied";
-                return (
-                  <tr key={l.id} className="border-t border-border hover:bg-secondary/40">
-                    <td className="px-4 py-3">
-                      <div className="font-display">{l.company}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {l.contact_name ?? "—"}
-                        {l.contact_role ? ` · ${l.contact_role}` : ""}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{l.vertical}</td>
-                    <td className="px-4 py-3">{scoreBadge(l.lead_score)}</td>
-                    <td className="px-4 py-3">{statusBadge(l)}</td>
-                    <td className="px-4 py-3 text-xs">
-                      {l.follow_up_date ? (
-                        <span className={followUpDue ? "text-brass-400 font-mono" : "text-muted-foreground font-mono"}>
-                          {l.follow_up_date}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 max-w-xs">
-                      <div className="text-xs text-muted-foreground line-clamp-2">
-                        {l.personalization_angle ?? "—"}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <Button size="sm" variant="outline" onClick={() => setOpenLeadId(l.id)}>
-                        Open
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {buildSummary && (
+        <div role="status" className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+          Queue built · {buildSummary}
         </div>
       )}
 
+      {/* KPI strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+        <Kpi label="Leads" value={stats.total} />
+        <Kpi label="High priority" value={stats.highPriority} highlight={stats.highPriority > 0} />
+        <Kpi label="Drafts pending" value={stats.draftsPending} highlight={stats.draftsPending > 0} />
+        <Kpi label="Follow-ups due" value={stats.followUpsDue} highlight={stats.followUpsDue > 0} />
+        <Kpi label="Replied" value={stats.replied} />
+        <Kpi label="Demos" value={stats.demos} />
+        <Kpi label="Beta" value={stats.beta} />
+        <Kpi label="DNC" value={stats.dnc} />
+      </div>
+
+      {/* Top-level actions */}
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => setShowAdd(true)}>
+          <Plus className="h-3 w-3" /> Add lead
+        </Button>
+        <Button variant="outline" onClick={() => setShowImport(true)}>
+          <Upload className="h-3 w-3" /> CSV import
+        </Button>
+        <Button variant="outline" disabled={buildingQueue} onClick={() => void buildTodaysQueue()}>
+          <Sparkles className="h-3 w-3" /> {buildingQueue ? "Building…" : "Build today's queue"}
+        </Button>
+      </div>
+
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <TabsList>
+          <TabsTrigger value="leads">Leads ({leads.length})</TabsTrigger>
+          <TabsTrigger value="queue">Daily queue ({stats.draftsPending})</TabsTrigger>
+          <TabsTrigger value="followups">Follow-ups ({stats.followUpsDue})</TabsTrigger>
+          <TabsTrigger value="replies">Replies ({replies.length})</TabsTrigger>
+          <TabsTrigger value="beta">Beta pipeline ({betaRows.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="leads" className="space-y-4">
+          <Filters
+            search={search} setSearch={setSearch}
+            vertical={vertical} setVertical={setVertical}
+            status={status} setStatus={setStatus}
+            priorityFilter={priorityFilter} setPriorityFilter={setPriorityFilter}
+            hideDnc={hideDnc} setHideDnc={setHideDnc}
+            shown={filtered.length} total={leads.length}
+          />
+          <LeadsTable
+            leads={filtered}
+            loading={isLoading}
+            onOpen={(id) => setOpenLeadId(id)}
+          />
+        </TabsContent>
+
+        <TabsContent value="queue" className="space-y-3">
+          <QueueView
+            drafts={draftMessages}
+            leads={leads}
+            onOpen={(id) => setOpenLeadId(id)}
+            onCopy={copy}
+          />
+        </TabsContent>
+
+        <TabsContent value="followups" className="space-y-3">
+          <FollowupsView
+            followups={followups}
+            leads={leads}
+            onOpen={(id) => setOpenLeadId(id)}
+          />
+        </TabsContent>
+
+        <TabsContent value="replies" className="space-y-3">
+          <RepliesView
+            replies={replies}
+            leads={leads}
+            onOpen={(id) => setOpenLeadId(id)}
+            onCopy={copy}
+          />
+        </TabsContent>
+
+        <TabsContent value="beta" className="space-y-3">
+          <BetaPipelineView
+            betaRows={betaRows}
+            leads={leads}
+            onOpen={(id) => setOpenLeadId(id)}
+          />
+        </TabsContent>
+      </Tabs>
+
       <Dialog open={!!openLead} onOpenChange={(o) => { if (!o) setOpenLeadId(null); }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           {openLead && (
             <LeadDetail
               lead={openLead}
@@ -376,6 +529,22 @@ export default function AdminOutreach() {
               actionBusy={actionBusy}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAdd} onOpenChange={setShowAdd}>
+        <DialogContent className="max-w-xl">
+          <AddLeadForm onClose={() => setShowAdd(false)} onSaved={() => qc.invalidateQueries({ queryKey: ["outreach-leads"] })} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showImport} onOpenChange={setShowImport}>
+        <DialogContent className="max-w-3xl">
+          <CsvImportPanel
+            existingEmails={new Set(leads.map((l) => (l.email ?? "").toLowerCase()).filter(Boolean))}
+            onClose={() => setShowImport(false)}
+            onImported={() => qc.invalidateQueries({ queryKey: ["outreach-leads"] })}
+          />
         </DialogContent>
       </Dialog>
 
@@ -391,7 +560,24 @@ export default function AdminOutreach() {
   );
 }
 
-function Stat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+// ── compliance banner ─────────────────────────────────────────────────────────
+
+function ComplianceBanner() {
+  return (
+    <div className="rounded-md border border-border bg-secondary/40 px-4 py-3 text-xs text-muted-foreground flex items-start gap-3">
+      <ShieldCheck className="h-4 w-4 text-brass-400 mt-0.5 shrink-0" />
+      <div>
+        <div className="font-medium text-foreground">Outreach compliance</div>
+        Outreach uses public business contacts only. No auto-sending. All messages require approval.
+        Opt-out is respected immediately, follow-ups stop on negative replies, and DNC leads are excluded from queues.
+      </div>
+    </div>
+  );
+}
+
+// ── small UI primitives ──────────────────────────────────────────────────────
+
+function Kpi({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
     <div className={`rounded-md border ${highlight ? "border-brass-500/40 bg-brass-500/5" : "border-border"} px-3 py-2`}>
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
@@ -400,17 +586,693 @@ function Stat({ label, value, highlight }: { label: string; value: number; highl
   );
 }
 
+function Filters(props: {
+  search: string; setSearch: (s: string) => void;
+  vertical: string; setVertical: (s: string) => void;
+  status: string; setStatus: (s: string) => void;
+  priorityFilter: string; setPriorityFilter: (s: string) => void;
+  hideDnc: boolean; setHideDnc: (b: boolean) => void;
+  shown: number; total: number;
+}) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div>
+        <Label htmlFor="search" className="text-xs">Search</Label>
+        <Input id="search" value={props.search} onChange={(e) => props.setSearch(e.target.value)} placeholder="Company, contact, angle…" />
+      </div>
+      <div>
+        <Label htmlFor="vertical" className="text-xs">Vertical</Label>
+        <select id="vertical" value={props.vertical} onChange={(e) => props.setVertical(e.target.value)}
+          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+          {VERTICALS.map((v) => <option key={v} value={v}>{v === "all" ? "All verticals" : v}</option>)}
+        </select>
+      </div>
+      <div>
+        <Label htmlFor="status" className="text-xs">Status</Label>
+        <select id="status" value={props.status} onChange={(e) => props.setStatus(e.target.value)}
+          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+          {STATUSES.map((s) => <option key={s} value={s}>{s === "all" ? "Any status" : s.replace(/_/g, " ")}</option>)}
+        </select>
+      </div>
+      <div>
+        <Label htmlFor="priority" className="text-xs">Priority</Label>
+        <select id="priority" value={props.priorityFilter} onChange={(e) => props.setPriorityFilter(e.target.value)}
+          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+          {PRIORITIES.map((p) => <option key={p} value={p}>{p === "all" ? "Any priority" : `P=${p}`}</option>)}
+        </select>
+      </div>
+      <div className="flex items-end gap-3">
+        <label className="flex items-center gap-2 text-xs">
+          <input type="checkbox" checked={props.hideDnc} onChange={(e) => props.setHideDnc(e.target.checked)} />
+          Hide DNC
+        </label>
+        <p className="text-xs text-muted-foreground ml-auto">
+          <span className="text-foreground font-mono">{props.shown}</span> / {props.total}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── leads table ──────────────────────────────────────────────────────────────
+
+function LeadsTable({ leads, loading, onOpen }: {
+  leads: OutreachLead[];
+  loading: boolean;
+  onOpen: (id: string) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="rounded-lg border border-border overflow-hidden">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-14 skeleton border-b border-border last:border-0" />
+        ))}
+      </div>
+    );
+  }
+  if (leads.length === 0) {
+    return (
+      <EmptyState
+        icon={Mail}
+        title="No outreach leads"
+        body="Add a lead manually, paste a CSV, or run today's queue once you have leads."
+      />
+    );
+  }
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <table className="w-full text-sm">
+        <thead className="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">
+          <tr>
+            <th className="text-left px-4 py-3">Company</th>
+            <th className="text-left px-4 py-3">Vertical</th>
+            <th className="text-left px-4 py-3">Priority</th>
+            <th className="text-left px-4 py-3">Score</th>
+            <th className="text-left px-4 py-3">Status</th>
+            <th className="text-left px-4 py-3">Next action</th>
+            <th className="text-left px-4 py-3">Follow-up</th>
+            <th className="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {leads.map((l) => {
+            const followUpDue = l.follow_up_date &&
+              l.follow_up_date <= todayIso() && !l.do_not_contact && l.status !== "replied";
+            return (
+              <tr key={l.id} className="border-t border-border hover:bg-secondary/40">
+                <td className="px-4 py-3">
+                  <div className="font-display">{l.company}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {l.contact_name ?? "—"}{l.contact_role ? ` · ${l.contact_role}` : ""}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{l.vertical}</td>
+                <td className="px-4 py-3">{priorityBadge(l.priority)}</td>
+                <td className="px-4 py-3">{scoreBadge(l.lead_score)}</td>
+                <td className="px-4 py-3">{statusBadge(l)}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground max-w-[180px] truncate">{l.next_action ?? "—"}</td>
+                <td className="px-4 py-3 text-xs">
+                  {l.follow_up_date ? (
+                    <span className={followUpDue ? "text-brass-400 font-mono" : "text-muted-foreground font-mono"}>
+                      {l.follow_up_date}
+                    </span>
+                  ) : <span className="text-muted-foreground">—</span>}
+                </td>
+                <td className="px-4 py-3 text-right whitespace-nowrap">
+                  <Button size="sm" variant="outline" onClick={() => onOpen(l.id)}>Open</Button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ── queue view ───────────────────────────────────────────────────────────────
+
+function QueueView({ drafts, leads, onOpen, onCopy }: {
+  drafts: OutreachMessage[];
+  leads: OutreachLead[];
+  onOpen: (id: string) => void;
+  onCopy: (text: string, label?: string) => void;
+}) {
+  const leadMap = useMemo(() => {
+    const m = new Map<string, OutreachLead>();
+    leads.forEach((l) => m.set(l.id, l));
+    return m;
+  }, [leads]);
+
+  if (drafts.length === 0) {
+    return (
+      <EmptyState
+        icon={Sparkles}
+        title="Queue is empty"
+        body='Click "Build today’s queue" to draft messages for the top 10 highest-priority leads.'
+      />
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {drafts.map((m) => {
+        const lead = leadMap.get(m.lead_id);
+        if (!lead) return null;
+        return (
+          <DraftCard key={m.id} message={m} lead={lead} onOpen={onOpen} onCopy={onCopy} />
+        );
+      })}
+    </div>
+  );
+}
+
+function DraftCard({ message, lead, onOpen, onCopy }: {
+  message: OutreachMessage;
+  lead: OutreachLead;
+  onOpen: (id: string) => void;
+  onCopy: (text: string, label?: string) => void;
+}) {
+  const quality = checkMessageQuality(message.body);
+  const risk = message.ai_tone_risk_score ?? quality.ai_tone_risk_score;
+  const riskBadge = risk >= 50
+    ? <Badge variant="bad">AI risk {risk}</Badge>
+    : risk >= 25
+      ? <Badge variant="accent">AI risk {risk}</Badge>
+      : <Badge variant="good">AI risk {risk}</Badge>;
+
+  return (
+    <div className="rounded-md border border-border p-4 space-y-2 bg-background">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <div className="font-display">{lead.company}</div>
+          <div className="text-xs text-muted-foreground">
+            {lead.contact_name ?? "—"} · {lead.vertical} · {message.channel}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {priorityBadge(lead.priority)}
+          {riskBadge}
+          <Badge>{message.status}</Badge>
+        </div>
+      </div>
+      {message.subject && (
+        <div className="text-xs"><span className="text-muted-foreground">Subject:</span> {message.subject}</div>
+      )}
+      <pre className="text-xs whitespace-pre-wrap font-sans leading-relaxed rounded bg-secondary/40 p-3 max-h-56 overflow-y-auto">
+        {message.body}
+      </pre>
+      {quality.issues.length > 0 && (
+        <div className="text-[11px] text-amber-400 flex items-start gap-1">
+          <AlertTriangle className="h-3 w-3 mt-0.5" />
+          <span>{quality.issues.join(" · ")}</span>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Button size="sm" variant="outline" onClick={() => onCopy(
+          message.subject ? `Subject: ${message.subject}\n\n${message.body}` : message.body,
+          "Email copied",
+        )}>
+          <Mail className="h-3 w-3" /> Copy email
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => onCopy(formatLinkedInDM(message.body), "LinkedIn DM copied")}>
+          <Linkedin className="h-3 w-3" /> Copy LinkedIn DM
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => onCopy(formatInstagramDM(message.body), "Instagram DM copied")}>
+          <Instagram className="h-3 w-3" /> Copy Instagram DM
+        </Button>
+        <Button size="sm" variant="outline" disabled title="Connect Gmail API to enable">
+          Create Gmail draft
+        </Button>
+        <Button size="sm" onClick={() => onOpen(lead.id)}>Open lead</Button>
+      </div>
+    </div>
+  );
+}
+
+// ── follow-ups view ──────────────────────────────────────────────────────────
+
+function FollowupsView({ followups, leads, onOpen }: {
+  followups: OutreachFollowup[];
+  leads: OutreachLead[];
+  onOpen: (id: string) => void;
+}) {
+  const leadMap = useMemo(() => {
+    const m = new Map<string, OutreachLead>();
+    leads.forEach((l) => m.set(l.id, l));
+    return m;
+  }, [leads]);
+
+  if (followups.length === 0) {
+    return <EmptyState icon={Calendar} title="No follow-ups due" body="Follow-ups appear here as soon as draft messages are approved." />;
+  }
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <table className="w-full text-sm">
+        <thead className="bg-secondary text-xs uppercase tracking-wider text-muted-foreground">
+          <tr>
+            <th className="text-left px-4 py-3">Due</th>
+            <th className="text-left px-4 py-3">Company</th>
+            <th className="text-left px-4 py-3">#</th>
+            <th className="text-left px-4 py-3">Status</th>
+            <th className="px-4 py-3 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {followups.map((f) => {
+            const lead = leadMap.get(f.lead_id);
+            const overdue = f.due_date <= todayIso();
+            return (
+              <tr key={f.id} className="border-t border-border hover:bg-secondary/40">
+                <td className={`px-4 py-3 font-mono text-xs ${overdue ? "text-brass-400" : ""}`}>{f.due_date}</td>
+                <td className="px-4 py-3">{lead?.company ?? "(deleted)"}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">#{f.followup_number}</td>
+                <td className="px-4 py-3"><Badge>{f.status}</Badge></td>
+                <td className="px-4 py-3 text-right">
+                  {lead && <Button size="sm" variant="outline" onClick={() => onOpen(lead.id)}>Open lead</Button>}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ── replies view ─────────────────────────────────────────────────────────────
+
+function RepliesView({ replies, leads, onOpen, onCopy }: {
+  replies: OutreachReply[];
+  leads: OutreachLead[];
+  onOpen: (id: string) => void;
+  onCopy: (text: string, label?: string) => void;
+}) {
+  const leadMap = useMemo(() => {
+    const m = new Map<string, OutreachLead>();
+    leads.forEach((l) => m.set(l.id, l));
+    return m;
+  }, [leads]);
+
+  if (replies.length === 0) {
+    return <EmptyState icon={MessageSquareReply} title="No replies yet" body="Paste a reply on a lead and classify it — recommendations appear here." />;
+  }
+  return (
+    <div className="space-y-3">
+      {replies.map((r) => {
+        const lead = leadMap.get(r.lead_id);
+        return (
+          <div key={r.id} className="rounded-md border border-border p-3 space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="text-sm font-display">{lead?.company ?? "(deleted)"}</div>
+              <div className="flex gap-2 items-center text-xs">
+                <Badge>{r.channel}</Badge>
+                {r.reply_type && <Badge variant="accent">{r.reply_type}</Badge>}
+                <span className="text-muted-foreground">{r.created_at.slice(0, 10)}</span>
+              </div>
+            </div>
+            <pre className="text-xs whitespace-pre-wrap font-sans line-clamp-4 bg-secondary/40 p-2 rounded">{r.reply_text}</pre>
+            {r.recommended_response && (
+              <div className="text-xs space-y-1">
+                <div className="text-muted-foreground uppercase tracking-wider text-[10px]">Recommended response</div>
+                <pre className="whitespace-pre-wrap font-sans bg-emerald-500/5 border border-emerald-500/20 rounded p-2">
+                  {r.recommended_response}
+                </pre>
+                <Button size="sm" variant="outline" onClick={() => onCopy(r.recommended_response ?? "", "Response copied")}>
+                  <Copy className="h-3 w-3" /> Copy response
+                </Button>
+              </div>
+            )}
+            {lead && <Button size="sm" onClick={() => onOpen(lead.id)}>Open lead</Button>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── beta pipeline view ───────────────────────────────────────────────────────
+
+function BetaPipelineView({ betaRows, leads, onOpen }: {
+  betaRows: BetaPipelineRow[];
+  leads: OutreachLead[];
+  onOpen: (id: string) => void;
+}) {
+  const leadMap = useMemo(() => {
+    const m = new Map<string, OutreachLead>();
+    leads.forEach((l) => m.set(l.id, l));
+    return m;
+  }, [leads]);
+
+  const grouped = useMemo(() => {
+    const g: Record<string, BetaPipelineRow[]> = {};
+    BETA_STAGES.forEach((s) => { g[s] = []; });
+    betaRows.forEach((b) => { (g[b.stage] ??= []).push(b); });
+    return g;
+  }, [betaRows]);
+
+  async function advance(row: BetaPipelineRow, next: BetaPipelineRow["stage"]) {
+    const { error } = await supabase.from("beta_pipeline").update({ stage: next }).eq("id", row.id);
+    if (!error) {
+      // best-effort: also update lead flags
+      const patch: Partial<OutreachLead> = {};
+      if (next === "demo_booked") patch.demo_booked = true;
+      if (next === "beta_invited") patch.beta_invited = true;
+      if (Object.keys(patch).length > 0) {
+        await supabase.from("outreach_leads").update(patch).eq("id", row.lead_id);
+      }
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md border border-border bg-secondary/30 p-4 text-xs space-y-1">
+        <div className="font-medium text-foreground">Beta offer terms</div>
+        <ul className="list-disc ml-4 text-muted-foreground space-y-0.5">
+          {BETA_OFFER.map((o) => <li key={o}>{o}</li>)}
+        </ul>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+        {BETA_STAGES.map((s) => (
+          <div key={s} className="rounded-md border border-border px-3 py-2">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.replace(/_/g, " ")}</div>
+            <div className="font-mono text-lg">{grouped[s]?.length ?? 0}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        {betaRows.length === 0 ? (
+          <EmptyState icon={UserPlus} title="No beta pipeline yet" body="When a lead replies positively, add them to the beta pipeline from the lead detail panel." />
+        ) : betaRows.map((b) => {
+          const lead = leadMap.get(b.lead_id);
+          const idx = BETA_STAGES.indexOf(b.stage);
+          const nextStage = idx >= 0 && idx < BETA_STAGES.length - 2 ? BETA_STAGES[idx + 1] : null;
+          return (
+            <div key={b.id} className="rounded-md border border-border p-3 flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <div className="font-display">{lead?.company ?? "(deleted)"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {b.stage.replace(/_/g, " ")} · {b.beta_type ?? "—"}
+                  {b.demo_date ? ` · demo ${b.demo_date.slice(0, 10)}` : ""}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {nextStage && (
+                  <Button size="sm" variant="outline" onClick={() => void advance(b, nextStage)}>
+                    Advance → {nextStage.replace(/_/g, " ")}
+                  </Button>
+                )}
+                {lead && <Button size="sm" onClick={() => onOpen(lead.id)}>Open lead</Button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── add lead form ────────────────────────────────────────────────────────────
+
+function AddLeadForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    company: "", contact_name: "", contact_role: "", vertical: "Boat Dealer",
+    email: "", phone: "", website: "", linkedin_url: "", instagram_url: "",
+    location: "", lead_source: "", personalization_angle: "",
+    pain_point: "", recommended_offer: "", notes: "",
+    priority: 3, lead_score: 3,
+  });
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function update<K extends keyof typeof form>(k: K, v: typeof form[K]) {
+    setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  async function save() {
+    setErr(null);
+    if (!form.company.trim()) { setErr("Company is required"); return; }
+    if (!form.vertical) { setErr("Vertical is required"); return; }
+    setBusy(true);
+    const payload = {
+      company: form.company.trim(),
+      contact_name: form.contact_name.trim() || null,
+      contact_role: form.contact_role.trim() || null,
+      vertical: form.vertical,
+      email: form.email.trim().toLowerCase() || null,
+      phone: form.phone.trim() || null,
+      website: form.website.trim() || null,
+      linkedin_url: form.linkedin_url.trim() || null,
+      instagram_url: form.instagram_url.trim() || null,
+      location: form.location.trim() || null,
+      lead_source: form.lead_source.trim() || null,
+      personalization_angle: form.personalization_angle.trim() || null,
+      pain_point: form.pain_point.trim() || null,
+      recommended_offer: form.recommended_offer.trim() || null,
+      notes: form.notes.trim() || null,
+      priority: form.priority,
+      lead_score: form.lead_score,
+      status: "new",
+    };
+    const { error } = await supabase.from("outreach_leads").insert(payload);
+    setBusy(false);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+    onSaved();
+    onClose();
+  }
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Add lead</DialogTitle>
+        <DialogDescription>One row in outreach_leads. Required: Company + Vertical.</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-3 max-h-[60vh] overflow-y-auto pr-1">
+        {err && <div role="alert" className="text-xs text-red-400">{err}</div>}
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Company *" value={form.company} onChange={(v) => update("company", v)} />
+          <div>
+            <Label className="text-xs">Vertical *</Label>
+            <select value={form.vertical} onChange={(e) => update("vertical", e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              {VERTICALS.filter((v) => v !== "all").map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+          </div>
+          <Field label="Contact name" value={form.contact_name} onChange={(v) => update("contact_name", v)} />
+          <Field label="Role" value={form.contact_role} onChange={(v) => update("contact_role", v)} />
+          <Field label="Email" value={form.email} onChange={(v) => update("email", v)} />
+          <Field label="Phone" value={form.phone} onChange={(v) => update("phone", v)} />
+          <Field label="Website" value={form.website} onChange={(v) => update("website", v)} />
+          <Field label="LinkedIn URL" value={form.linkedin_url} onChange={(v) => update("linkedin_url", v)} />
+          <Field label="Instagram URL" value={form.instagram_url} onChange={(v) => update("instagram_url", v)} />
+          <Field label="Location" value={form.location} onChange={(v) => update("location", v)} />
+          <Field label="Lead source" value={form.lead_source} onChange={(v) => update("lead_source", v)} />
+          <div>
+            <Label className="text-xs">Priority (1–5)</Label>
+            <Input type="number" min={1} max={5} value={form.priority}
+              onChange={(e) => update("priority", Math.max(1, Math.min(5, Number(e.target.value) || 3)))} />
+          </div>
+          <div>
+            <Label className="text-xs">Lead score (1–5)</Label>
+            <Input type="number" min={1} max={5} value={form.lead_score}
+              onChange={(e) => update("lead_score", Math.max(1, Math.min(5, Number(e.target.value) || 3)))} />
+          </div>
+        </div>
+        <div>
+          <Label className="text-xs">Personalization angle</Label>
+          <Textarea rows={2} value={form.personalization_angle}
+            onChange={(e) => update("personalization_angle", e.target.value)}
+            placeholder="One specific thing about this business worth mentioning." />
+        </div>
+        <div>
+          <Label className="text-xs">Pain point</Label>
+          <Textarea rows={2} value={form.pain_point} onChange={(e) => update("pain_point", e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Recommended offer</Label>
+          <Textarea rows={2} value={form.recommended_offer} onChange={(e) => update("recommended_offer", e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Notes</Label>
+          <Textarea rows={2} value={form.notes} onChange={(e) => update("notes", e.target.value)} />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
+        <Button onClick={() => void save()} disabled={busy}>{busy ? "Saving…" : "Save lead"}</Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Input value={value} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+// ── csv import panel ─────────────────────────────────────────────────────────
+
+function CsvImportPanel({ existingEmails, onClose, onImported }: {
+  existingEmails: Set<string>;
+  onClose: () => void;
+  onImported: () => void;
+}) {
+  const [text, setText] = useState("");
+  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const t = (reader.result as string) || "";
+      setText(t);
+      setPreview(previewOutreachCsv(t, existingEmails));
+    };
+    reader.readAsText(file);
+  }
+
+  function parseFromText() {
+    setPreview(previewOutreachCsv(text, existingEmails));
+  }
+
+  async function doImport(rows: ParsedLead[]) {
+    if (rows.length === 0) return;
+    setBusy(true);
+    setResult(null);
+    const chunks: ParsedLead[][] = [];
+    for (let i = 0; i < rows.length; i += 100) chunks.push(rows.slice(i, i + 100));
+    let inserted = 0;
+    let failed = 0;
+    for (const chunk of chunks) {
+      const { error } = await supabase.from("outreach_leads").insert(
+        chunk.map((r) => ({ ...r, status: "new", priority: 3, lead_score: 3 })),
+      );
+      if (error) failed += chunk.length;
+      else inserted += chunk.length;
+    }
+    setBusy(false);
+    setResult(`Imported ${inserted}, failed ${failed}.`);
+    if (inserted > 0) onImported();
+  }
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>CSV import</DialogTitle>
+        <DialogDescription>
+          Columns: Company, Contact, Role, Vertical, Email, Phone, Website, LinkedIn, Instagram, Location, Lead Source, Notes.
+          Required: Company + Vertical.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-3 max-h-[60vh] overflow-y-auto pr-1">
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="h-3 w-3" /> Choose CSV
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+          />
+          <Button size="sm" variant="outline" onClick={parseFromText} disabled={!text.trim()}>Parse pasted CSV</Button>
+        </div>
+        <Textarea rows={6} value={text} onChange={(e) => setText(e.target.value)} placeholder="Or paste CSV here…" />
+
+        {preview && (
+          <div className="space-y-2">
+            <div className="text-xs text-muted-foreground">
+              <span className="text-emerald-400">{preview.ok.length}</span> ok ·{" "}
+              <span className="text-amber-400">{preview.duplicates.length}</span> duplicates ·{" "}
+              <span className="text-red-400">{preview.errors.length}</span> errors
+            </div>
+            {preview.errors.length > 0 && (
+              <details className="text-xs text-red-300">
+                <summary className="cursor-pointer">Errors ({preview.errors.length})</summary>
+                <ul className="ml-4 list-disc">
+                  {preview.errors.slice(0, 30).map((e) => <li key={e.row}>row {e.row}: {e.reason}</li>)}
+                </ul>
+              </details>
+            )}
+            {preview.duplicates.length > 0 && (
+              <details className="text-xs text-amber-300">
+                <summary className="cursor-pointer">Duplicates ({preview.duplicates.length})</summary>
+                <ul className="ml-4 list-disc">
+                  {preview.duplicates.slice(0, 30).map((d) => <li key={d.row}>row {d.row}: {d.reason}</li>)}
+                </ul>
+              </details>
+            )}
+            {preview.ok.length > 0 && (
+              <div className="overflow-x-auto rounded border border-border max-h-64">
+                <table className="w-full text-xs">
+                  <thead className="bg-secondary text-muted-foreground">
+                    <tr>
+                      <th className="text-left px-2 py-1">Company</th>
+                      <th className="text-left px-2 py-1">Contact</th>
+                      <th className="text-left px-2 py-1">Vertical</th>
+                      <th className="text-left px-2 py-1">Email</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {preview.ok.slice(0, 20).map((r, i) => (
+                      <tr key={i} className="border-t border-border">
+                        <td className="px-2 py-1">{r.company}</td>
+                        <td className="px-2 py-1">{r.contact_name ?? "—"}</td>
+                        <td className="px-2 py-1">{r.vertical}</td>
+                        <td className="px-2 py-1">{r.email ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {preview.ok.length > 20 && <div className="px-2 py-1 text-muted-foreground">… and {preview.ok.length - 20} more</div>}
+              </div>
+            )}
+          </div>
+        )}
+
+        {result && <div className="text-xs text-emerald-400">{result}</div>}
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose} disabled={busy}>Close</Button>
+        <Button onClick={() => void doImport(preview?.ok ?? [])} disabled={busy || !preview?.ok.length}>
+          {busy ? "Importing…" : `Import ${preview?.ok.length ?? 0}`}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+// ── lead detail panel ────────────────────────────────────────────────────────
+
 interface LeadDetailProps {
   lead: OutreachLead;
   onUpdate: (patch: Partial<OutreachLead>) => void;
-  onCopy: (text: string) => void;
+  onCopy: (text: string, label?: string) => void;
   actionBusy: boolean;
 }
 
 function LeadDetail({ lead, onUpdate, onCopy, actionBusy }: LeadDetailProps) {
+  const qc = useQueryClient();
   const [notes, setNotes] = useState(lead.notes ?? "");
+  const [nextAction, setNextAction] = useState(lead.next_action ?? "");
   const [draftMsg, setDraftMsg] = useState<OutreachMessage | null>(null);
   const [messageBody, setMessageBody] = useState("");
+  const [replyText, setReplyText] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [classifying, setClassifying] = useState(false);
+  const [showDemoFlow, setShowDemoFlow] = useState(false);
+  const [genChannel, setGenChannel] = useState<"email" | "linkedin" | "instagram">("email");
 
   const { data: messages = [], refetch: refetchMessages } = useQuery({
     queryKey: ["outreach-messages", lead.id],
@@ -432,10 +1294,14 @@ function LeadDetail({ lead, onUpdate, onCopy, actionBusy }: LeadDetailProps) {
 
   const previewMessage = draftMsg?.body
     ?? latestOutbound?.body
-    ?? "(No draft yet. Use the daily Claude command to draft a message, or paste one below.)";
+    ?? "(No draft yet. Generate one or paste below.)";
+  const previewSubject = draftMsg?.subject ?? latestOutbound?.subject ?? "";
+
+  const quality = useMemo(() => checkMessageQuality(previewMessage), [previewMessage]);
 
   async function saveNewMessage(body: string) {
     if (!body.trim()) return;
+    const q = checkMessageQuality(body);
     const { error } = await supabase.from("outreach_messages").insert({
       lead_id: lead.id,
       direction: "outbound",
@@ -444,12 +1310,140 @@ function LeadDetail({ lead, onUpdate, onCopy, actionBusy }: LeadDetailProps) {
       body,
       status: "drafted",
       approved: false,
+      ai_tone_risk_score: q.ai_tone_risk_score,
+      quality_score: Math.max(0, 100 - q.ai_tone_risk_score - q.issues.length * 3),
     });
     if (!error) {
       setMessageBody("");
       void refetchMessages();
+      void qc.invalidateQueries({ queryKey: ["outreach-drafts"] });
     }
   }
+
+  async function generateMessage() {
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-outreach-message", {
+        body: {
+          lead,
+          channel: genChannel,
+          vertical: lead.vertical,
+          previous_messages: messages.slice(0, 3).map((m) => ({
+            direction: m.direction, channel: m.channel, body: m.body,
+          })),
+        },
+      });
+      if (error) throw error;
+      const out = data as {
+        subject?: string; body: string; personalization_note?: string;
+        cta?: string; quality_score?: number; ai_tone_risk_score?: number;
+      };
+      const { error: insErr, data: ins } = await supabase.from("outreach_messages").insert({
+        lead_id: lead.id,
+        direction: "outbound",
+        channel: genChannel,
+        subject: out.subject || null,
+        body: out.body,
+        status: "drafted",
+        approved: false,
+        personalization_note: out.personalization_note ?? null,
+        cta: out.cta ?? null,
+        quality_score: out.quality_score ?? null,
+        ai_tone_risk_score: out.ai_tone_risk_score ?? null,
+      }).select().single();
+      if (insErr) throw insErr;
+      setDraftMsg(ins as OutreachMessage);
+      void refetchMessages();
+      void qc.invalidateQueries({ queryKey: ["outreach-drafts"] });
+    } catch (e) {
+      // surface in console — the parent handles broader errors
+      console.error("[outreach] generate failed:", e);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function classifyReply() {
+    if (!replyText.trim()) return;
+    setClassifying(true);
+    try {
+      const { error } = await supabase.functions.invoke("classify-outreach-reply", {
+        body: { lead_id: lead.id, reply_text: replyText, channel: "email" },
+      });
+      if (error) throw error;
+      setReplyText("");
+      void qc.invalidateQueries({ queryKey: ["outreach-leads"] });
+      void qc.invalidateQueries({ queryKey: ["outreach-replies"] });
+    } catch (e) {
+      console.error("[outreach] classify failed:", e);
+    } finally {
+      setClassifying(false);
+    }
+  }
+
+  async function approveMessage(m: OutreachMessage) {
+    const { error } = await supabase.from("outreach_messages")
+      .update({ status: "approved", approved: true, approved_at: new Date().toISOString() })
+      .eq("id", m.id);
+    if (!error) {
+      void refetchMessages();
+      void qc.invalidateQueries({ queryKey: ["outreach-drafts"] });
+    }
+  }
+
+  async function markSent(m: OutreachMessage) {
+    await supabase.from("outreach_messages")
+      .update({ status: "sent", sent_at: new Date().toISOString() })
+      .eq("id", m.id);
+    onUpdate({
+      status: "sent",
+      date_contacted: todayIso(),
+      follow_up_date: daysFromNow(3),
+    });
+    void refetchMessages();
+    void qc.invalidateQueries({ queryKey: ["outreach-drafts"] });
+  }
+
+  async function skipMessage(m: OutreachMessage) {
+    await supabase.from("outreach_messages").update({ status: "failed" }).eq("id", m.id);
+    void refetchMessages();
+    void qc.invalidateQueries({ queryKey: ["outreach-drafts"] });
+  }
+
+  async function bookDemo(when: string) {
+    onUpdate({ demo_booked: true, status: "replied", next_action: `Demo booked: ${when}` });
+    // upsert beta_pipeline
+    await supabase.from("beta_pipeline").upsert(
+      {
+        lead_id: lead.id,
+        stage: "demo_booked",
+        demo_date: when ? new Date(when).toISOString() : null,
+        beta_type: lead.real_listing_candidate ? "seller_beta" : "partner_beta",
+      },
+      { onConflict: "lead_id" },
+    );
+    setShowDemoFlow(false);
+  }
+
+  async function inviteToBeta() {
+    onUpdate({ beta_invited: true, status: "replied", next_action: "Beta invite sent" });
+    await supabase.from("beta_pipeline").upsert(
+      {
+        lead_id: lead.id,
+        stage: "beta_invited",
+        beta_type: lead.real_listing_candidate ? "seller_beta" : "partner_beta",
+      },
+      { onConflict: "lead_id" },
+    );
+  }
+
+  const QUALIFYING_QUESTIONS = [
+    "What does your typical buyer/seller flow look like today?",
+    "Where do most of your listings come from now?",
+    "What's the most painful part of selling/servicing a customer right now?",
+    "If TradeWind reduced one of those, which would matter most?",
+    "Would you be open to a 10-minute walkthrough? [CALENDAR_LINK]",
+  ];
 
   return (
     <>
@@ -462,10 +1456,10 @@ function LeadDetail({ lead, onUpdate, onCopy, actionBusy }: LeadDetailProps) {
         </DialogDescription>
       </DialogHeader>
 
-      <div className="grid gap-4 max-h-[60vh] overflow-y-auto pr-1">
+      <div className="grid gap-4 max-h-[65vh] overflow-y-auto pr-1">
         <div className="grid grid-cols-2 gap-3 text-xs">
           <Info label="Vertical" value={lead.vertical} />
-          <Info label="Score" value={String(lead.lead_score)} />
+          <Info label="Priority / Score" value={`P${lead.priority} · S${lead.lead_score}`} />
           <Info label="Email" value={lead.email ?? "—"} />
           <Info label="Phone" value={lead.phone ?? "—"} />
           <Info label="Website" value={lead.website ?? "—"} />
@@ -480,111 +1474,154 @@ function LeadDetail({ lead, onUpdate, onCopy, actionBusy }: LeadDetailProps) {
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Pain point / offer</Label>
-          <p className="text-sm">
-            <span className="text-muted-foreground">Pain: </span>{lead.pain_point ?? "—"}
-          </p>
-          <p className="text-sm">
-            <span className="text-muted-foreground">Offer: </span>{lead.recommended_offer ?? "—"}
-          </p>
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Pain / offer</Label>
+          <p className="text-sm"><span className="text-muted-foreground">Pain: </span>{lead.pain_point ?? "—"}</p>
+          <p className="text-sm"><span className="text-muted-foreground">Offer: </span>{lead.recommended_offer ?? "—"}</p>
         </div>
 
+        {/* Generate message */}
         <div className="rounded-md border border-border p-3 space-y-2 bg-secondary/30">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Message preview</Label>
-            <Button size="sm" variant="outline" onClick={() => onCopy(previewMessage)}>
-              <Copy className="h-3 w-3" /> Copy message
-            </Button>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Generate message</Label>
+            <div className="flex gap-2 items-center">
+              <select value={genChannel} onChange={(e) => setGenChannel(e.target.value as typeof genChannel)}
+                className="h-8 rounded-md border border-input bg-background px-2 text-xs">
+                <option value="email">Email</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="instagram">Instagram</option>
+              </select>
+              <Button size="sm" onClick={() => void generateMessage()} disabled={generating}>
+                <Sparkles className="h-3 w-3" /> {generating ? "Generating…" : "Generate"}
+              </Button>
+            </div>
           </div>
-          <pre className="text-xs whitespace-pre-wrap font-sans leading-relaxed">{previewMessage}</pre>
         </div>
 
+        {/* Message preview + copy/approve */}
+        <div className="rounded-md border border-border p-3 space-y-2 bg-secondary/30">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Message preview</Label>
+            <div className="flex gap-2 flex-wrap">
+              <Button size="sm" variant="outline" onClick={() => onCopy(
+                previewSubject ? `Subject: ${previewSubject}\n\n${previewMessage}` : previewMessage,
+                "Email copied",
+              )}><Mail className="h-3 w-3" /> Copy email</Button>
+              <Button size="sm" variant="outline" onClick={() => onCopy(formatLinkedInDM(previewMessage), "LinkedIn DM copied")}>
+                <Linkedin className="h-3 w-3" /> LinkedIn DM
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onCopy(formatInstagramDM(previewMessage), "Instagram DM copied")}>
+                <Instagram className="h-3 w-3" /> Instagram DM
+              </Button>
+              <Button size="sm" variant="outline" disabled title="Connect Gmail API to enable">Gmail draft</Button>
+            </div>
+          </div>
+          {previewSubject && <div className="text-xs"><span className="text-muted-foreground">Subject:</span> {previewSubject}</div>}
+          <pre className="text-xs whitespace-pre-wrap font-sans leading-relaxed">{previewMessage}</pre>
+          {quality.issues.length > 0 && (
+            <div className="text-[11px] text-amber-400 flex items-start gap-1">
+              <AlertTriangle className="h-3 w-3 mt-0.5" />
+              <span>Quality flags: {quality.issues.join(" · ")}</span>
+            </div>
+          )}
+          {(draftMsg ?? latestOutbound) && (draftMsg ?? latestOutbound)!.status === "drafted" && (
+            <div className="flex gap-2 pt-1">
+              <Button size="sm" onClick={() => void approveMessage((draftMsg ?? latestOutbound)!)}>
+                <CheckCircle2 className="h-3 w-3" /> Approve
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void markSent((draftMsg ?? latestOutbound)!)}>
+                <Send className="h-3 w-3" /> Mark sent
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void skipMessage((draftMsg ?? latestOutbound)!)}>
+                <X className="h-3 w-3" /> Skip
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Paste a draft */}
         <div className="space-y-2">
-          <Label htmlFor="new-msg" className="text-xs uppercase tracking-wider text-muted-foreground">
-            Paste a new draft
-          </Label>
-          <Textarea
-            id="new-msg"
-            rows={6}
-            value={messageBody}
-            onChange={(e) => setMessageBody(e.target.value)}
-            placeholder="Paste a Claude-drafted message or write one here…"
-          />
+          <Label htmlFor="new-msg" className="text-xs uppercase tracking-wider text-muted-foreground">Paste a draft</Label>
+          <Textarea id="new-msg" rows={6} value={messageBody} onChange={(e) => setMessageBody(e.target.value)}
+            placeholder="Or paste a Claude-drafted message here…" />
           <Button size="sm" onClick={() => void saveNewMessage(messageBody)} disabled={!messageBody.trim()}>
             <StickyNote className="h-3 w-3" /> Save draft
           </Button>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="notes" className="text-xs uppercase tracking-wider text-muted-foreground">
-            Notes
-          </Label>
-          <Textarea
-            id="notes"
-            rows={3}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Pre-demo notes, objections, anything worth keeping…"
-          />
-          <Button size="sm" variant="outline" onClick={() => onUpdate({ notes })}>
-            Save notes
+        {/* Classify a reply */}
+        <div className="space-y-2 rounded-md border border-border p-3">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Got a reply? Paste + classify</Label>
+          <Textarea rows={4} value={replyText} onChange={(e) => setReplyText(e.target.value)}
+            placeholder="Paste the recipient's reply text…" />
+          <Button size="sm" onClick={() => void classifyReply()} disabled={!replyText.trim() || classifying}>
+            <MessageSquareReply className="h-3 w-3" /> {classifying ? "Classifying…" : "Classify reply"}
           </Button>
         </div>
 
+        {/* Notes + next action */}
+        <div className="grid grid-cols-1 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="next-action" className="text-xs uppercase tracking-wider text-muted-foreground">Next action</Label>
+            <Input id="next-action" value={nextAction} onChange={(e) => setNextAction(e.target.value)} placeholder="e.g. Send LinkedIn DM Tuesday" />
+            <Button size="sm" variant="outline" onClick={() => onUpdate({ next_action: nextAction })}>Save</Button>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="notes" className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
+            <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <Button size="sm" variant="outline" onClick={() => onUpdate({ notes })}>Save notes</Button>
+          </div>
+        </div>
+
+        {/* Quick actions */}
         <div className="space-y-2">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Quick actions</Label>
           <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              onClick={() => onUpdate({
-                status: "sent",
-                date_contacted: new Date().toISOString().slice(0, 10),
-                follow_up_date: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
-              })}
-              disabled={actionBusy}
-            >
+            <Button size="sm" onClick={() => onUpdate({
+              status: "sent", date_contacted: todayIso(), follow_up_date: daysFromNow(3),
+            })} disabled={actionBusy}>
               <Send className="h-3 w-3" /> Mark sent
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onUpdate({ status: "replied" })}
-              disabled={actionBusy}
-            >
+            <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "replied" })} disabled={actionBusy}>
               <MessageSquareReply className="h-3 w-3" /> Mark replied
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onUpdate({ demo_booked: true, status: "replied" })}
-              disabled={actionBusy}
-            >
-              <Calendar className="h-3 w-3" /> Mark demo booked
+            <Button size="sm" variant="outline" onClick={() => setShowDemoFlow(true)} disabled={actionBusy}>
+              <Calendar className="h-3 w-3" /> Book demo
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onUpdate({ beta_invited: true, status: "replied" })}
-              disabled={actionBusy}
-            >
-              <UserPlus className="h-3 w-3" /> Mark beta invited
+            <Button size="sm" variant="outline" onClick={() => void inviteToBeta()} disabled={actionBusy}>
+              <UserPlus className="h-3 w-3" /> Invite to beta
             </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => onUpdate({ do_not_contact: true })}
-              disabled={actionBusy}
-            >
+            <Button size="sm" variant="destructive" onClick={() => onUpdate({ do_not_contact: true })} disabled={actionBusy}>
               <CircleSlash className="h-3 w-3" /> Do not contact
             </Button>
           </div>
         </div>
 
+        {/* Demo flow */}
+        {showDemoFlow && (
+          <div className="rounded-md border border-brass-500/30 bg-brass-500/5 p-3 space-y-2">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Demo booking</div>
+            <p className="text-xs">Ask these qualifying questions, then offer the calendar link [CALENDAR_LINK]:</p>
+            <ul className="text-xs list-disc ml-4 space-y-1 text-muted-foreground">
+              {QUALIFYING_QUESTIONS.map((q) => <li key={q}>{q}</li>)}
+            </ul>
+            <div className="flex gap-2 items-center">
+              <Input
+                type="datetime-local"
+                onChange={(e) => void bookDemo(e.target.value)}
+                className="max-w-xs"
+              />
+              <Button size="sm" variant="outline" onClick={() => onCopy(QUALIFYING_QUESTIONS.join("\n"), "Qualifying questions copied")}>
+                <Copy className="h-3 w-3" /> Copy questions
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowDemoFlow(false)}>Close</Button>
+            </div>
+          </div>
+        )}
+
+        {/* History */}
         {messages.length > 0 && (
           <div className="space-y-2">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-              Message history ({messages.length})
-            </Label>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Message history ({messages.length})</Label>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {messages.map((m) => (
                 <div key={m.id} className="rounded-md border border-border p-2 text-xs">
@@ -597,18 +1634,9 @@ function LeadDetail({ lead, onUpdate, onCopy, actionBusy }: LeadDetailProps) {
                     </span>
                   </div>
                   {m.subject && <div className="font-display text-xs mb-1">{m.subject}</div>}
-                  <pre className="whitespace-pre-wrap font-sans line-clamp-3 text-muted-foreground">
-                    {m.body}
-                  </pre>
-                  <div className="mt-1">
-                    <button
-                      type="button"
-                      className="text-[10px] underline text-muted-foreground"
-                      onClick={() => setDraftMsg(m)}
-                    >
-                      Show in preview
-                    </button>
-                  </div>
+                  <pre className="whitespace-pre-wrap font-sans line-clamp-3 text-muted-foreground">{m.body}</pre>
+                  <button type="button" className="text-[10px] underline text-muted-foreground mt-1"
+                    onClick={() => setDraftMsg(m)}>Show in preview</button>
                 </div>
               ))}
             </div>
