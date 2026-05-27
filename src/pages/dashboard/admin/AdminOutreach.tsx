@@ -187,6 +187,37 @@ const BETA_OFFER = [
   "Locked-in early-adopter rate after beta",
 ];
 
+// ── TradeWind 100 campaign ───────────────────────────────────────────────────
+//
+// The TradeWind 100 campaign — 100 verified leads across 9 verticals, sent
+// over ~30 days. Daily caps are enforced in the UI so we never overshoot the
+// schedule documented in go-to-market/outreach-autopilot/30_DAY_SEND_SCHEDULE.md.
+//
+// Week ramps: Wk1=7/day, Wk2=8/day, Wk3=13/day, Wk4=15/day. The cap below is
+// the current "today" cap that the dashboard enforces — bump it as the weeks
+// progress (or wire to date math later).
+
+const CAMPAIGN_NAME = "TradeWind 100";
+const CAMPAIGN_TARGET = 100;
+const CAMPAIGN_DAILY_CAP = 7; // Week 1 cap; bump as the schedule progresses.
+
+const POSITIVE_REPLY_TYPES = new Set([
+  "interested",
+  "demo_request",
+  "positive",
+  "ready_to_buy",
+]);
+
+const VERIFICATION_FILTERS = [
+  "all",
+  "verified",
+  "likely_valid",
+  "unverified",
+  "bounced",
+  "invalid",
+  "do_not_email",
+] as const;
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function scoreBadge(score: number) {
@@ -262,6 +293,7 @@ export default function AdminOutreach() {
   const [vertical, setVertical] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [verificationFilter, setVerificationFilter] = useState<string>("all");
   const [hideDnc, setHideDnc] = useState(true);
   const [search, setSearch] = useState("");
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
@@ -314,10 +346,13 @@ export default function AdminOutreach() {
 
   // Delivery / bounce metrics — separate query because draftMessages only
   // pulls drafted+approved. Bounce rate needs sent/bounced/replied counts.
-  const { data: deliveryStats = { delivered: 0, bounced: 0 } } = useQuery({
+  // Also tracks today's sent count for the daily cap indicator.
+  const { data: deliveryStats = { delivered: 0, bounced: 0, sent: 0, sentToday: 0 } } = useQuery({
     queryKey: ["outreach-delivery-stats"],
-    queryFn: async (): Promise<{ delivered: number; bounced: number }> => {
-      const [deliveredRes, bouncedRes] = await Promise.all([
+    queryFn: async (): Promise<{ delivered: number; bounced: number; sent: number; sentToday: number }> => {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const [deliveredRes, bouncedRes, sentRes, sentTodayRes] = await Promise.all([
         supabase
           .from("outreach_messages")
           .select("id", { count: "exact", head: true })
@@ -328,12 +363,27 @@ export default function AdminOutreach() {
           .select("id", { count: "exact", head: true })
           .eq("direction", "outbound")
           .eq("status", "bounced"),
+        supabase
+          .from("outreach_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("direction", "outbound")
+          .eq("status", "sent"),
+        supabase
+          .from("outreach_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("direction", "outbound")
+          .in("status", ["sent", "replied"])
+          .gte("sent_at", todayStart.toISOString()),
       ]);
       if (deliveredRes.error) throw deliveredRes.error;
       if (bouncedRes.error) throw bouncedRes.error;
+      if (sentRes.error) throw sentRes.error;
+      if (sentTodayRes.error) throw sentTodayRes.error;
       return {
         delivered: deliveredRes.count ?? 0,
         bounced: bouncedRes.count ?? 0,
+        sent: sentRes.count ?? 0,
+        sentToday: sentTodayRes.count ?? 0,
       };
     },
   });
@@ -393,6 +443,10 @@ export default function AdminOutreach() {
       if (hideDnc && l.do_not_contact) return false;
       if (vertical !== "all" && l.vertical !== vertical) return false;
       if (priorityFilter !== "all" && l.priority !== Number(priorityFilter)) return false;
+      if (verificationFilter !== "all") {
+        const v = l.email_verification_status ?? "unverified";
+        if (v !== verificationFilter) return false;
+      }
       if (status !== "all") {
         if (status === "do_not_contact" && !l.do_not_contact) return false;
         if (status === "demo_booked" && !l.demo_booked) return false;
@@ -413,21 +467,28 @@ export default function AdminOutreach() {
       }
       return true;
     });
-  }, [leads, vertical, status, priorityFilter, hideDnc, search]);
+  }, [leads, vertical, status, priorityFilter, verificationFilter, hideDnc, search]);
 
   const stats = useMemo(() => {
     const total = leads.length;
     const highPriority = leads.filter((l) => l.priority >= 4 && !l.do_not_contact).length;
     const draftsPending = draftMessages.filter((m) => m.status === "drafted").length;
+    const queued = draftMessages.filter((m) => m.status === "approved").length;
     const followUpsDue = followups.filter((f) => f.due_date <= todayIso()).length;
     const demos = leads.filter((l) => l.demo_booked).length;
     const beta = leads.filter((l) => l.beta_invited).length;
     const replied = leads.filter((l) => l.status === "replied").length;
+    const positiveReplies = replies.filter(
+      (r) => r.reply_type && POSITIVE_REPLY_TYPES.has(r.reply_type.toLowerCase()),
+    ).length;
     const dnc = leads.filter((l) => l.do_not_contact).length;
 
     // ── Deliverability + verification KPIs ───────────────────────────────────
+    // Sent = outbound w/ status sent (raw count, not yet replied).
     // Delivered = sent OR replied (the message landed). Bounced is bounced.
     // Bounce rate is bounced / (delivered + bounced).
+    const sent = deliveryStats.sent;
+    const sentToday = deliveryStats.sentToday;
     const delivered = deliveryStats.delivered;
     const bounced = deliveryStats.bounced;
     const denom = delivered + bounced;
@@ -442,11 +503,13 @@ export default function AdminOutreach() {
     const bouncedLeads = leads.filter((l) => l.email_verification_status === "bounced").length;
 
     return {
-      total, highPriority, draftsPending, followUpsDue, demos, beta, replied, dnc,
-      delivered, bounced, bounceRatePct,
+      total, highPriority, draftsPending, queued, followUpsDue, demos, beta, replied, positiveReplies, dnc,
+      sent, sentToday, delivered, bounced, bounceRatePct,
       verified: verifiedLeads, unverified: unverifiedLeads, bouncedLeads,
     };
-  }, [leads, deliveryStats, followups, draftMessages]);
+  }, [leads, deliveryStats, followups, draftMessages, replies]);
+
+  const dailyCapHit = stats.sentToday >= CAMPAIGN_DAILY_CAP;
 
   const bounceRateHigh = stats.bounceRatePct > 15;
 
@@ -513,13 +576,23 @@ export default function AdminOutreach() {
     <div className="space-y-6">
       <div>
         <div className="eyebrow">Admin · outreach autopilot</div>
-        <h1 className="section-title">Outreach</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="section-title">Outreach</h1>
+          <Badge variant="accent" title="The current named campaign — see go-to-market/outreach-autopilot/100_LEAD_CAMPAIGN_STATUS.md">
+            Campaign: {CAMPAIGN_NAME}
+          </Badge>
+          <Badge variant={stats.total >= CAMPAIGN_TARGET ? "good" : undefined} title="Total leads loaded vs the 100-lead campaign target">
+            {stats.total} / {CAMPAIGN_TARGET} leads
+          </Badge>
+        </div>
         <p className="text-sm text-muted-foreground mt-2">
           Founder-led outreach: find leads, draft personalized messages, approve, send, track replies, convert to beta.
         </p>
       </div>
 
       <ComplianceBanner />
+
+      <DailyCapIndicator sentToday={stats.sentToday} cap={CAMPAIGN_DAILY_CAP} hit={dailyCapHit} />
 
       {bounceRateHigh && (
         <div
@@ -548,20 +621,20 @@ export default function AdminOutreach() {
         </div>
       )}
 
-      {/* KPI strip */}
+      {/* Campaign-level KPI strip — pipeline + funnel */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-        <Kpi label="Leads" value={stats.total} />
-        <Kpi label="High priority" value={stats.highPriority} highlight={stats.highPriority > 0} />
-        <Kpi label="Drafts pending" value={stats.draftsPending} highlight={stats.draftsPending > 0} />
-        <Kpi label="Follow-ups due" value={stats.followUpsDue} highlight={stats.followUpsDue > 0} />
-        <Kpi label="Replied" value={stats.replied} />
+        <Kpi label="Total leads" value={stats.total} />
+        <Kpi label="Verified" value={stats.verified} tone={stats.verified > 0 ? "good" : undefined} />
+        <Kpi label="Queued" value={stats.queued + stats.draftsPending} highlight={stats.draftsPending > 0} />
+        <Kpi label="Sent" value={stats.sent} />
+        <Kpi label="Replies" value={stats.replied} />
+        <Kpi label="Positive" value={stats.positiveReplies} tone={stats.positiveReplies > 0 ? "good" : undefined} />
         <Kpi label="Demos" value={stats.demos} />
-        <Kpi label="Beta" value={stats.beta} />
-        <Kpi label="DNC" value={stats.dnc} />
+        <Kpi label="Beta invited" value={stats.beta} />
       </div>
 
       {/* Deliverability + verification KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         <Kpi label="Delivered" value={stats.delivered} />
         <Kpi label="Bounced" value={stats.bounced} tone={stats.bounced > 0 ? "bad" : undefined} />
         <Kpi
@@ -570,12 +643,13 @@ export default function AdminOutreach() {
           suffix="%"
           tone={bounceRateHigh ? "bad" : stats.bounceRatePct > 5 ? "warn" : undefined}
         />
-        <Kpi label="Verified" value={stats.verified} tone={stats.verified > 0 ? "good" : undefined} />
         <Kpi
           label="Unverified"
           value={stats.unverified}
           tone={stats.unverified > 0 ? "warn" : undefined}
         />
+        <Kpi label="Follow-ups due" value={stats.followUpsDue} highlight={stats.followUpsDue > 0} />
+        <Kpi label="DNC" value={stats.dnc} />
       </div>
 
       {/* Top-level actions */}
@@ -606,6 +680,7 @@ export default function AdminOutreach() {
             vertical={vertical} setVertical={setVertical}
             status={status} setStatus={setStatus}
             priorityFilter={priorityFilter} setPriorityFilter={setPriorityFilter}
+            verificationFilter={verificationFilter} setVerificationFilter={setVerificationFilter}
             hideDnc={hideDnc} setHideDnc={setHideDnc}
             shown={filtered.length} total={leads.length}
           />
@@ -692,6 +767,26 @@ export default function AdminOutreach() {
   );
 }
 
+// ── daily cap indicator ──────────────────────────────────────────────────────
+
+function DailyCapIndicator({ sentToday, cap, hit }: { sentToday: number; cap: number; hit: boolean }) {
+  const tone = hit ? "border-red-500/40 bg-red-500/10 text-red-200" : "border-brass-500/30 bg-brass-500/5 text-brass-200";
+  return (
+    <div className={`rounded-md border ${tone} px-4 py-2 text-xs flex items-center gap-3`}>
+      <span className="uppercase tracking-wider text-[10px] text-muted-foreground">Daily limit</span>
+      <span className="font-mono text-sm">
+        {sentToday} / {cap}
+      </span>
+      <span className="text-muted-foreground">sent today</span>
+      {hit && (
+        <span className="ml-auto flex items-center gap-1 text-red-300">
+          <AlertTriangle className="h-3 w-3" /> Cap reached — approvals disabled until midnight
+        </span>
+      )}
+    </div>
+  );
+}
+
 // ── compliance banner ─────────────────────────────────────────────────────────
 
 function ComplianceBanner() {
@@ -756,11 +851,12 @@ function Filters(props: {
   vertical: string; setVertical: (s: string) => void;
   status: string; setStatus: (s: string) => void;
   priorityFilter: string; setPriorityFilter: (s: string) => void;
+  verificationFilter: string; setVerificationFilter: (s: string) => void;
   hideDnc: boolean; setHideDnc: (b: boolean) => void;
   shown: number; total: number;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
       <div>
         <Label htmlFor="search" className="text-xs">Search</Label>
         <Input id="search" value={props.search} onChange={(e) => props.setSearch(e.target.value)} placeholder="Company, contact, angle…" />
@@ -784,6 +880,15 @@ function Filters(props: {
         <select id="priority" value={props.priorityFilter} onChange={(e) => props.setPriorityFilter(e.target.value)}
           className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
           {PRIORITIES.map((p) => <option key={p} value={p}>{p === "all" ? "Any priority" : `P=${p}`}</option>)}
+        </select>
+      </div>
+      <div>
+        <Label htmlFor="verification" className="text-xs">Verification</Label>
+        <select id="verification" value={props.verificationFilter} onChange={(e) => props.setVerificationFilter(e.target.value)}
+          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+          {VERIFICATION_FILTERS.map((v) => (
+            <option key={v} value={v}>{v === "all" ? "Any verification" : v.replace(/_/g, " ")}</option>
+          ))}
         </select>
       </div>
       <div className="flex items-end gap-3">
@@ -897,11 +1002,55 @@ function QueueView({ drafts, leads, onOpen, onCopy }: {
   onOpen: (id: string) => void;
   onCopy: (text: string, label?: string) => void;
 }) {
+  const qc = useQueryClient();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
+
   const leadMap = useMemo(() => {
     const m = new Map<string, OutreachLead>();
     leads.forEach((l) => m.set(l.id, l));
     return m;
   }, [leads]);
+
+  // Only "drafted" rows are approve-eligible.
+  const eligible = useMemo(() => drafts.filter((d) => d.status === "drafted"), [drafts]);
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAllEligible() {
+    setSelected(new Set(eligible.map((m) => m.id)));
+  }
+
+  function clearSelection() {
+    setSelected(new Set());
+  }
+
+  async function approveSelected() {
+    if (selected.size === 0) return;
+    setBulkBusy(true);
+    setBulkMsg(null);
+    const ids = Array.from(selected);
+    const { error } = await supabase
+      .from("outreach_messages")
+      .update({ status: "approved", approved: true, approved_at: new Date().toISOString() })
+      .in("id", ids);
+    setBulkBusy(false);
+    if (error) {
+      setBulkMsg(`Bulk approve failed: ${error.message}`);
+      return;
+    }
+    setBulkMsg(`Approved ${ids.length} draft${ids.length === 1 ? "" : "s"}.`);
+    setSelected(new Set());
+    void qc.invalidateQueries({ queryKey: ["outreach-drafts"] });
+  }
 
   if (drafts.length === 0) {
     return (
@@ -914,22 +1063,53 @@ function QueueView({ drafts, leads, onOpen, onCopy }: {
   }
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2 text-xs bg-secondary/30 border border-border rounded-md px-3 py-2">
+        <span className="text-muted-foreground">
+          Selected: <span className="font-mono text-foreground">{selected.size}</span> / {eligible.length} eligible
+        </span>
+        <div className="ml-auto flex gap-2">
+          <Button size="sm" variant="outline" onClick={selectAllEligible} disabled={eligible.length === 0}>
+            Select all
+          </Button>
+          <Button size="sm" variant="outline" onClick={clearSelection} disabled={selected.size === 0}>
+            Clear
+          </Button>
+          <Button size="sm" onClick={() => void approveSelected()} disabled={selected.size === 0 || bulkBusy}>
+            <CheckCircle2 className="h-3 w-3" /> {bulkBusy ? "Approving…" : `Approve Selected (${selected.size})`}
+          </Button>
+        </div>
+      </div>
+      {bulkMsg && (
+        <div role="status" className="text-xs text-emerald-300 px-1">{bulkMsg}</div>
+      )}
       {drafts.map((m) => {
         const lead = leadMap.get(m.lead_id);
         if (!lead) return null;
         return (
-          <DraftCard key={m.id} message={m} lead={lead} onOpen={onOpen} onCopy={onCopy} />
+          <DraftCard
+            key={m.id}
+            message={m}
+            lead={lead}
+            onOpen={onOpen}
+            onCopy={onCopy}
+            selected={selected.has(m.id)}
+            onToggle={() => toggle(m.id)}
+            selectable={m.status === "drafted"}
+          />
         );
       })}
     </div>
   );
 }
 
-function DraftCard({ message, lead, onOpen, onCopy }: {
+function DraftCard({ message, lead, onOpen, onCopy, selected, onToggle, selectable }: {
   message: OutreachMessage;
   lead: OutreachLead;
   onOpen: (id: string) => void;
   onCopy: (text: string, label?: string) => void;
+  selected?: boolean;
+  onToggle?: () => void;
+  selectable?: boolean;
 }) {
   const quality = checkMessageQuality(message.body);
   const risk = message.ai_tone_risk_score ?? quality.ai_tone_risk_score;
@@ -940,12 +1120,23 @@ function DraftCard({ message, lead, onOpen, onCopy }: {
       : <Badge variant="good">AI risk {risk}</Badge>;
 
   return (
-    <div className="rounded-md border border-border p-4 space-y-2 bg-background">
+    <div className={`rounded-md border p-4 space-y-2 bg-background ${selected ? "border-brass-500/60 ring-1 ring-brass-500/30" : "border-border"}`}>
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <div className="font-display">{lead.company}</div>
-          <div className="text-xs text-muted-foreground">
-            {lead.contact_name ?? "—"} · {lead.vertical} · {message.channel}
+        <div className="flex items-start gap-3">
+          {selectable && (
+            <input
+              type="checkbox"
+              checked={!!selected}
+              onChange={onToggle}
+              aria-label={`Select draft for ${lead.company}`}
+              className="mt-1.5"
+            />
+          )}
+          <div>
+            <div className="font-display">{lead.company}</div>
+            <div className="text-xs text-muted-foreground">
+              {lead.contact_name ?? "—"} · {lead.vertical} · {message.channel}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
