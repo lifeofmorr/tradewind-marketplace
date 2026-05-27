@@ -1,0 +1,36 @@
+company,contact_name,email,vertical,email_verification_status,issue,action_needed
+Marshall Goldman Motor Sales,Harlan Goldman,,exotic_dealer,unverified,no direct email published on company site,Use contact form https://www.marshallgoldman.com/contact-us/ or LinkedIn DM (variant in 100_EMAIL_DRAFTS §3.3)
+Tactical Fleet,Christopher Barta,,exotic_dealer,unverified,principal email not posted on site,Use contact form https://tacticalfleet.com/contact or LinkedIn /in/chris-barta
+Fusion Luxury Motors,Yoel Wazana,,exotic_dealer,unverified,no principal email on contact page,Use contact form https://www.fusionmotorco.com/contact or LinkedIn /in/yoel-wazana
+RK Motors Charlotte,Rob Kauffman,,classic_dealer,unverified,no founder email published,Use contact form https://www.rkmotors.com/contact or LinkedIn search
+Park Place LTD,David Bingham,sales@parkplaceltd.com,exotic_dealer,unverified,2026-05-27 audit: sales@ NOT confirmed on Bellevue contact page,Send to contact form first; if reply use bingham name; phone 425-562-1000
+Cars Dawydiak,Walter Dawydiak,,exotic_dealer,unverified,owner email pattern-inferred only,Use contact form https://www.carsauto.com/contact or LinkedIn /in/walter-dawydiak
+Beverly Hills Car Club,Alex Manos,,exotic_dealer,unverified,owner email pattern-inferred (not published),Use contact form beverlyhillscarclub.com/contact-us.htm or LinkedIn /in/alex-manos-beverly-hills-car-club/
+MotorCars of Atlanta,Jorge Galvez,jorge@motorcarsofatlanta.com,exotic_dealer,unverified,2026-05-27 audit: direct email NOT on live team page,Use sales department via contact form first
+Canepa,Bruce Canepa,sales@canepa.com,exotic_dealer,unverified,2026-05-27 audit: contact page email is obfuscated,Use contact form or call 831-430-9940 first
+High Performance Aviation,Brandon Ray,info@flyhpa.com,aircraft_broker,unverified,info@ pattern-inferred,Use contact form flyhpa.com/contact-2/ or LinkedIn
+Aerista,Chris Eichman,chris@aerista.com,aircraft_broker,unverified,2026-05-27 audit: only info@ published on live site,Switch send to info@aerista.com (published)
+TBM Central,David Crockett,david@tbmcentral.com,aircraft_broker,unverified,2026-05-27 audit: only sales@ published on live site,Switch send to sales@tbmcentral.com (published)
+OGARAJETS,Johnny Foster,ogarajets@ogarajets.com,aircraft_broker,unverified,2026-05-27 audit: contact page has no email,Use contact form / phone 770-955-3554
+Wainui Marine Surveying,Tony Fergusson,tony@wainuimarinesurveying.com,marine_surveyor,unverified,pattern-inferred,Verify on company site / LinkedIn before send
+Port City Marine Surveyors,DJ Smith,masurveyor@aol.com,marine_surveyor,unverified,AOL personal email — confirm matches site,Visit portcitymarineservices.com / call to verify
+Naples Jet Center,Dave Stetson,dstetson@naplesjetcenter.com,ap_mechanic,unverified,pattern-inferred,Verify on team page / LinkedIn
+Cutter Aviation (Addison TBM Service),Christopher Gradisar,,ap_mechanic,unverified,no direct email,Use contact form or call Addison location
+Stevens Aerospace (Denver),MRO Sales,info@stevensaerospace.com,ap_mechanic,unverified,generic inbox,Use the standard published inbox; flag any bounce
+Clear Star Aviation,Services Team,info@clearstarmx.com,ap_mechanic,unverified,inferred generic inbox,Verify domain on site
+Intercity Lines,Dispatch/Sales,info@intercitylines.com,transport,unverified,generic inbox,Verify and consider switching to named broker
+Joule Yacht Transport,Sales Team,sales@JouleYacht.com,transport,unverified,generic inbox pattern,Verify on site footer / call to confirm
+Sterling Acceptance Corporation,Matt Brown,matt@sterlingacceptance.com,lender,unverified,pattern-inferred,Verify on team page / LinkedIn
+Woodside Credit,Jerry Alspach,jalspach@woodsidecredit.com,lender,unverified,pattern-inferred,Verify on team page
+J.J. Best Banc & Co.,John J. Meldon,jmeldon@jjbest.com,lender,unverified,pattern-inferred,Verify on jjbest.com team page
+Gowrie Group / IMIS,Mark Gargula,markg@gowrie.com,insurance,unverified,pattern-inferred,Verify on producer profile
+Maritime Insurance International,Ned Sawyer,nsawyer@maritimeinsuranceinternational.com,insurance,unverified,pattern-inferred,Verify on team page
+Wings Insurance,Tom Hauge,thauge@wingsinsurance.com,insurance,unverified,pattern-inferred,Verify on team page
+Maritime Documentation Center,Customer Service Team,info@maritimedocumentation.us,escrow_title,unverified,generic inbox,Verify before send
+Massey Yacht Sales & Service,Ed Massey,,yacht_broker,unverified,no published email,Use contact form https://masseyyacht.com/contact/
+Aspire Yacht Sales,John Booysen,,yacht_broker,unverified,no published email,Use phone 954-560-2811 or contact form
+Reel Deal Yachts,Marcos Morjain,,yacht_broker,unverified,no direct email,Use contact form reeldealyachts.com
+Naples Yacht Brokerage,Pete Peterson,,yacht_broker,unverified,site blocked WebFetch,Use contact form naplesyachtbrokerage.com/contact/
+Prestige Imports Miami,Brett David,bdavid@prestigeimports.com,exotic_dealer,likely_valid,CAVEAT: email in 3rd-party DBs (RocketReach/ZoomInfo) but not on live contact page,SAFE TO SEND — fall back to sales@prestigeimports.com on bounce
+Premier Aircraft Sales,Travis Peffer,sales@flypas.com,aircraft_broker,likely_valid,CAVEAT: @flypas.com is brand-vs-website-domain mismatch (intentional),SAFE TO SEND — standard sales inbox confirmed via Diamond Aircraft press
+Mente Group LLC,Brian Proctor,brian@mentegroup.com,aircraft_broker,likely_valid,CAVEAT: pattern-inferred from main office domain,SAFE TO SEND — domain + founder confirmed via LinkedIn/Bloomberg/Crunchbase
