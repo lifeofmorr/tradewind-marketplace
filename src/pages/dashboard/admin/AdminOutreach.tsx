@@ -135,7 +135,19 @@ interface BetaPipelineRow {
   id: string;
   lead_id: string;
   beta_type: string | null;
-  stage: "interested" | "demo_booked" | "demo_completed" | "beta_invited" | "onboarded" | "paid_candidate" | "declined";
+  stage:
+    | "interested"
+    | "wants_demo"
+    | "demo_booked"
+    | "demo_completed"
+    | "beta_invited"
+    | "beta_onboarded"
+    | "real_listing_candidate"
+    | "partner_candidate"
+    | "paid_candidate"
+    | "follow_up_later"
+    | "not_interested"
+    | "declined";
   demo_date: string | null;
   feedback_notes: string | null;
   real_listing_candidate: boolean;
@@ -168,7 +180,7 @@ const VERTICALS = [
 
 const STATUSES = [
   "all", "new", "send_ready", "needs_review", "non_email_channel",
-  "drafted", "approved", "sent", "replied",
+  "drafted", "approved", "sent", "replied", "interested", "wants_demo",
   "demo_booked", "beta_invited", "do_not_contact",
 ] as const;
 
@@ -182,9 +194,23 @@ const NON_EMAIL_STATUSES = ["non_email_channel"] as const;
 
 const PRIORITIES = ["all", "1", "2", "3", "4", "5"] as const;
 
+// Beta pipeline stages used by /admin/outreach. Must match the CHECK
+// constraint in supabase/migrations/20260527_beta_pipeline_expanded_stages.sql.
+// Ordered to reflect the typical reply → demo → onboarded → paid flow,
+// with terminal stages (follow_up_later, not_interested, declined) last.
 const BETA_STAGES = [
-  "interested", "demo_booked", "demo_completed",
-  "beta_invited", "onboarded", "paid_candidate", "declined",
+  "interested",
+  "wants_demo",
+  "demo_booked",
+  "demo_completed",
+  "beta_invited",
+  "beta_onboarded",
+  "real_listing_candidate",
+  "partner_candidate",
+  "paid_candidate",
+  "follow_up_later",
+  "not_interested",
+  "declined",
 ] as const;
 
 const BETA_OFFER = [
@@ -1524,7 +1550,7 @@ function BetaPipelineView({ betaRows, leads, onOpen }: {
         </ul>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
         {BETA_STAGES.map((s) => (
           <div key={s} className="rounded-md border border-border px-3 py-2">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.replace(/_/g, " ")}</div>
@@ -1537,9 +1563,13 @@ function BetaPipelineView({ betaRows, leads, onOpen }: {
         {betaRows.length === 0 ? (
           <EmptyState icon={UserPlus} title="No beta pipeline yet" body="When a lead replies positively, add them to the beta pipeline from the lead detail panel." />
         ) : betaRows.map((b) => {
-          const lead = leadMap.get(b.lead_id);
           const idx = BETA_STAGES.indexOf(b.stage);
-          const nextStage = idx >= 0 && idx < BETA_STAGES.length - 2 ? BETA_STAGES[idx + 1] : null;
+          // Advance only along the conversion funnel — terminal stages
+          // (follow_up_later, not_interested, declined) must be set
+          // manually, never via the auto-advance button.
+          const lastFunnelIdx = BETA_STAGES.indexOf("paid_candidate");
+          const lead = leadMap.get(b.lead_id);
+          const nextStage = idx >= 0 && idx < lastFunnelIdx ? BETA_STAGES[idx + 1] : null;
           return (
             <div key={b.id} className="rounded-md border border-border p-3 flex items-center justify-between gap-3 flex-wrap">
               <div>
