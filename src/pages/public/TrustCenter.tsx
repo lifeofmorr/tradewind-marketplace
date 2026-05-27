@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BetaCTA } from "@/components/layout/BetaCTA";
 import { setMeta } from "@/lib/seo";
 import { BRAND } from "@/lib/brand";
 
@@ -231,6 +232,12 @@ export default function TrustCenter() {
           </div>
         </div>
       </Section>
+
+      <BetaCTA
+        source="trust_page"
+        title="Have ideas to make the marketplace safer?"
+        body="We're in private beta and actively building out trust controls. Tell us what would make you trust the platform with a high-value transaction."
+      />
     </>
   );
 }

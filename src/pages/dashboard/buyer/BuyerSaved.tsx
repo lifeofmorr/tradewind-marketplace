@@ -1,13 +1,16 @@
 import { useEffect } from "react";
+import { AlertTriangle } from "lucide-react";
 import { useSavedListings } from "@/hooks/useSavedListings";
 import { ListingGrid } from "@/components/listings/ListingGrid";
 import { setMeta } from "@/lib/seo";
+import { DEMO_DISCLAIMER_TITLE, DEMO_DISCLAIMER_BODY } from "@/lib/demoDisclaimer";
 import type { Listing } from "@/types/database";
 
 export default function BuyerSaved() {
   const { data: saved = [], isLoading } = useSavedListings();
   useEffect(() => { setMeta({ title: "Saved listings", description: "Your saved listings on TradeWind." }); }, []);
   const listings: Listing[] = saved.map((s) => s.listing).filter((l): l is Listing => !!l);
+  const hasDemo = listings.some((l) => l.is_demo);
   return (
     <div className="space-y-6">
       <div>
@@ -17,6 +20,18 @@ export default function BuyerSaved() {
           Listings you bookmarked for later. Saves sync across devices when you sign in.
         </p>
       </div>
+      {!isLoading && hasDemo && (
+        <div
+          role="status"
+          className="flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-amber-200"
+        >
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+          <div className="text-sm leading-relaxed">
+            <div className="font-display text-base text-amber-100">{DEMO_DISCLAIMER_TITLE}</div>
+            <p className="mt-1 text-amber-200/90">{DEMO_DISCLAIMER_BODY}</p>
+          </div>
+        </div>
+      )}
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (

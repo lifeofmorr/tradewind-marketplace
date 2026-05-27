@@ -68,7 +68,7 @@ export const BADGE_META: Record<BadgeType, BadgeMeta> = {
   demo: {
     type: "demo",
     label: "Demo",
-    tooltip: "Sample listing — not for sale. Used for product demos.",
+    tooltip: "Demo listing — used to preview the TradeWind marketplace experience. Not represented as available inventory.",
     tone: "slate",
     icon: "flask",
   },

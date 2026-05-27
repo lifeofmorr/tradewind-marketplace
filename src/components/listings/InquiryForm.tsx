@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { DEMO_DISCLAIMER_TITLE, DEMO_DISCLAIMER_BODY } from "@/lib/demoDisclaimer";
 import type { Listing } from "@/types/database";
 
 const Schema = z.object({
@@ -70,9 +71,9 @@ export function InquiryForm({ listing }: Props) {
   if (listing.is_demo) {
     return (
       <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-6 text-sm">
-        <div className="font-display text-base text-amber-100">Demo listing</div>
+        <div className="font-display text-base text-amber-100">{DEMO_DISCLAIMER_TITLE}</div>
         <p className="text-amber-200/90 mt-1">
-          This is a marketplace preview, not real inventory. Inquiries are disabled. Browse{" "}
+          {DEMO_DISCLAIMER_BODY} Inquiries are disabled — browse{" "}
           <a href="/browse" className="text-amber-100 underline">live listings</a> to contact a real seller.
         </p>
       </div>

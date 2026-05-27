@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Plane, ShieldAlert } from "lucide-react";
 import { ListingFilters, type ListingFilterValues } from "@/components/listings/ListingFilters";
 import { ListingGrid } from "@/components/listings/ListingGrid";
+import { BetaCTA } from "@/components/layout/BetaCTA";
 import { useListings } from "@/hooks/useListings";
 import { AIRCRAFT_CATEGORIES, CATEGORIES } from "@/lib/categories";
 import { setMeta } from "@/lib/seo";
@@ -114,6 +115,12 @@ export default function AircraftPage({
           emptyCtaLabel="See all aircraft"
         />
       )}
+      <BetaCTA
+        variant="banner"
+        source="aircraft_page"
+        title="Aircraft brokers — want to list here?"
+        body="TradeWind is in private beta. We're inviting aircraft brokers to test the compliance-aware listing and pre-buy workflows early."
+      />
     </div>
   );
 }

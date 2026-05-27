@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { X, Anchor, ArrowRight } from "lucide-react";
+import { X, Anchor, ArrowRight, AlertTriangle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Listing, AircraftSpecs } from "@/types/database";
 import { useCompare } from "@/contexts/CompareContext";
@@ -13,6 +13,7 @@ import { getListingBadges } from "@/lib/badges";
 import { calculateOwnershipCost } from "@/lib/ownershipCost";
 import { isAircraftCategory } from "@/lib/categories";
 import { setMeta } from "@/lib/seo";
+import { DEMO_DISCLAIMER_TITLE, DEMO_DISCLAIMER_BODY } from "@/lib/demoDisclaimer";
 import { formatCents, formatNumber } from "@/lib/utils";
 
 const BOAT_CATS = new Set(["boat", "performance_boat", "yacht", "center_console"]);
@@ -241,6 +242,19 @@ export default function BuyerCompare() {
         </div>
         <Button variant="outline" size="sm" onClick={clear}>Clear all</Button>
       </div>
+
+      {!isLoading && listings.some((l) => l.is_demo) && (
+        <div
+          role="status"
+          className="flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-amber-200"
+        >
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+          <div className="text-sm leading-relaxed">
+            <div className="font-display text-base text-amber-100">{DEMO_DISCLAIMER_TITLE}</div>
+            <p className="mt-1 text-amber-200/90">{DEMO_DISCLAIMER_BODY}</p>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-3">

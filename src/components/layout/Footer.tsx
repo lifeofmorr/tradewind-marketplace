@@ -35,9 +35,19 @@ const COLS: FooterCol[] = [
     title: "Company",
     links: [
       { label: "About",          to: "/about" },
+      { label: "How it works",   to: "/how-it-works" },
       { label: "Blog",           to: "/blog" },
       { label: "Market reports", to: "/market-reports" },
       { label: "Contact",        to: "/contact" },
+    ],
+  },
+  {
+    title: "Beta & feedback",
+    links: [
+      { label: "Request beta access", to: "/beta" },
+      { label: "Give feedback",       to: "/feedback" },
+      { label: "Book a 10-min call",  to: "/feedback" },
+      { label: "Trust Center",        to: "/trust" },
     ],
   },
   {
@@ -45,7 +55,6 @@ const COLS: FooterCol[] = [
     links: [
       { label: "Terms",         to: "/terms" },
       { label: "Privacy",       to: "/privacy" },
-      { label: "Trust Center",  to: "/trust" },
     ],
   },
 ];
@@ -54,7 +63,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-border bg-navy-950/50 mt-24">
       <div className="container-pad py-16">
-        <div className="grid gap-10 md:grid-cols-5">
+        <div className="grid gap-10 md:grid-cols-3 lg:grid-cols-6">
           {COLS.map((col) => (
             <div key={col.title}>
               <div className="font-mono text-xs uppercase tracking-[0.24em] text-brass-400 mb-3">{col.title}</div>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Navigate, useParams, useSearchParams } from "react-router-dom";
 import { ListingFilters, type ListingFilterValues } from "@/components/listings/ListingFilters";
 import { ListingGrid } from "@/components/listings/ListingGrid";
+import { BetaCTA } from "@/components/layout/BetaCTA";
 import { useListings } from "@/hooks/useListings";
 import { CATEGORIES } from "@/lib/categories";
 import { categoryMeta, setMeta } from "@/lib/seo";
@@ -139,6 +140,16 @@ export function GroupPage({ group }: { group: "boat" | "auto" }) {
           emptyCtaLabel="Browse all"
         />
       )}
+      <BetaCTA
+        variant="banner"
+        source={group === "boat" ? "boats_page" : "autos_page"}
+        title={
+          group === "boat"
+            ? "Want to list more boats here?"
+            : "Want to list specialty autos here?"
+        }
+        body="TradeWind is in private beta. We're inviting dealers and brokers who care about premium listings to test it early."
+      />
     </div>
   );
 }

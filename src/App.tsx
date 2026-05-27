@@ -50,6 +50,9 @@ const AircraftPage = lazy(() => import("@/pages/public/AircraftPage"));
 const AviationServicesPage = lazy(() => import("@/pages/public/AviationServicesPage"));
 const FinancialHub = lazy(() => import("@/pages/buyer/FinancialHub"));
 const TransactionRoom = lazy(() => import("@/pages/TransactionRoom"));
+const BetaPage = lazy(() => import("@/pages/public/BetaPage"));
+const HowItWorksPage = lazy(() => import("@/pages/public/HowItWorksPage"));
+const FeedbackPage = lazy(() => import("@/pages/public/FeedbackPage"));
 
 // Onboarding
 const DealerOnboarding = lazy(() => import("@/pages/onboarding/DealerOnboarding"));
@@ -174,6 +177,9 @@ export default function App() {
         <Route path="/integrations" element={<L><Integrations /></L>} />
         <Route path="/integrations/developer" element={<L><DeveloperHub /></L>} />
         <Route path="/community" element={<L><Community /></L>} />
+        <Route path="/beta" element={<L><BetaPage /></L>} />
+        <Route path="/how-it-works" element={<L><HowItWorksPage /></L>} />
+        <Route path="/feedback" element={<L><FeedbackPage /></L>} />
 
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/checkout/cancel" element={<CheckoutCancel />} />

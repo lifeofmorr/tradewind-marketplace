@@ -1,10 +1,31 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, ShieldCheck, Wrench, Anchor, Car as CarIcon, Plane, ArrowRight } from "lucide-react";
+import {
+  Sparkles,
+  ShieldCheck,
+  Wrench,
+  Anchor,
+  Car as CarIcon,
+  Plane,
+  ArrowRight,
+  FileBadge,
+  Gauge,
+  Wallet,
+  ClipboardList,
+  Briefcase,
+  Plug,
+  CreditCard,
+  UserCog,
+  Lock,
+  Flag,
+  Eye,
+  FlaskConical,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/Reveal";
 import { ListingGrid } from "@/components/listings/ListingGrid";
 import { MarketPulseCard } from "@/components/market/MarketPulseCard";
+import { BetaCTA } from "@/components/layout/BetaCTA";
 import { useListings } from "@/hooks/useListings";
 import { CATEGORIES } from "@/lib/categories";
 import { BRAND } from "@/lib/brand";
@@ -175,6 +196,165 @@ function TrustSection() {
   );
 }
 
+function PlatformCapabilities() {
+  const items = [
+    {
+      icon: FileBadge,
+      title: "Asset Passport",
+      body: "A single record of title, ownership, service, and inspection history per listing.",
+    },
+    {
+      icon: Gauge,
+      title: "Deal Score",
+      body: "Pricing context against comps so buyers see what fair looks like.",
+    },
+    {
+      icon: Wallet,
+      title: "True Cost to Own",
+      body: "Insurance, dockage, fuel, financing, and maintenance modeled into one number.",
+    },
+    {
+      icon: ClipboardList,
+      title: "Transaction Room",
+      body: "Inspection, financing, escrow, and transport tracked on one timeline.",
+    },
+    {
+      icon: Briefcase,
+      title: "Dealer CRM",
+      body: "Inventory, leads, staff routing, and conversion analytics in one workspace.",
+    },
+    {
+      icon: Plane,
+      title: "Aircraft pre-buy",
+      body: "Compliance-aware listings with logbook handling and pre-buy inspection requests.",
+    },
+    {
+      icon: Plug,
+      title: "Partner network",
+      body: "Lenders, insurance, escrow, and transport partners wired into the deal flow.",
+    },
+    {
+      icon: Sparkles,
+      title: "AI listing assistant",
+      body: "Drafts clean, accurate listing copy from your specs and photos — you stay in control.",
+    },
+  ];
+  return (
+    <Reveal as="section" className="container-pad py-16 border-t border-border">
+      <div className="eyebrow">The platform</div>
+      <h2 className="section-title">Premium listings are only the start.</h2>
+      <div className="section-title-underline mb-8" />
+      <p className="max-w-2xl text-muted-foreground mb-8">
+        TradeWind is a marketplace and a workflow. Beyond the listing, the platform handles
+        the work that actually closes the deal.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {items.map((it, i) => (
+          <Reveal key={it.title} delay={i * 0.04}>
+            <div className="glass-card p-5 lift-card h-full">
+              <div className="grid h-9 w-9 place-items-center rounded-full bg-brass-500/10 ring-1 ring-brass-500/30">
+                <it.icon className="h-4 w-4 text-brass-400" />
+              </div>
+              <div className="font-display text-lg mt-3">{it.title}</div>
+              <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{it.body}</p>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </Reveal>
+  );
+}
+
+function TrustControls() {
+  const items = [
+    {
+      icon: CreditCard,
+      title: "Stripe-tested payments",
+      body: "Stripe Connect handles dealer onboarding, KYC, and payout flow.",
+    },
+    {
+      icon: UserCog,
+      title: "Role-based dashboards",
+      body: "Buyers, sellers, dealers, service providers, and admins each see only what they should.",
+    },
+    {
+      icon: FileBadge,
+      title: "Asset Passport",
+      body: "One record of title, ownership, and service history per asset.",
+    },
+    {
+      icon: ClipboardList,
+      title: "Transaction Room",
+      body: "Every approval, document, and message lives on one timeline.",
+    },
+    {
+      icon: Flag,
+      title: "Report system",
+      body: "Buyers and sellers can flag listings, messages, or users. Reviewed by humans.",
+    },
+    {
+      icon: Eye,
+      title: "Audit logs",
+      body: "Admin actions on listings, payments, and accounts are logged and queryable.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Admin review",
+      body: "Sensitive operations route through admin review, not just an automated rule.",
+    },
+    {
+      icon: FlaskConical,
+      title: "Demo listings clearly labeled",
+      body: "Sample inventory is visibly tagged as Demo — never represented as live stock.",
+    },
+    {
+      icon: Plane,
+      title: "Aircraft compliance-safe",
+      body: "Aviation listings carry the fields a compliant pre-buy actually depends on.",
+    },
+  ];
+  return (
+    <Reveal as="section" className="container-pad py-16 border-t border-border">
+      <div className="eyebrow">Trust controls</div>
+      <h2 className="section-title">Built with trust controls from day one.</h2>
+      <div className="section-title-underline mb-8" />
+      <p className="max-w-2xl text-muted-foreground mb-8">
+        We don't claim traction we haven't earned, and we don't show testimonials we don't
+        have. What we do have is the platform controls below — already in production.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((it, i) => (
+          <Reveal key={it.title} delay={i * 0.04}>
+            <div className="glass-card p-5 lift-card h-full">
+              <div className="flex items-start gap-3">
+                <div className="grid h-9 w-9 place-items-center rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/30 shrink-0">
+                  <it.icon className="h-4 w-4 text-emerald-300" />
+                </div>
+                <div>
+                  <div className="font-display text-lg">{it.title}</div>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{it.body}</p>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+      <div className="mt-8 flex flex-wrap items-center gap-3">
+        <Button asChild variant="outline">
+          <Link to="/trust">
+            <Lock className="h-4 w-4" /> Read the Trust Center
+          </Link>
+        </Button>
+        <Button asChild variant="link">
+          <Link to="/how-it-works">
+            How it works <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
+    </Reveal>
+  );
+}
+
 function DealerCTA() {
   return (
     <Reveal as="section" className="container-pad py-20 border-t border-border text-center">
@@ -212,10 +392,13 @@ export default function Home() {
         <MarketPulseCard />
       </Reveal>
       <CategoryGrid />
+      <PlatformCapabilities />
       <AIAssistantBanner />
       <ServicesGrid />
       <TrustSection />
+      <TrustControls />
       <DealerCTA />
+      <BetaCTA source="home_footer" />
     </>
   );
 }

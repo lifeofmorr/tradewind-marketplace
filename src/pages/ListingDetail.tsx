@@ -26,6 +26,8 @@ import { getListingBadges } from "@/lib/badges";
 import { isAircraftCategory } from "@/lib/categories";
 import { formatCents, formatNumber } from "@/lib/utils";
 import { listingMeta, setMeta } from "@/lib/seo";
+import { DEMO_DISCLAIMER_TITLE, DEMO_DISCLAIMER_BODY } from "@/lib/demoDisclaimer";
+import { trackEvent } from "@/lib/trackEvent";
 import type { ListingPhoto } from "@/types/database";
 
 const BOAT_CATS = new Set(["boat", "performance_boat", "yacht", "center_console"]);
@@ -65,6 +67,11 @@ export default function ListingDetail() {
       state: listing.state,
       cover_photo_url: listing.cover_photo_url,
     }));
+    trackEvent("listing_detail_view", {
+      listing_id: listing.id,
+      category: listing.category,
+      is_demo: !!listing.is_demo,
+    });
   }, [listing]);
 
   if (isLoading) {
@@ -109,11 +116,8 @@ export default function ListingDetail() {
         >
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
           <div className="text-sm leading-relaxed">
-            <div className="font-display text-base text-amber-100">Demo listing</div>
-            <p className="mt-1 text-amber-200/90">
-              This is a demo listing for marketplace preview purposes. It does not represent
-              real available inventory.
-            </p>
+            <div className="font-display text-base text-amber-100">{DEMO_DISCLAIMER_TITLE}</div>
+            <p className="mt-1 text-amber-200/90">{DEMO_DISCLAIMER_BODY}</p>
           </div>
         </div>
       )}
