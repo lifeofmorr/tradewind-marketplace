@@ -1,0 +1,9 @@
+company,contact_name,email,vertical,reason_removed,suggested_replacement,new_status
+Park Place LTD,David Bingham,sales@parkplaceltd.com,exotic_dealer,Post-audit downgrade 2026-05-27: sales@ NOT on Bellevue contact page,"Use contact form first; if reply, confirm bingham name; phone 425-562-1000",needs_review
+MotorCars of Atlanta,Jorge Galvez,jorge@motorcarsofatlanta.com,exotic_dealer,Post-audit downgrade 2026-05-27: direct email NOT on team page,Use sales department via contact form first,needs_review
+Canepa,Bruce Canepa,sales@canepa.com,exotic_dealer,Post-audit downgrade 2026-05-27: contact page email is obfuscated,Use contact form or call 831-430-9940,needs_review
+Aerista,Chris Eichman,chris@aerista.com,aircraft_broker,Post-audit downgrade 2026-05-27: only info@ published,Switch to info@aerista.com (published),needs_review
+TBM Central,David Crockett,david@tbmcentral.com,aircraft_broker,Post-audit downgrade 2026-05-27: only sales@ published,Switch to sales@tbmcentral.com (published),needs_review
+OGARAJETS,Johnny Foster,ogarajets@ogarajets.com,aircraft_broker,Post-audit downgrade 2026-05-27: no email on contact page,Use contact form or phone 770-955-3554,needs_review
+USA Aircraft Brokers (prior batch),—,info@usaaircraft.com,aircraft_broker,Hard bounce on 2026-05-26,Find named decision-maker; reach via contact form first,do_not_contact
+Smoky Mountain Traders (prior batch),—,info@smokymountaintraders.com,classic_dealer,Hard bounce on 2026-05-26,Find named decision-maker; reach via contact form first,do_not_contact

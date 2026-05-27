@@ -167,9 +167,18 @@ const VERTICALS = [
 ] as const;
 
 const STATUSES = [
-  "all", "new", "drafted", "approved", "sent", "replied",
+  "all", "new", "send_ready", "needs_review", "non_email_channel",
+  "drafted", "approved", "sent", "replied",
   "demo_booked", "beta_invited", "do_not_contact",
 ] as const;
+
+// Status buckets introduced by supabase/outreach-lead-cleanup.sql (2026-05-27).
+// send_ready        — likely_valid email, safe to draft
+// needs_review      — email pattern-inferred / post-audit downgrade
+// non_email_channel — no public email; LinkedIn / form / phone only
+const SEND_READY_STATUSES = ["send_ready"] as const;
+const NEEDS_REVIEW_STATUSES = ["needs_review"] as const;
+const NON_EMAIL_STATUSES = ["non_email_channel"] as const;
 
 const PRIORITIES = ["all", "1", "2", "3", "4", "5"] as const;
 
@@ -244,6 +253,12 @@ function statusBadge(lead: OutreachLead) {
   if (lead.status === "sent") return <Badge>Sent</Badge>;
   if (lead.status === "approved") return <Badge variant="accent">Approved</Badge>;
   if (lead.status === "drafted") return <Badge>Draft</Badge>;
+  if (lead.status === "send_ready")
+    return <Badge variant="good" title="Verified email — safe to draft and queue">Send ready</Badge>;
+  if (lead.status === "needs_review")
+    return <Badge variant="accent" title="Email pattern-inferred — confirm before send">Needs review</Badge>;
+  if (lead.status === "non_email_channel")
+    return <Badge title="No public email — use LinkedIn / contact form / phone">Non-email</Badge>;
   return <Badge>New</Badge>;
 }
 
@@ -289,7 +304,7 @@ function daysFromNow(n: number) { return new Date(Date.now() + n * 86_400_000).t
 export default function AdminOutreach() {
   const qc = useQueryClient();
   const { user } = useAuth();
-  const [tab, setTab] = useState<"leads" | "queue" | "followups" | "replies" | "beta">("leads");
+  const [tab, setTab] = useState<"leads" | "priority" | "queue" | "followups" | "replies" | "beta">("leads");
   const [vertical, setVertical] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
@@ -502,10 +517,26 @@ export default function AdminOutreach() {
     ).length;
     const bouncedLeads = leads.filter((l) => l.email_verification_status === "bounced").length;
 
+    // Workflow-status buckets from supabase/outreach-lead-cleanup.sql
+    const sendReady = leads.filter(
+      (l) => l.status === "send_ready" && !l.do_not_contact,
+    ).length;
+    const needsReview = leads.filter(
+      (l) => l.status === "needs_review" && !l.do_not_contact,
+    ).length;
+    const nonEmailOnly = leads.filter(
+      (l) => l.status === "non_email_channel" && !l.do_not_contact,
+    ).length;
+    // Removed = bounced rows OR DNC at the row level
+    const removed = leads.filter(
+      (l) => l.do_not_contact || l.email_verification_status === "bounced",
+    ).length;
+
     return {
       total, highPriority, draftsPending, queued, followUpsDue, demos, beta, replied, positiveReplies, dnc,
       sent, sentToday, delivered, bounced, bounceRatePct,
       verified: verifiedLeads, unverified: unverifiedLeads, bouncedLeads,
+      sendReady, needsReview, nonEmailOnly, removed,
     };
   }, [leads, deliveryStats, followups, draftMessages, replies]);
 
@@ -652,6 +683,24 @@ export default function AdminOutreach() {
         <Kpi label="DNC" value={stats.dnc} />
       </div>
 
+      {/* Send-ready workflow KPIs — added by outreach-lead-cleanup.sql.
+          send_ready / needs_review / non_email_channel split the verified
+          lead pool into action buckets the priority queue uses. */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <Kpi
+          label="Send ready"
+          value={stats.sendReady}
+          tone={stats.sendReady > 0 ? "good" : undefined}
+        />
+        <Kpi
+          label="Needs review"
+          value={stats.needsReview}
+          tone={stats.needsReview > 0 ? "warn" : undefined}
+        />
+        <Kpi label="Non-email only" value={stats.nonEmailOnly} />
+        <Kpi label="Removed" value={stats.removed} tone={stats.removed > 0 ? "bad" : undefined} />
+      </div>
+
       {/* Top-level actions */}
       <div className="flex flex-wrap gap-2">
         <Button onClick={() => setShowAdd(true)}>
@@ -668,6 +717,7 @@ export default function AdminOutreach() {
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
           <TabsTrigger value="leads">Leads ({leads.length})</TabsTrigger>
+          <TabsTrigger value="priority">Priority queue ({stats.sendReady})</TabsTrigger>
           <TabsTrigger value="queue">Daily queue ({stats.draftsPending})</TabsTrigger>
           <TabsTrigger value="followups">Follow-ups ({stats.followUpsDue})</TabsTrigger>
           <TabsTrigger value="replies">Replies ({replies.length})</TabsTrigger>
@@ -688,6 +738,15 @@ export default function AdminOutreach() {
             leads={filtered}
             loading={isLoading}
             onOpen={(id) => setOpenLeadId(id)}
+          />
+        </TabsContent>
+
+        <TabsContent value="priority" className="space-y-3">
+          <PriorityQueueView
+            leads={leads}
+            drafts={draftMessages}
+            onOpen={(id) => setOpenLeadId(id)}
+            onCopy={copy}
           />
         </TabsContent>
 
@@ -990,6 +1049,149 @@ function LeadsTable({ leads, loading, onOpen }: {
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// ── priority queue view ─────────────────────────────────────────────────────
+//
+// Shows only the send-ready slice of the lead table (status='send_ready'),
+// sorted by priority then lead_score then updated_at, with a one-message
+// preview for each row. The preview is the most-recent drafted/approved
+// outreach_messages row tied to that lead (if any) — otherwise a short
+// "no draft yet" placeholder so the operator knows to build today's queue.
+//
+// Source documents:
+//   go-to-market/outreach-autopilot/TOP_10_SAFEST_LEADS.md
+//   go-to-market/outreach-autopilot/TOP_25_SAFEST_LEADS.md
+//   go-to-market/outreach-autopilot/TOP_25_POLISHED_EMAILS.md
+
+function PriorityQueueView({ leads, drafts, onOpen, onCopy }: {
+  leads: OutreachLead[];
+  drafts: OutreachMessage[];
+  onOpen: (id: string) => void;
+  onCopy: (text: string, label?: string) => void;
+}) {
+  const sendReady = useMemo(() => {
+    return leads
+      .filter((l) => l.status === "send_ready" && !l.do_not_contact)
+      .sort((a, b) => {
+        if (b.priority !== a.priority) return b.priority - a.priority;
+        if (b.lead_score !== a.lead_score) return b.lead_score - a.lead_score;
+        return (b.updated_at ?? "").localeCompare(a.updated_at ?? "");
+      });
+  }, [leads]);
+
+  // Index of most-recent drafted/approved message per lead_id, for the preview.
+  const previewByLead = useMemo(() => {
+    const m = new Map<string, OutreachMessage>();
+    drafts.forEach((d) => {
+      const existing = m.get(d.lead_id);
+      if (!existing || d.created_at > existing.created_at) m.set(d.lead_id, d);
+    });
+    return m;
+  }, [drafts]);
+
+  if (sendReady.length === 0) {
+    return (
+      <EmptyState
+        icon={Send}
+        title="No send-ready leads"
+        body='Run supabase/outreach-lead-cleanup.sql to bucket leads, then they will appear here in priority order.'
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-xs text-emerald-200 flex items-start gap-2">
+        <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0" />
+        <div>
+          <div className="font-display text-foreground">Priority queue</div>
+          <div className="opacity-90">
+            {sendReady.length} send-ready lead{sendReady.length === 1 ? "" : "s"} sorted by
+            priority. Use the daily-cap indicator above before approving — no email goes out
+            without a manual approve + send on the dashboard.
+          </div>
+        </div>
+      </div>
+      {sendReady.map((l) => {
+        const preview = previewByLead.get(l.id);
+        return (
+          <PriorityQueueRow
+            key={l.id}
+            lead={l}
+            preview={preview}
+            onOpen={onOpen}
+            onCopy={onCopy}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function PriorityQueueRow({ lead, preview, onOpen, onCopy }: {
+  lead: OutreachLead;
+  preview: OutreachMessage | undefined;
+  onOpen: (id: string) => void;
+  onCopy: (text: string, label?: string) => void;
+}) {
+  return (
+    <div className="rounded-md border border-border p-4 space-y-2 bg-background">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <div className="font-display">{lead.company}</div>
+          <div className="text-xs text-muted-foreground">
+            {lead.contact_name ?? "—"}
+            {lead.contact_role ? ` · ${lead.contact_role}` : ""}
+            {" · "}{lead.vertical}
+            {lead.email ? ` · ${lead.email}` : ""}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {priorityBadge(lead.priority)}
+          {scoreBadge(lead.lead_score)}
+          {verificationBadge(lead)}
+          {statusBadge(lead)}
+        </div>
+      </div>
+      {lead.personalization_angle && (
+        <div className="text-xs text-muted-foreground italic line-clamp-2">
+          {lead.personalization_angle}
+        </div>
+      )}
+      {preview ? (
+        <>
+          {preview.subject && (
+            <div className="text-xs">
+              <span className="text-muted-foreground">Subject:</span> {preview.subject}
+            </div>
+          )}
+          <pre className="text-xs whitespace-pre-wrap font-sans leading-relaxed rounded bg-secondary/40 p-3 max-h-40 overflow-y-auto">
+            {preview.body}
+          </pre>
+        </>
+      ) : (
+        <div className="text-xs text-muted-foreground italic px-1">
+          No draft yet — click "Build today's queue" above to draft one.
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2 pt-1">
+        {preview && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onCopy(
+              preview.subject ? `Subject: ${preview.subject}\n\n${preview.body}` : preview.body,
+              "Email copied",
+            )}
+          >
+            <Mail className="h-3 w-3" /> Copy email
+          </Button>
+        )}
+        <Button size="sm" onClick={() => onOpen(lead.id)}>Open lead</Button>
+      </div>
     </div>
   );
 }
