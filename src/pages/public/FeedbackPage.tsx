@@ -10,7 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { setMeta } from "@/lib/seo";
 import { BRAND } from "@/lib/brand";
-import { trackEvent } from "@/lib/trackEvent";
+import {
+  trackEvent,
+  captureAttribution,
+  readAttribution,
+} from "@/lib/trackEvent";
 
 const FeedbackSchema = z.object({
   name: z.string().min(2, "Tell us your name"),
@@ -56,10 +60,13 @@ function Submitted() {
   return (
     <div className="text-center py-10">
       <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
-      <div className="font-display text-2xl mt-4">Thanks — we've got it.</div>
-      <p className="text-muted-foreground mt-3 text-sm max-w-md mx-auto leading-relaxed">
-        Don reads every submission personally. If you said you'd be open to a call or
-        beta partnership, you'll hear back within one business day.
+      <div className="font-display text-2xl mt-4">Appreciate it — got it.</div>
+      <p className="text-muted-foreground mt-3 text-sm max-w-lg mx-auto leading-relaxed">
+        I'll review this personally. If it looks like a strong beta fit, I'll
+        follow up with a few times for a quick 10-minute walkthrough.
+      </p>
+      <p className="text-xs text-muted-foreground/70 mt-4 max-w-md mx-auto">
+        — Don Morrison, founder
       </p>
     </div>
   );
@@ -83,11 +90,16 @@ export default function FeedbackPage() {
       description: `Send ${BRAND.name} product feedback or request beta access.`,
       ogType: "website",
     });
+    // Capture attribution if the visitor landed directly on /feedback
+    // from an outreach link (otherwise sessionStorage already has it
+    // from BetaPage). Merge — never overwrite.
+    captureAttribution();
   }, []);
 
   async function onSubmit(v: FeedbackValues) {
     setError(null);
-    const { error: e } = await supabase.from("beta_feedback").insert({
+    const attr = readAttribution();
+    const payload = {
       name: v.name,
       email: v.email,
       company: v.company || null,
@@ -98,15 +110,37 @@ export default function FeedbackPage() {
       confusing: v.confusing || null,
       beta_partner: v.beta_partner,
       feedback_call: v.feedback_call,
-    });
+      // Hidden attribution fields — populated from sessionStorage /
+      // URL params (set by BetaPage or by direct outreach links).
+      lead_id: attr.lead_id ?? null,
+      utm_source: attr.utm_source ?? null,
+      utm_medium: attr.utm_medium ?? null,
+      utm_campaign: attr.utm_campaign ?? null,
+      utm_term: attr.utm_term ?? null,
+      utm_content: attr.utm_content ?? null,
+      referrer: attr.referrer ?? (typeof document !== "undefined" ? document.referrer || null : null),
+      landing_page:
+        attr.landing_page ??
+        (typeof window !== "undefined" ? window.location.href : null),
+      user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+    };
+    const { error: e } = await supabase.from("beta_feedback").insert(payload);
     if (e) {
       setError(e.message);
       return;
     }
+    // Legacy event name preserved for any existing dashboards; new
+    // canonical event name is `feedback_submitted`.
     trackEvent("feedback_submit", {
       vertical: v.vertical,
       beta_partner: v.beta_partner,
       feedback_call: v.feedback_call,
+    });
+    trackEvent("feedback_submitted", {
+      vertical: v.vertical,
+      beta_partner: v.beta_partner,
+      feedback_call: v.feedback_call,
+      has_lead_id: !!attr.lead_id,
     });
     setDone(true);
   }

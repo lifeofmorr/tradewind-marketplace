@@ -102,6 +102,7 @@ const AdminAuctions = lazy(() => import("@/pages/dashboard/admin/AdminAuctions")
 const AdminBlog = lazy(() => import("@/pages/dashboard/admin/AdminBlog"));
 const AdminMarketReports = lazy(() => import("@/pages/dashboard/admin/AdminMarketReports"));
 const AdminOutreach = lazy(() => import("@/pages/dashboard/admin/AdminOutreach"));
+const AdminBetaInbox = lazy(() => import("@/pages/dashboard/admin/AdminBetaInbox"));
 
 function PageSpinner() {
   return (
@@ -280,6 +281,7 @@ export default function App() {
           <Route path="/admin/blog" element={<L><AdminBlog /></L>} />
           <Route path="/admin/market-reports" element={<L><AdminMarketReports /></L>} />
           <Route path="/admin/outreach" element={<L><AdminOutreach /></L>} />
+          <Route path="/admin/beta-inbox" element={<L><AdminBetaInbox /></L>} />
         </Route>
       </Route>
 

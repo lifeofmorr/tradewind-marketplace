@@ -14,6 +14,36 @@ const DEFAULT_TITLE = "TradeWind is in private beta.";
 const DEFAULT_BODY =
   "We're inviting dealers, brokers, service partners, and serious buyers to use the platform early — and shape what comes next.";
 
+const FEEDBACK_CALL_URL =
+  (import.meta.env.VITE_FEEDBACK_CALL_URL as string | undefined)?.trim() || "";
+
+function BookCallButton({ source, size }: { source: string; size: "sm" | "lg" }) {
+  if (FEEDBACK_CALL_URL) {
+    return (
+      <Button asChild size={size} variant="outline">
+        <a
+          href={FEEDBACK_CALL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackEvent("book_call_click", { source, url: FEEDBACK_CALL_URL })}
+        >
+          Book 10-Minute Feedback Call
+        </a>
+      </Button>
+    );
+  }
+  return (
+    <Button asChild size={size} variant="outline">
+      <Link
+        to="/feedback"
+        onClick={() => trackEvent("book_call_click", { source, fallback: "feedback" })}
+      >
+        Give feedback
+      </Link>
+    </Button>
+  );
+}
+
 /**
  * Subtle, premium beta/feedback callout. Drop into a page to invite the
  * visitor to request beta access or send feedback. Never popup-aggressive.
@@ -44,9 +74,7 @@ export function BetaCTA({ variant = "section", source, title, body }: Props) {
                 Request beta access
               </Link>
             </Button>
-            <Button asChild size="sm" variant="outline">
-              <Link to="/feedback">Give feedback</Link>
-            </Button>
+            <BookCallButton source={source} size="sm" />
           </div>
         </div>
       </section>
@@ -77,9 +105,7 @@ export function BetaCTA({ variant = "section", source, title, body }: Props) {
               Request beta access <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link to="/feedback">Give feedback</Link>
-          </Button>
+          <BookCallButton source={source} size="lg" />
         </div>
       </div>
     </section>

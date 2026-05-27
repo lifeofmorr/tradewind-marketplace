@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { setMeta } from "@/lib/seo";
 import { BRAND } from "@/lib/brand";
-import { trackEvent } from "@/lib/trackEvent";
+import { trackEvent, captureAttribution } from "@/lib/trackEvent";
 
 function Section({
   eyebrow,
@@ -64,6 +64,47 @@ function FeatureCard({
   );
 }
 
+const FEEDBACK_CALL_URL =
+  (import.meta.env.VITE_FEEDBACK_CALL_URL as string | undefined)?.trim() || "";
+
+/**
+ * Renders either a router <Link to="/feedback"> or an external anchor
+ * pointing at VITE_FEEDBACK_CALL_URL. Lives inline so we don't pull a
+ * new shared component into a single page.
+ */
+function BookCallLink({
+  children,
+  source,
+  className,
+}: {
+  children: React.ReactNode;
+  source: string;
+  className?: string;
+}) {
+  if (FEEDBACK_CALL_URL) {
+    return (
+      <a
+        href={FEEDBACK_CALL_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => trackEvent("book_call_click", { source, url: FEEDBACK_CALL_URL })}
+        className={className}
+      >
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link
+      to="/feedback"
+      onClick={() => trackEvent("book_call_click", { source, fallback: "feedback" })}
+      className={className}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export default function BetaPage() {
   useEffect(() => {
     setMeta({
@@ -71,6 +112,10 @@ export default function BetaPage() {
       description: `Help shape ${BRAND.name} — the marketplace for high-value boats, autos, aircraft, and the services around them.`,
       ogType: "website",
     });
+    // Capture UTM + lead_id attribution from outreach links and stash
+    // in sessionStorage so /feedback can read it on submit. trackEvent
+    // will pick up the merged attribution automatically.
+    captureAttribution();
     trackEvent("beta_page_view");
   }, []);
 
@@ -101,9 +146,7 @@ export default function BetaPage() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link to="/feedback" onClick={() => trackEvent("book_call_click", { source: "beta_hero" })}>
-                Book a 10-minute feedback call
-              </Link>
+              <BookCallLink source="beta_hero">Book 10-Minute Feedback Call</BookCallLink>
             </Button>
           </div>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs">
@@ -290,9 +333,7 @@ export default function BetaPage() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link to="/feedback" onClick={() => trackEvent("book_call_click", { source: "beta_footer" })}>
-              Book a 10-minute feedback call
-            </Link>
+            <BookCallLink source="beta_footer">Book 10-Minute Feedback Call</BookCallLink>
           </Button>
           <Button asChild variant="link" size="lg">
             <Link to="/feedback">Give product feedback</Link>

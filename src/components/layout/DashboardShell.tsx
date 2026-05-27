@@ -65,6 +65,7 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { to: "/admin/blog",           label: "Blog",         icon: BookOpen },
     { to: "/admin/market-reports", label: "Reports",      icon: Newspaper },
     { to: "/admin/outreach",       label: "Outreach",     icon: Mail },
+    { to: "/admin/beta-inbox",     label: "Beta inbox",   icon: Inbox },
     { to: "/messages",             label: "Messages",     icon: MessageSquare },
   ],
 };

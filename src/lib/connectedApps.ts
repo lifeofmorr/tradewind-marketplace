@@ -20,6 +20,7 @@ import {
   KeyRound,
   Calendar,
   Plug,
+  Inbox,
 } from "lucide-react";
 
 export type AppStatus = "active" | "coming_soon";
@@ -120,6 +121,15 @@ export const TRADEWIND_APPS: ConnectedApp[] = [
     to: "/admin/outreach",
     status: "active",
     accent: "from-fuchsia-500/25 to-fuchsia-700/10",
+  },
+  {
+    id: "beta-inbox",
+    name: "Beta Inbox",
+    description: "Inbound /feedback submissions — triage, link to outreach, prep demos.",
+    icon: Inbox,
+    to: "/admin/beta-inbox",
+    status: "active",
+    accent: "from-teal-500/25 to-teal-700/10",
   },
 ];
 
