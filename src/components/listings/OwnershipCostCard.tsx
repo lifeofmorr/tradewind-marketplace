@@ -162,7 +162,7 @@ export function OwnershipCostCard({ listing }: Props) {
         Estimates are for planning only. Actual costs vary by lender, region, usage, and condition.
         {isAircraft && (
           <>
-            {" "}TradeWind does not verify insurance, hangar contracts, or financing —
+            {" "}Tradewind does not verify insurance, hangar contracts, or financing —
             confirm rates with a real aviation broker / lender.
           </>
         )}{" "}

@@ -222,9 +222,9 @@ const BETA_OFFER = [
   "Locked-in early-adopter rate after beta",
 ];
 
-// ── TradeWind 100 campaign ───────────────────────────────────────────────────
+// ── Tradewind 100 campaign ───────────────────────────────────────────────────
 //
-// The TradeWind 100 campaign — 100 verified leads across 9 verticals, sent
+// The Tradewind 100 campaign — 100 verified leads across 9 verticals, sent
 // over ~30 days. Daily caps are enforced in the UI so we never overshoot the
 // schedule documented in go-to-market/outreach-autopilot/30_DAY_SEND_SCHEDULE.md.
 //
@@ -232,7 +232,7 @@ const BETA_OFFER = [
 // the current "today" cap that the dashboard enforces — bump it as the weeks
 // progress (or wire to date math later).
 
-const CAMPAIGN_NAME = "TradeWind 100";
+const CAMPAIGN_NAME = "Tradewind 100";
 const CAMPAIGN_TARGET = 100;
 const CAMPAIGN_DAILY_CAP = 7; // Week 1 cap; bump as the schedule progresses.
 
@@ -347,7 +347,7 @@ export default function AdminOutreach() {
   const [buildSummary, setBuildSummary] = useState<string | null>(null);
 
   useEffect(() => {
-    setMeta({ title: "Admin · outreach", description: "TradeWind outreach autopilot." });
+    setMeta({ title: "Admin · outreach", description: "Tradewind outreach autopilot." });
   }, []);
 
   useEffect(() => {
@@ -875,14 +875,42 @@ function DailyCapIndicator({ sentToday, cap, hit }: { sentToday: number; cap: nu
 // ── compliance banner ─────────────────────────────────────────────────────────
 
 function ComplianceBanner() {
+  // CAN-SPAM requires a physical postal address on commercial email. The server
+  // (build-daily-queue) hard-blocks email scaling until BUSINESS_MAILING_ADDRESS
+  // is set; this mirrors that state for the operator using the public client var.
+  const mailingAddress = (import.meta.env.VITE_BUSINESS_MAILING_ADDRESS ?? "").trim();
+  const canSpamReady = mailingAddress.length > 0;
+
   return (
-    <div className="rounded-md border border-border bg-secondary/40 px-4 py-3 text-xs text-muted-foreground flex items-start gap-3">
-      <ShieldCheck className="h-4 w-4 text-brass-400 mt-0.5 shrink-0" />
-      <div>
-        <div className="font-medium text-foreground">Outreach compliance</div>
-        Outreach uses public business contacts only. No auto-sending. All messages require approval.
-        Opt-out is respected immediately, follow-ups stop on negative replies, and DNC leads are excluded from queues.
+    <div className="space-y-3">
+      <div className="rounded-md border border-border bg-secondary/40 px-4 py-3 text-xs text-muted-foreground flex items-start gap-3">
+        <ShieldCheck className="h-4 w-4 text-brass-400 mt-0.5 shrink-0" />
+        <div>
+          <div className="font-medium text-foreground">Outreach compliance</div>
+          Outreach uses public business contacts only. No auto-sending. All messages require approval.
+          Opt-out is respected immediately, follow-ups stop on negative replies, and DNC leads are excluded from queues.
+        </div>
       </div>
+
+      {canSpamReady ? (
+        <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-300 flex items-start gap-2">
+          <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0" />
+          <div>
+            <span className="font-medium">CAN-SPAM ready.</span> Email footers carry a physical
+            postal address and an opt-out line. Address: <span className="font-mono">{mailingAddress}</span>
+          </div>
+        </div>
+      ) : (
+        <div role="alert" className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs text-red-300 flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <div>
+            <span className="font-medium">CAN-SPAM: mailing address not set.</span> Email outreach
+            scaling is blocked until <span className="font-mono">BUSINESS_MAILING_ADDRESS</span> (server)
+            and <span className="font-mono">VITE_BUSINESS_MAILING_ADDRESS</span> (client) are configured.
+            See OUTREACH_CAN_SPAM_READINESS.md.
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2043,7 +2071,7 @@ function LeadDetail({ lead, onUpdate, onCopy, actionBusy }: LeadDetailProps) {
     "What does your typical buyer/seller flow look like today?",
     "Where do most of your listings come from now?",
     "What's the most painful part of selling/servicing a customer right now?",
-    "If TradeWind reduced one of those, which would matter most?",
+    "If Tradewind reduced one of those, which would matter most?",
     "Would you be open to a 10-minute walkthrough? [CALENDAR_LINK]",
   ];
 

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { setMeta } from "@/lib/seo";
 import { formatCents, timeAgo } from "@/lib/utils";
+import StripeModeBanner from "@/components/admin/StripeModeBanner";
 import type { Payment, PaymentStatus, Profile, Dealer } from "@/types/database";
 
 const VARIANT: Record<PaymentStatus, "default" | "accent" | "good" | "bad"> = {
@@ -82,6 +83,8 @@ export default function AdminPayments() {
         <h1 className="section-title">Stripe payments</h1>
         <p className="text-sm text-muted-foreground mt-2">Every successful, failed, and refunded charge across the marketplace.</p>
       </div>
+
+      <StripeModeBanner />
 
       <div className="grid gap-4 sm:grid-cols-4">
         <Stat label="Count" value={totals.count} />

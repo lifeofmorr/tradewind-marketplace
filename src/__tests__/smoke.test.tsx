@@ -99,7 +99,7 @@ beforeEach(() => {
   document.head.querySelectorAll("[data-test], #tradewind-jsonld").forEach((n) => n.remove());
 });
 
-describe("TradeWind smoke", () => {
+describe("Tradewind smoke", () => {
   it("Login page renders sign-in form", async () => {
     const { default: Login } = await import("@/pages/Login");
     renderRoute(<Login />, "/login");

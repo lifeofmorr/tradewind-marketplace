@@ -59,7 +59,7 @@ interface Verdict {
   recommended_action: "allow" | "review" | "block";
 }
 
-const FRAUD_SYSTEM = `You are TradeWind's fraud-screening AI for marketplace inquiries.
+const FRAUD_SYSTEM = `You are Tradewind's fraud-screening AI for marketplace inquiries.
 Score the message 0–100 (100 = certainly fraud) and list specific signals.
 Recommended action: allow (<30), review (30–70), block (>70).
 Output ONLY JSON: { "score": int, "signals": [string], "recommended_action": "allow"|"review"|"block" }.`;

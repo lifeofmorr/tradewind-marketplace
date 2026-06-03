@@ -31,7 +31,7 @@ export default function DealerOnboarding() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Values>({
     resolver: zodResolver(Schema),
   });
-  useEffect(() => { setMeta({ title: "Dealer onboarding", description: "Set up your dealership on TradeWind." }); }, []);
+  useEffect(() => { setMeta({ title: "Dealer onboarding", description: "Set up your dealership on Tradewind." }); }, []);
 
   async function onSubmit(v: Values) {
     if (!user) return;

@@ -6,7 +6,7 @@ import { setMeta } from "@/lib/seo";
 import type { MarketReport } from "@/types/database";
 
 export default function MarketReports() {
-  useEffect(() => { setMeta({ title: "Market reports", description: "TradeWind market reports — boat and auto categories." }); }, []);
+  useEffect(() => { setMeta({ title: "Market reports", description: "Tradewind market reports — boat and auto categories." }); }, []);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["market-reports"],

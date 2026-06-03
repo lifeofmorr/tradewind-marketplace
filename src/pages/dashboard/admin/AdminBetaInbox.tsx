@@ -825,7 +825,7 @@ function demoPlanFor(verticalRaw: string, feedbackPain: string | null, leadPain:
       ],
       questions: [
         "What % of partner-routed leads close vs. open-market leads?",
-        "Where in the funnel do you want TradeWind to send you the lead?",
+        "Where in the funnel do you want Tradewind to send you the lead?",
         "Any regulatory constraints we need to design around?",
       ],
     };

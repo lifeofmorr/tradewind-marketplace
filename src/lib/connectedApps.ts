@@ -37,7 +37,7 @@ export interface ConnectedApp {
 }
 
 /**
- * The "internal apps" that make up the TradeWind operating system.
+ * The "internal apps" that make up the Tradewind operating system.
  * Each app surfaces in the AppSwitcher command palette.
  */
 export const TRADEWIND_APPS: ConnectedApp[] = [
@@ -178,7 +178,7 @@ export const INTEGRATIONS: Integration[] = [
   { id: "mixpanel", name: "Mixpanel", description: "Product analytics for dealers.", category: "Analytics", icon: PieChart, status: "coming_soon" },
 
   // Automation
-  { id: "zapier", name: "Zapier", description: "Connect TradeWind to 7,000+ apps.", category: "Automation", icon: Workflow, status: "available" },
+  { id: "zapier", name: "Zapier", description: "Connect Tradewind to 7,000+ apps.", category: "Automation", icon: Workflow, status: "available" },
   { id: "make", name: "Make", description: "Visual automation flows.", category: "Automation", icon: Workflow, status: "coming_soon" },
   { id: "n8n", name: "n8n", description: "Self-hosted workflow automation.", category: "Automation", icon: Workflow, status: "coming_soon" },
 

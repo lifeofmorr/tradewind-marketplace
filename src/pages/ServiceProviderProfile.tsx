@@ -95,7 +95,7 @@ export default function ServiceProviderProfile() {
 
 export function ServicesIndex() {
   useEffect(() => {
-    setMeta({ title: "Service providers", description: "Vetted marine and auto service partners on TradeWind." });
+    setMeta({ title: "Service providers", description: "Vetted marine and auto service partners on Tradewind." });
   }, []);
   const { data: providers = [], isLoading } = useQuery({
     queryKey: ["service-providers"],

@@ -148,7 +148,7 @@ export function GroupPage({ group }: { group: "boat" | "auto" }) {
             ? "Want to list more boats here?"
             : "Want to list specialty autos here?"
         }
-        body="TradeWind is in private beta. We're inviting dealers and brokers who care about premium listings to test it early."
+        body="Tradewind is in private beta. We're inviting dealers and brokers who care about premium listings to test it early."
       />
     </div>
   );
@@ -166,8 +166,8 @@ export function BrowsePage() {
     setMeta({
       title: featuredOnly ? "Featured listings" : "Browse listings",
       description: featuredOnly
-        ? "Hand-picked featured listings on TradeWind."
-        : "All active boats and autos on TradeWind.",
+        ? "Hand-picked featured listings on Tradewind."
+        : "All active boats and autos on Tradewind.",
     });
   }, [featuredOnly]);
   const { data: listings = [], isLoading } = useListings({

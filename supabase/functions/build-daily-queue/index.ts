@@ -17,6 +17,8 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { generateFallbackMessage } from "../_shared/outreach-fallback.ts";
+import { enforceOutreachRateLimit } from "../_shared/rate-limit.ts";
+import { canSpamReady, appendCanSpamFooter } from "../_shared/outreach-compliance.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -101,6 +103,23 @@ Deno.serve(async (req: Request) => {
 
   const limit = Math.max(1, Math.min(opts.limit ?? 10, 25));
   const channel = opts.channel ?? "email";
+
+  // CAN-SPAM gate: never SCALE email outreach without a configured physical
+  // postal address. This is the hard block on scaling — drafting the daily
+  // queue is the scaling mechanism, so we refuse it up front. LinkedIn/IG DMs
+  // are exempt (not commercial email under CAN-SPAM).
+  if (channel === "email" && !canSpamReady()) {
+    return errorResponse(
+      "Outreach scaling is blocked: BUSINESS_MAILING_ADDRESS is not configured. " +
+        "Set it as a Supabase function secret before drafting email outreach (CAN-SPAM requires a physical address).",
+      409,
+      req,
+    );
+  }
+
+  // Outreach budget — 25 queue builds / day per admin (see AI_RATE_LIMITING.md).
+  const limited = await enforceOutreachRateLimit(req, "build-daily-queue");
+  if (limited) return limited;
 
   // 1) Pull candidates. RLS will enforce admin.
   // Skip leads contacted in the last 5 days (date_contacted) and DNC/replied/etc.
@@ -239,7 +258,8 @@ Deno.serve(async (req: Request) => {
           direction: "outbound",
           channel,
           subject: gen.subject || null,
-          body: gen.body,
+          // CAN-SPAM footer (opt-out + physical postal address) for email drafts.
+          body: appendCanSpamFooter(gen.body, channel),
           status: "drafted",
           approved: false,
           personalization_note: gen.personalization_note ?? null,

@@ -3,7 +3,7 @@
 //
 // Usage:
 //   const text = await callLLM({
-//     system: "You are a TradeWind listing writer.",
+//     system: "You are a Tradewind listing writer.",
 //     user: "Write a description for a 2022 Boston Whaler 320.",
 //     maxTokens: 800,
 //     responseFormat: "json",   // optional — forces JSON-only output

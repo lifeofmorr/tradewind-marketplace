@@ -194,7 +194,7 @@ export default function ListingDetail() {
                 <p className="mt-1 text-amber-200/90">
                   Aircraft details, registration, title, logbooks, maintenance status,
                   and airworthiness must be independently verified by qualified aviation
-                  professionals before purchase. TradeWind does not verify FAA status,
+                  professionals before purchase. Tradewind does not verify FAA status,
                   airworthiness, or maintenance compliance.
                 </p>
               </div>
@@ -233,11 +233,11 @@ export default function ListingDetail() {
                 <div className="font-display text-base">Buy with confidence</div>
                 <p className="text-muted-foreground mt-1 leading-relaxed">
                   Always verify title, HIN/VIN, and matching numbers before purchase. Never wire
-                  funds, send crypto, or pay outside the platform. Use a TradeWind concierge or
+                  funds, send crypto, or pay outside the platform. Use a Tradewind concierge or
                   bonded F&I office for high-value deals.
                 </p>
                 <Link to="/trust" className="inline-block text-xs text-brass-400 mt-2 hover:underline">
-                  How TradeWind verifies →
+                  How Tradewind verifies →
                 </Link>
               </div>
             </div>

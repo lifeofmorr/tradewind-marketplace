@@ -73,7 +73,7 @@ export default function ServiceProviderOnboarding() {
     defaultValues: { category: "marine_mechanic" },
   });
   const category = watch("category");
-  useEffect(() => { setMeta({ title: "Service provider onboarding", description: "Set up your service business on TradeWind." }); }, []);
+  useEffect(() => { setMeta({ title: "Service provider onboarding", description: "Set up your service business on Tradewind." }); }, []);
 
   async function onSubmit(v: Values) {
     if (!user) return;

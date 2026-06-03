@@ -83,7 +83,7 @@ export function OfferBuilderPro({ listing }: Props) {
       buyer_name: profile?.full_name ?? undefined,
     });
     const extras: string[] = [];
-    if (depositCents > 0) extras.push(`• Deposit on acceptance: ${formatCents(depositCents)} via TradeWind escrow`);
+    if (depositCents > 0) extras.push(`• Deposit on acceptance: ${formatCents(depositCents)} via Tradewind escrow`);
     if (financingContingency && financing !== "cash") extras.push(`• Financing contingency: yes — final approval required`);
     if (extras.length === 0) return base;
     const lines = base.split("\n");
@@ -155,7 +155,7 @@ export function OfferBuilderPro({ listing }: Props) {
               onChange={(e) => setDeposit(e.target.value)}
             />
             <div className="mt-1 text-[11px] font-mono text-muted-foreground">
-              Held in TradeWind escrow until inspection clears
+              Held in Tradewind escrow until inspection clears
             </div>
           </div>
         </div>
@@ -224,7 +224,7 @@ export function OfferBuilderPro({ listing }: Props) {
 
         <p className="text-[11px] text-muted-foreground leading-relaxed border-t border-border pt-3">
           Non-binding offer draft — not a legal purchase agreement. A formal offer must be executed
-          through a TradeWind concierge or your preferred F&amp;I office before it binds either party.
+          through a Tradewind concierge or your preferred F&amp;I office before it binds either party.
         </p>
 
         <NegotiationAssistant listing={listing} offerCents={offerCents} />

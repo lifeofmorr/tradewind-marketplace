@@ -19,7 +19,7 @@ interface ReviewWithTarget extends Review {
 export default function BuyerReviews() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  useEffect(() => { setMeta({ title: "My reviews", description: "Reviews you've written on TradeWind." }); }, []);
+  useEffect(() => { setMeta({ title: "My reviews", description: "Reviews you've written on Tradewind." }); }, []);
 
   const { data: reviews = [], isLoading } = useQuery({
     queryKey: ["my-reviews", user?.id],

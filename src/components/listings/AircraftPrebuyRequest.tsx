@@ -33,9 +33,9 @@ const DEFAULT_SCOPES: Scopes = {
 /**
  * Aircraft pre-buy inspection request flow.
  * Buyer selects scope (logbook / airframe / engine / avionics / corrosion / AD-SB),
- * adds notes, submits — TradeWind concierge / admin assigns an A&P/IA service provider.
+ * adds notes, submits — Tradewind concierge / admin assigns an A&P/IA service provider.
  *
- * TradeWind itself does not perform inspections — assignment routes to a real
+ * Tradewind itself does not perform inspections — assignment routes to a real
  * licensed A&P/IA partner.
  */
 export function AircraftPrebuyRequestCard({ listingId }: Props) {
@@ -118,7 +118,7 @@ export function AircraftPrebuyRequestCard({ listingId }: Props) {
             Request an A&amp;P / IA pre-buy
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            TradeWind routes pre-buy requests to a vetted A&amp;P or IA. TradeWind does
+            Tradewind routes pre-buy requests to a vetted A&amp;P or IA. Tradewind does
             not perform inspections.
           </p>
         </div>
@@ -230,7 +230,7 @@ export function AircraftPrebuyRequestCard({ listingId }: Props) {
       >
         <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
         <div>
-          TradeWind does not perform inspections, verify airworthiness, or sign off
+          Tradewind does not perform inspections, verify airworthiness, or sign off
           on AD/SB compliance. Final airworthiness determination is the
           responsibility of an independent licensed A&amp;P/IA.
         </div>

@@ -183,7 +183,7 @@ export function OfferBuilder({ listing }: Props) {
           </div>
 
           <p className="text-[11px] text-muted-foreground leading-relaxed">
-            Non-binding offer draft. Not a legal purchase agreement. Use a TradeWind concierge or a bonded F&I office to formalize the deal.
+            Non-binding offer draft. Not a legal purchase agreement. Use a Tradewind concierge or a bonded F&I office to formalize the deal.
           </p>
         </div>
       )}

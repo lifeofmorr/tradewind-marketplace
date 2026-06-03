@@ -4,11 +4,12 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { callLLM } from "../_shared/anthropic.ts";
+import { enforceAiRateLimit } from "../_shared/rate-limit.ts";
 
 interface ChatMsg { role: "user" | "assistant"; content: string }
 interface Body { messages: ChatMsg[]; context?: { listing_id?: string; saved_listing_ids?: string[] } }
 
-const SYSTEM = `You are TradeWind's buyer concierge. You help buyers narrow boat, car, or aircraft decisions.
+const SYSTEM = `You are Tradewind's buyer concierge. You help buyers narrow boat, car, or aircraft decisions.
 
 Behavior:
 - Ask one focused question per turn until you understand budget, intended use, and must-haves.
@@ -20,6 +21,8 @@ Behavior:
 Deno.serve(async (req: Request) => {
   const pre = handleOptions(req); if (pre) return pre;
   if (req.method !== "POST") return errorResponse("POST only", 405);
+  const limited = await enforceAiRateLimit(req, "ai-buyer-assistant");
+  if (limited) return limited;
   let body: Body;
   try { body = await req.json() as Body; } catch { return errorResponse("Invalid JSON"); }
   if (!body.messages?.length) return errorResponse("messages required");

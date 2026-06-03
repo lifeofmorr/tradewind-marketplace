@@ -1,49 +1,49 @@
-// Lightweight telemetry shim.
+// Telemetry façade over Sentry.
 //
-// Production wires this to Sentry (or any error reporter) by reading
-// VITE_SENTRY_DSN at build time. When the env var is missing, the module
-// becomes a no-op so dev/local/preview builds never break.
-//
-// To wire Sentry:
-//   1. npm i @sentry/react
-//   2. set VITE_SENTRY_DSN in Vercel
-//   3. uncomment the Sentry import + init below
-//
-// Until then, every captureException() simply logs to console.
+// The actual Sentry.init() happens in src/instrument.ts (imported first in
+// main.tsx, before any app code, so route/fetch tracing is in place from the
+// start). This module is the app-facing API: captureException/captureMessage/
+// setUser delegate to Sentry when a DSN is configured, and degrade to console
+// logging otherwise. Callers never import @sentry/react directly.
 
-const DSN: string | undefined = import.meta.env.VITE_SENTRY_DSN;
+import { Sentry, sentryEnabled, initSentry } from "@/instrument";
+
 const ENV: string = import.meta.env.VITE_ENV_NAME ?? import.meta.env.MODE ?? "unknown";
 
-let initialized = false;
-
+/**
+ * Idempotent. Sentry already self-initializes on import of instrument.ts; this
+ * remains for call sites (main.tsx) and guarantees init even if import order
+ * changes. No-op when VITE_SENTRY_DSN is unset.
+ */
 export function initTelemetry(): void {
-  if (initialized) return;
-  initialized = true;
-  if (!DSN) return;
-  // Wire @sentry/react here once installed:
-  //   Sentry.init({ dsn: DSN, environment: ENV, tracesSampleRate: 0.1 });
-  // eslint-disable-next-line no-console
-  console.info("[telemetry] DSN present, Sentry not yet wired");
+  initSentry();
 }
 
 export function captureException(err: unknown, context?: Record<string, unknown>): void {
   // eslint-disable-next-line no-console
   console.error("[telemetry]", err, context ?? {});
-  // When Sentry is wired:
-  //   Sentry.captureException(err, { extra: context });
+  if (sentryEnabled()) {
+    Sentry.captureException(err, context ? { extra: context } : undefined);
+  }
 }
 
 export function captureMessage(msg: string, context?: Record<string, unknown>): void {
   // eslint-disable-next-line no-console
   console.warn("[telemetry]", msg, context ?? {});
-  // When Sentry is wired:
-  //   Sentry.captureMessage(msg, { extra: context });
+  if (sentryEnabled()) {
+    Sentry.captureMessage(msg, context ? { extra: context } : undefined);
+  }
 }
 
-export function setUser(user: { id: string; email?: string | null; role?: string | null } | null): void {
-  if (!DSN) return;
-  // When Sentry is wired:
-  //   Sentry.setUser(user ? { id: user.id, email: user.email ?? undefined, role: user.role ?? undefined } : null);
+export function setUser(
+  user: { id: string; email?: string | null; role?: string | null } | null,
+): void {
+  if (!sentryEnabled()) return;
+  Sentry.setUser(
+    user
+      ? { id: user.id, email: user.email ?? undefined, role: user.role ?? undefined }
+      : null,
+  );
 }
 
 export const telemetryEnv = ENV;

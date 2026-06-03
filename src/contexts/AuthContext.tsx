@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { setUser as setTelemetryUser } from "@/lib/telemetry";
 import type { Profile, UserRole } from "@/types/database";
 
 interface AuthContextValue {
@@ -64,6 +65,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return () => { mounted = false; sub.subscription.unsubscribe(); };
   }, [loadProfile]);
+
+  // Attribute errors/traces to the current user in Sentry (no-op without DSN).
+  useEffect(() => {
+    setTelemetryUser(
+      user ? { id: user.id, email: user.email ?? null, role: profile?.role ?? null } : null,
+    );
+  }, [user, profile?.role]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });

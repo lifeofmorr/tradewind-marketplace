@@ -4,6 +4,7 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { callLLM, parseJSON } from "../_shared/anthropic.ts";
+import { enforceAiRateLimit } from "../_shared/rate-limit.ts";
 
 interface Body {
   category: string;
@@ -22,7 +23,7 @@ interface Estimate {
   rationale: string;
 }
 
-const SYSTEM = `You are TradeWind's pricing estimator for boats, autos, and aircraft.
+const SYSTEM = `You are Tradewind's pricing estimator for boats, autos, and aircraft.
 
 Use your knowledge of typical US private/dealer pricing as of the model year through today.
 Output a single JSON object with realistic CENTS values:
@@ -40,6 +41,8 @@ Output ONLY JSON.`;
 Deno.serve(async (req: Request) => {
   const pre = handleOptions(req); if (pre) return pre;
   if (req.method !== "POST") return errorResponse("POST only", 405);
+  const limited = await enforceAiRateLimit(req, "ai-pricing-estimate");
+  if (limited) return limited;
   let body: Body;
   try { body = await req.json() as Body; } catch { return errorResponse("Invalid JSON"); }
   if (!body.make || !body.model || !body.year || !body.category) {

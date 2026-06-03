@@ -8,7 +8,7 @@ import { setMeta } from "@/lib/seo";
 export default function Messages() {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
-  useEffect(() => { setMeta({ title: "Messages", description: "Your TradeWind inbox." }); }, []);
+  useEffect(() => { setMeta({ title: "Messages", description: "Your Tradewind inbox." }); }, []);
 
   return (
     <div className="-m-4 md:-m-8 min-h-[calc(100vh-3.5rem)] md:min-h-[calc(100vh-0px)] md:grid md:grid-cols-[320px_1fr] border-l border-border">

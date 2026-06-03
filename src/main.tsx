@@ -1,3 +1,4 @@
+import "./instrument"; // Sentry init — must be first so tracing is in place before app code
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";

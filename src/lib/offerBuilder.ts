@@ -15,7 +15,7 @@ export interface OfferDraft {
 const FINANCING_LABEL: Record<OfferDraft["financing_status"], string> = {
   cash: "Cash offer — funds available now",
   preapproved: "Pre-approved with my lender",
-  needs_financing: "Need financing — can use TradeWind partners",
+  needs_financing: "Need financing — can use Tradewind partners",
   tbd: "Financing TBD",
 };
 
@@ -36,7 +36,7 @@ export function generateOfferMessage(data: OfferDraft): string {
   }
   lines.push(`• Financing: ${FINANCING_LABEL[data.financing_status]}`);
   lines.push(`• Inspection contingency: ${data.inspection_contingency ? "yes — subject to surveyor / PPI" : "no — buying as-is after my own due diligence"}`);
-  lines.push(`• Transport: ${data.transport_needed ? "I'll need TradeWind transport coordination" : "I can pick up / arrange my own"}`);
+  lines.push(`• Transport: ${data.transport_needed ? "I'll need Tradewind transport coordination" : "I can pick up / arrange my own"}`);
   if (data.timeline?.trim()) lines.push(`• Timeline: ${data.timeline.trim()}`);
   if (data.note?.trim()) {
     lines.push("");
@@ -44,7 +44,7 @@ export function generateOfferMessage(data: OfferDraft): string {
   }
 
   lines.push("");
-  lines.push("This is a non-binding offer to start the conversation — happy to formalize through a TradeWind concierge or your preferred F&I office.");
+  lines.push("This is a non-binding offer to start the conversation — happy to formalize through a Tradewind concierge or your preferred F&I office.");
   lines.push("");
   lines.push("Thanks!");
   return lines.join("\n");

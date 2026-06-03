@@ -245,7 +245,7 @@ function PlatformCapabilities() {
       <h2 className="section-title">Premium listings are only the start.</h2>
       <div className="section-title-underline mb-8" />
       <p className="max-w-2xl text-muted-foreground mb-8">
-        TradeWind is a marketplace and a workflow. Beyond the listing, the platform handles
+        Tradewind is a marketplace and a workflow. Beyond the listing, the platform handles
         the work that actually closes the deal.
       </p>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

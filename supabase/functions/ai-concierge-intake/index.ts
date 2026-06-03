@@ -4,6 +4,7 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { callLLM, parseJSON } from "../_shared/anthropic.ts";
+import { enforceAiRateLimit } from "../_shared/rate-limit.ts";
 
 interface ChatMsg { role: "user" | "assistant"; content: string }
 interface Body { messages: ChatMsg[] }
@@ -18,7 +19,7 @@ interface ConciergeIntake {
   next_question: string | null;
 }
 
-const SYSTEM = `You are TradeWind's concierge intake AI.
+const SYSTEM = `You are Tradewind's concierge intake AI.
 
 You are reading a partial conversation between a buyer and a concierge.
 Extract a structured intake the human concierge can act on, and propose the next clarifying question.
@@ -42,6 +43,8 @@ Rules:
 Deno.serve(async (req: Request) => {
   const pre = handleOptions(req); if (pre) return pre;
   if (req.method !== "POST") return errorResponse("POST only", 405);
+  const limited = await enforceAiRateLimit(req, "ai-concierge-intake");
+  if (limited) return limited;
   let body: Body;
   try { body = await req.json() as Body; } catch { return errorResponse("Invalid JSON"); }
   if (!body.messages?.length) return errorResponse("messages required");

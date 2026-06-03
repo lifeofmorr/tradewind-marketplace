@@ -36,7 +36,7 @@ const LEVELS: Level[] = [
   {
     key: "buy_ready",
     label: "Buy Ready",
-    copy: "You're ready to make an offer. TradeWind concierge can close it.",
+    copy: "You're ready to make an offer. Tradewind concierge can close it.",
     min: 7,
   },
 ];

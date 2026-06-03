@@ -58,7 +58,7 @@ const OPT_OUT_LINE =
   "If this is not relevant, no worries — just tell me and I will not follow up.";
 const DEFAULT_CTA =
   "Would you be open to a quick 10-minute look and giving honest feedback?";
-const SIGN_OFF = "— Don\nTradeWind";
+const SIGN_OFF = "— Don\nTradewind";
 
 interface Template {
   label: string;
@@ -77,7 +77,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Took a look at ${l.company}${l.location ? ` in ${l.location}` : ""} this morning. The mix of boats you carry is the kind of inventory I want on the platform early.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for boats, autos, and aircraft. Dealers get a clean profile, AI-built listing descriptions from your photos and notes, and a feed of buyer requests filtered to your inventory.",
+      "I am Don, building Tradewind, a marketplace for boats, autos, and aircraft. Dealers get a clean profile, AI-built listing descriptions from your photos and notes, and a feed of buyer requests filtered to your inventory.",
     offer: "Private beta. Free for 60 days. No fee until you see real lead flow.",
   },
   yacht_broker: {
@@ -87,7 +87,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Looked at ${l.company}${l.location ? ` over in ${l.location}` : ""}. Your listing mix and the way you present larger boats stood out.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for boats, autos, and aircraft. Brokers get a verified profile, AI-built listing copy, and inbound buyer requests routed to the kind of boats you actually carry.",
+      "I am Don, building Tradewind, a marketplace for boats, autos, and aircraft. Brokers get a verified profile, AI-built listing copy, and inbound buyer requests routed to the kind of boats you actually carry.",
     offer: "Private beta. Free for 60 days. No fee until you see real lead flow.",
   },
   auto_dealer: {
@@ -97,7 +97,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Took a look at ${l.company}${l.location ? ` in ${l.location}` : ""}. The inventory mix made me want to reach out before we open the platform up further.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for boats, autos, and aircraft. Dealers get a clean profile, AI-built listing descriptions from your photos and notes, and inbound buyer requests routed to your actual stock.",
+      "I am Don, building Tradewind, a marketplace for boats, autos, and aircraft. Dealers get a clean profile, AI-built listing descriptions from your photos and notes, and inbound buyer requests routed to your actual stock.",
     offer: "Private beta. Free for 60 days. No fee until you see real lead flow.",
   },
   exotic_dealer: {
@@ -107,7 +107,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Spent some time on ${l.company}${l.location ? ` (${l.location})` : ""}. The exotic mix you carry is the kind of inventory I want on the platform early.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for boats, exotic and classic cars, and aircraft. Dealers get a verified profile, AI-built listing copy, and serious buyer inquiries routed to their actual stock.",
+      "I am Don, building Tradewind, a marketplace for boats, exotic and classic cars, and aircraft. Dealers get a verified profile, AI-built listing copy, and serious buyer inquiries routed to their actual stock.",
     offer: "Private beta. Free for 60 days. No fee until you see real lead flow.",
   },
   classic_dealer: {
@@ -117,7 +117,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Read through your inventory at ${l.company}${l.location ? ` (${l.location})` : ""}. Classic listings done right are rare and yours stood out.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for boats, classic and exotic cars, and aircraft. Dealers get a verified profile, AI-built listing copy from your existing photos and notes, and inbound buyer requests routed to your inventory.",
+      "I am Don, building Tradewind, a marketplace for boats, classic and exotic cars, and aircraft. Dealers get a verified profile, AI-built listing copy from your existing photos and notes, and inbound buyer requests routed to your inventory.",
     offer: "Private beta. Free for 60 days. No fee until you see real lead flow.",
   },
   aircraft_broker: {
@@ -127,7 +127,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Read through the listings at ${l.company}${l.location ? ` (${l.location})` : ""} this morning. The mix you carry is the kind of inventory I want on the platform early.`,
     hook:
-      "I am Don, building TradeWind, a marketplace that now includes aircraft (jets, helicopters, turbines). Brokers get a verified profile, AI-built listing copy, and inbound buyer requests routed to the kinds of aircraft you actually sell.",
+      "I am Don, building Tradewind, a marketplace that now includes aircraft (jets, helicopters, turbines). Brokers get a verified profile, AI-built listing copy, and inbound buyer requests routed to the kinds of aircraft you actually sell.",
     offer: "Private beta. Free for 60 days. No fee until you see real lead flow.",
   },
   marine_surveyor: {
@@ -137,7 +137,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Found ${l.company}${l.location ? ` in ${l.location}` : ""} while looking for surveyors I would actually route buyers to.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for boats, autos, and aircraft. Right now buyers find us through search, then they immediately ask 'who can I trust to survey this.' I want surveyors like you on the network so I can route those requests instead of telling people to search around.",
+      "I am Don, building Tradewind, a marketplace for boats, autos, and aircraft. Right now buyers find us through search, then they immediately ask 'who can I trust to survey this.' I want surveyors like you on the network so I can route those requests instead of telling people to search around.",
     offer:
       "Free profile during beta, free routed leads, no fee until you see real volume.",
     cta: "Would you be open to a quick 10-minute call to walk through how this would look?",
@@ -149,7 +149,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Found ${l.company}${l.location ? ` based in ${l.location}` : ""} while looking for transport partners I would actually route deals to.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for boats, autos, and aircraft. Buyers and sellers on the platform constantly need transport, and right now I have nobody honest to route them to. I would rather have a small bench of good partners than a directory.",
+      "I am Don, building Tradewind, a marketplace for boats, autos, and aircraft. Buyers and sellers on the platform constantly need transport, and right now I have nobody honest to route them to. I would rather have a small bench of good partners than a directory.",
     offer:
       "Free partner profile during beta, free routed leads, no fee until real volume.",
     cta: "Would you be open to a quick 10-minute call to walk through how this would look?",
@@ -161,7 +161,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Came across ${l.company}${l.location ? ` (${l.location})` : ""} while looking for finance partners on the boats and aircraft side.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for boats, autos, and aircraft. Buyers on the platform routinely ask 'who finances this' and right now I just hand them a Google result. I would rather route them to a partner I trust.",
+      "I am Don, building Tradewind, a marketplace for boats, autos, and aircraft. Buyers on the platform routinely ask 'who finances this' and right now I just hand them a Google result. I would rather route them to a partner I trust.",
     offer: "Free partner profile during beta, no fee until real deal flow.",
     cta: "Open to a quick 10-minute call to see if a partner setup makes sense?",
   },
@@ -172,7 +172,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Came across ${l.company}${l.location ? ` (${l.location})` : ""} while looking for an insurance partner I would actually route buyers to.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for boats, autos, and aircraft. Every closed deal triggers a 'who do I use for coverage' question, and right now I do not have a real answer. I want a small set of partners I trust.",
+      "I am Don, building Tradewind, a marketplace for boats, autos, and aircraft. Every closed deal triggers a 'who do I use for coverage' question, and right now I do not have a real answer. I want a small set of partners I trust.",
     offer:
       "Free partner profile during beta, free routed leads, no fee until real volume.",
     cta: "Open to a quick 10-minute call to see if this makes sense for you?",
@@ -184,7 +184,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Found ${l.company}${l.location ? ` (${l.location})` : ""} while looking for an escrow and title partner who actually handles boats and aircraft.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for boats, autos, and aircraft. Buyers close on big-ticket assets and immediately need escrow and clean title handling. I do not want to wing that part. I want a partner on the platform.",
+      "I am Don, building Tradewind, a marketplace for boats, autos, and aircraft. Buyers close on big-ticket assets and immediately need escrow and clean title handling. I do not want to wing that part. I want a partner on the platform.",
     offer: "Free partner profile during beta, no fee until real deal flow.",
     cta: "Open to a quick 10-minute call to see if this makes sense?",
   },
@@ -195,7 +195,7 @@ const TEMPLATES: Record<Vertical, Template> = {
       l.personalization_angle?.trim() ||
       `Found ${l.company}${l.location ? ` (${l.location})` : ""} while looking for shops I would actually route owners to.`,
     hook:
-      "I am Don, building TradeWind, a marketplace for aircraft buyers and owners. Buyers close on a plane and immediately ask 'who can I trust to inspect or maintain this.' I want shops like yours on the network so I can route those requests instead of telling people to Google.",
+      "I am Don, building Tradewind, a marketplace for aircraft buyers and owners. Buyers close on a plane and immediately ask 'who can I trust to inspect or maintain this.' I want shops like yours on the network so I can route those requests instead of telling people to Google.",
     offer:
       "Free profile during beta, free routed leads, no fee until you see real volume.",
     cta: "Worth a quick call to walk through how this would look?",
@@ -298,7 +298,7 @@ export function generateFallbackMessage(lead: FallbackLead, channel: Channel = "
     const obs = t.observation(lead).split(/\.\s+/)[0];
     body = [
       `Hey ${firstName(lead.contact_name)} — ${obs}.`,
-      `I am Don, building TradeWind (marketplace for boats, autos, and aircraft). We are in private beta and bringing on a few ${t.label}s with real inventory. Free profile during beta.`,
+      `I am Don, building Tradewind (marketplace for boats, autos, and aircraft). We are in private beta and bringing on a few ${t.label}s with real inventory. Free profile during beta.`,
       `Open to a 10-minute look?`,
       OPT_OUT_LINE,
       `— Don`,

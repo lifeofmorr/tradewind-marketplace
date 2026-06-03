@@ -46,7 +46,7 @@ export default function AuctionDetail() {
     if (!auction?.listing) return;
     setMeta({
       title: `Auction · ${auction.listing.title}`,
-      description: `Live auction on TradeWind for ${auction.listing.title}.`,
+      description: `Live auction on Tradewind for ${auction.listing.title}.`,
     });
   }, [auction]);
 

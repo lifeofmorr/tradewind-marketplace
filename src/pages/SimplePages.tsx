@@ -35,7 +35,7 @@ export function About() {
   return (
     <PageShell eyebrow="About" title={`We built ${BRAND.name} for serious buyers.`} description={BRAND.tagline}>
       <p>
-        TradeWind is a focused marketplace for the boats, cars, and powersports machines people actually
+        Tradewind is a focused marketplace for the boats, cars, and powersports machines people actually
         spend years dreaming about. We pair AI-written listings, transparent pricing comps, and a vetted
         network of service partners — so closing the deal is as serious as the equipment.
       </p>
@@ -53,7 +53,7 @@ export function Contact() {
 }
 
 export function Auctions() {
-  useTitle("Auctions", "Auctions are coming to TradeWind.");
+  useTitle("Auctions", "Auctions are coming to Tradewind.");
   return (
     <PageShell eyebrow="Auctions" title="Time-bound sales." description="Performance boats, exotics, and collectibles on a clock.">
       <p>
@@ -66,7 +66,7 @@ export function Auctions() {
 }
 
 export function Services() {
-  useTitle("Services", "Done-for-you services on TradeWind.");
+  useTitle("Services", "Done-for-you services on Tradewind.");
   return (
     <PageShell eyebrow="Services" title="Closing the deal, end-to-end." description="Financing, insurance, inspections, transport, and concierge — vetted.">
       <ul className="list-disc pl-6 mt-4 space-y-1">
@@ -176,7 +176,7 @@ export function Pricing() {
       <div className="mt-8 rounded-lg border border-border bg-card/40 p-6 text-sm">
         <div className="font-display text-base">Concierge</div>
         <p className="text-muted-foreground mt-1">
-          Tell us exactly what you want and a TradeWind concierge sources it. Flat <span className="text-brass-400">$499</span> engagement,
+          Tell us exactly what you want and a Tradewind concierge sources it. Flat <span className="text-brass-400">$499</span> engagement,
           fully refundable if we can't find your match. <Link className="text-brass-400" to="/concierge">Start a brief →</Link>
         </p>
       </div>
@@ -229,16 +229,16 @@ function PriceColumn({ label, tiers, icon: Icon }: { label: string; tiers: Tier[
 }
 
 export function Dealers() {
-  useTitle("For dealers", "Run your dealership on TradeWind.");
+  useTitle("For dealers", "Run your dealership on Tradewind.");
   return (
-    <PageShell eyebrow="For dealers" title="Run your dealership on TradeWind." description="Inventory tools, AI listing copy, leads and analytics in one place.">
+    <PageShell eyebrow="For dealers" title="Run your dealership on Tradewind." description="Inventory tools, AI listing copy, leads and analytics in one place.">
       <p>Ready to apply? <Link className="text-brass-400" to="/signup?role=dealer">Create an account</Link> as a dealer to start onboarding. See <Link className="text-brass-400" to="/pricing">pricing</Link> for plan details.</p>
     </PageShell>
   );
 }
 
 export function SellMyBoat() {
-  useTitle("Sell my boat", "List your boat in minutes on TradeWind.");
+  useTitle("Sell my boat", "List your boat in minutes on Tradewind.");
   return (
     <PageShell eyebrow="Sell" title="Sell my boat." description="Drop in a few details and let our AI write the listing for you.">
       <p><Link className="text-brass-400" to="/seller/listings/new?category=boat">Start your listing →</Link></p>
@@ -247,7 +247,7 @@ export function SellMyBoat() {
 }
 
 export function SellMyCar() {
-  useTitle("Sell my car", "List your car in minutes on TradeWind.");
+  useTitle("Sell my car", "List your car in minutes on Tradewind.");
   return (
     <PageShell eyebrow="Sell" title="Sell my car." description="Drop in a few details and let our AI write the listing for you.">
       <p><Link className="text-brass-400" to="/seller/listings/new?category=car">Start your listing →</Link></p>
@@ -256,7 +256,7 @@ export function SellMyCar() {
 }
 
 export function SellHub() {
-  useTitle("Sell on TradeWind", "List boats, cars, RVs, and more.");
+  useTitle("Sell on Tradewind", "List boats, cars, RVs, and more.");
   return (
     <PageShell eyebrow="Sell" title="What are you selling?">
       <ul className="list-disc pl-6 space-y-1">
@@ -274,7 +274,7 @@ export function Terms() {
     <PageShell eyebrow="Legal" title="Terms of Service" description={`Last updated April 2026. By using ${BRAND.name}, you agree to these terms.`}>
       <h2>1. Marketplace role</h2>
       <p>
-        TradeWind is a marketplace that connects buyers, sellers, dealers, and service providers. We do not
+        Tradewind is a marketplace that connects buyers, sellers, dealers, and service providers. We do not
         take title to vehicles or vessels listed on the platform, do not act as broker of record, and do
         not guarantee the accuracy of any listing. Buyers and sellers transact directly.
       </p>
@@ -295,7 +295,7 @@ export function Terms() {
       </p>
       <h2>5. Disclaimers</h2>
       <p>
-        TradeWind provides AI-assisted pricing, valuation, and copy as informational tools. They are not a
+        Tradewind provides AI-assisted pricing, valuation, and copy as informational tools. They are not a
         substitute for inspection, professional appraisal, or licensed advice. Always verify HIN/VIN and
         title before any deposit.
       </p>
@@ -317,7 +317,7 @@ export function Privacy() {
         <li>Listing content you publish, including photos and descriptions.</li>
         <li>Inquiry messages, saved listings, and request submissions.</li>
         <li>Standard server logs (IP, user agent, request paths) for security and debugging.</li>
-        <li>Payment metadata from Stripe — TradeWind never sees raw card numbers.</li>
+        <li>Payment metadata from Stripe — Tradewind never sees raw card numbers.</li>
       </ul>
       <h2>How we use it</h2>
       <ul>
@@ -338,8 +338,46 @@ export function Privacy() {
   );
 }
 
+export function Support() {
+  useTitle("Support", `Get help from ${BRAND.name}.`);
+  return (
+    <PageShell eyebrow="Support" title="We're here to help." description="Reach out and a real person will respond within one business day.">
+      <h2>How to reach us</h2>
+      <p>
+        Email <a className="text-brass-400" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a> for
+        any of the following:
+      </p>
+      <ul>
+        <li>Account issues (login, profile, role changes)</li>
+        <li>Listing questions (how to list, edit, remove)</li>
+        <li>Payment or billing inquiries</li>
+        <li>Reporting a suspicious listing or user</li>
+        <li>Data deletion or privacy requests</li>
+        <li>Bug reports or feature requests</li>
+        <li>Partnership or integration inquiries</li>
+      </ul>
+      <h2>Response times</h2>
+      <ul>
+        <li><strong>General inquiries:</strong> within 1 business day</li>
+        <li><strong>Account or payment issues:</strong> within 4 hours during business hours</li>
+        <li><strong>Suspicious listing reports:</strong> within 4 hours</li>
+        <li><strong>Data deletion requests:</strong> confirmed within 48 hours, completed within 30 days</li>
+      </ul>
+      <h2>Self-service</h2>
+      <ul>
+        <li><Link className="text-brass-400" to="/trust">Trust Center</Link> — how we protect your data and verify listings</li>
+        <li><Link className="text-brass-400" to="/delete-my-data">Delete my data</Link> — submit a data deletion request</li>
+        <li><Link className="text-brass-400" to="/privacy">Privacy Policy</Link></li>
+        <li><Link className="text-brass-400" to="/terms">Terms of Service</Link></li>
+      </ul>
+      <h2>Business hours</h2>
+      <p>Monday–Friday, 9 AM – 6 PM ET. We monitor for urgent issues outside these hours.</p>
+    </PageShell>
+  );
+}
+
 export function NotFound() {
-  useTitle("Not found", "That page doesn't exist on TradeWind.");
+  useTitle("Not found", "That page doesn't exist on Tradewind.");
   return (
     <PageShell eyebrow="404" title="Page not found.">
       <p><Link className="text-brass-400" to="/">Take me home →</Link></p>

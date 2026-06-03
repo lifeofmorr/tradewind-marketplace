@@ -37,6 +37,14 @@ export type EventType =
   | "feedback_submitted"
   | "book_call_click"
   | "listing_detail_view"
+  | "contact_form_submit"
+  | "support_page_view"
+  | "dealer_cta_click"
+  | "service_cta_click"
+  | "aircraft_cta_click"
+  | "pricing_page_view"
+  | "payment_attempt"
+  | "payment_complete"
   | (string & {});
 
 export interface Attribution {

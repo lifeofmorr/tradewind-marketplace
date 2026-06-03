@@ -1,5 +1,5 @@
 // POST /functions/v1/stripe-webhook
-// Stripe → TradeWind webhook receiver. Verify the signature, then upsert
+// Stripe → Tradewind webhook receiver. Verify the signature, then upsert
 // payments + subscriptions + featured_listings rows.
 //
 // IMPORTANT: deploy with `--no-verify-jwt`:

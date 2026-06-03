@@ -81,7 +81,7 @@ export function BankLinkPanel() {
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <div className="flex items-start gap-2 text-sm">
           <ShieldCheck className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
-          <span>Read-only verification — TradeWind never sees credentials.</span>
+          <span>Read-only verification — Tradewind never sees credentials.</span>
         </div>
         <div className="flex items-start gap-2 text-sm">
           <Lock className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />

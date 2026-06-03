@@ -26,6 +26,7 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { callLLM, parseJSON } from "../_shared/anthropic.ts";
+import { enforceAiRateLimit } from "../_shared/rate-limit.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -43,7 +44,7 @@ interface Classified {
   confidence: number;
 }
 
-const SYSTEM = `You classify replies to founder-led cold outreach for TradeWind, a marketplace for boats, exotic cars, and aircraft.
+const SYSTEM = `You classify replies to founder-led cold outreach for Tradewind, a marketplace for boats, exotic cars, and aircraft.
 
 Pick ONE reply_type from this exact list:
 - interested            → positive, wants to learn more, asks a follow-up question
@@ -105,6 +106,9 @@ Deno.serve(async (req: Request) => {
   }
   const auth = req.headers.get("authorization");
   if (!auth) return errorResponse("Missing authorization", 401, req);
+
+  const limited = await enforceAiRateLimit(req, "classify-outreach-reply", { adminScope: true });
+  if (limited) return limited;
 
   let body: Body;
   try { body = await req.json() as Body; } catch { return errorResponse("Invalid JSON", 400, req); }

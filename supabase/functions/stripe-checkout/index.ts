@@ -29,6 +29,7 @@
 //   APP_URL  (e.g. https://gotradewind.com)
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { stripeReadinessFromEnv } from "../_shared/stripe-mode.ts";
 
 type Kind =
   | "featured_listing" | "boost_listing"
@@ -118,7 +119,26 @@ async function userOwnsConciergeRequest(userId: string, reqId: string): Promise<
 Deno.serve(async (req: Request) => {
   const pre = handleOptions(req); if (pre) return pre;
   if (req.method !== "POST") return errorResponse("POST only", 405, req);
-  if (!STRIPE_KEY) return errorResponse("STRIPE_SECRET_KEY not configured", 500, req);
+
+  // Fail-closed Stripe environment gate. Refuses to proceed if live mode is
+  // enabled but live keys/price IDs are missing, or if the secret-key prefix
+  // does not match STRIPE_MODE (no test/live mixing). Returns a safe message —
+  // never leaks which secret is wrong beyond its env-var name.
+  const readiness = stripeReadinessFromEnv();
+  if (!readiness.ok) {
+    return jsonResponse(
+      {
+        error: readiness.mode === "live"
+          ? "Payments are not available: live mode is enabled but not fully configured."
+          : "Payments are temporarily unavailable.",
+        stripe_mode: readiness.mode,
+        // missing[] is just env-var NAMES, never values — safe to surface to admins.
+        missing: readiness.missing,
+      },
+      503,
+      req,
+    );
+  }
 
   const user = await getCallingUser(req);
   if (!user) return errorResponse("authentication required", 401, req);

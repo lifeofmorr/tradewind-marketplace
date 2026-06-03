@@ -10,6 +10,7 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { callLLM, parseJSON } from "../_shared/anthropic.ts";
+import { enforceAiRateLimit } from "../_shared/rate-limit.ts";
 
 interface Body {
   title?: string;
@@ -27,7 +28,7 @@ interface AutopilotResult {
   quality_tips: string[];
 }
 
-const SYSTEM = `You are TradeWind's Listing Quality Advisor. Given a draft listing, you return suggestions for improving it.
+const SYSTEM = `You are Tradewind's Listing Quality Advisor. Given a draft listing, you return suggestions for improving it.
 
 You output JSON with these keys:
 - suggested_title (string, ≤80 chars; if the existing title is already strong, return it unchanged)
@@ -39,11 +40,13 @@ You output JSON with these keys:
 Tone: confident, specific, no fluff. No emojis, no exclamation points. Output ONLY a single JSON object — no prose, no fences.`;
 
 const DISCLAIMER =
-  "Advisory only — TradeWind's AI suggestions are non-binding and do not replace a professional appraisal or surveyor inspection.";
+  "Advisory only — Tradewind's AI suggestions are non-binding and do not replace a professional appraisal or surveyor inspection.";
 
 Deno.serve(async (req: Request) => {
   const pre = handleOptions(req); if (pre) return pre;
   if (req.method !== "POST") return errorResponse("POST only", 405, req);
+  const limited = await enforceAiRateLimit(req, "ai-listing-autopilot");
+  if (limited) return limited;
   let body: Body;
   try { body = await req.json() as Body; } catch { return errorResponse("Invalid JSON", 400, req); }
   if (!body.category) return errorResponse("category required", 400, req);

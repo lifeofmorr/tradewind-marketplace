@@ -411,7 +411,7 @@ export function AircraftSpecsForm({ listingId, readOnly = false }: Props) {
       >
         <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
         <div className="leading-relaxed text-amber-200/90">
-          Specs you enter are <strong>seller-supplied</strong>. TradeWind does not
+          Specs you enter are <strong>seller-supplied</strong>. Tradewind does not
           verify FAA status, airworthiness, AD/SB compliance, or maintenance
           history. Buyers are expected to independently verify via an A&amp;P/IA.
         </div>

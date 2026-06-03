@@ -40,7 +40,7 @@ const AIRCRAFT_STEPS: Step[] = [
   { key: "offer",          label: "Offer",                         status: "complete",    detail: "Initial offer presented" },
   { key: "loi",            label: "LOI / purchase agreement",       status: "in_progress", detail: "Draft LOI in legal review" },
   { key: "escrow",         label: "Escrow request",                 status: "in_progress", detail: "Aircraft escrow company opening file" },
-  { key: "prebuy",         label: "Pre-buy inspection",             status: "pending",     detail: "A&P/IA assignment via TradeWind" },
+  { key: "prebuy",         label: "Pre-buy inspection",             status: "pending",     detail: "A&P/IA assignment via Tradewind" },
   { key: "logbook_title",  label: "Logbook / title review",         status: "pending",     detail: "Title company performing FAA registry search" },
   { key: "financing",      label: "Financing",                      status: "pending",     detail: "Aviation lender pre-approval" },
   { key: "insurance",      label: "Insurance",                      status: "pending",     detail: "Hull + liability binder" },

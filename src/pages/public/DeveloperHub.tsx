@@ -60,7 +60,7 @@ export default function DeveloperHub() {
     const { error } = await supabase.from("integration_requests").insert({
       user_id: user.id,
       integration_key: "developer_api",
-      integration_name: "TradeWind Developer API",
+      integration_name: "Tradewind Developer API",
       category: "Developer",
       notes: [companyName && `Company: ${companyName}`, useCase && `Use case: ${useCase}`]
         .filter(Boolean)

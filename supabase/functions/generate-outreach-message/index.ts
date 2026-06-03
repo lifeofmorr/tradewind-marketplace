@@ -19,10 +19,11 @@
 //     quality_score, ai_tone_risk_score, issues
 //   }
 //
-// Founder-voice cold outreach for TradeWind. No buzzwords, no AI-speak.
+// Founder-voice cold outreach for Tradewind. No buzzwords, no AI-speak.
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { callLLM, parseJSON } from "../_shared/anthropic.ts";
+import { enforceOutreachRateLimit } from "../_shared/rate-limit.ts";
 
 interface Lead {
   company: string;
@@ -73,9 +74,9 @@ const OVERPROMISE = [
   "no risk", "risk-free", "double your sales",
 ];
 
-const SYSTEM = `You write cold outreach for Don Morrison, founder of TradeWind — a marketplace for boats, exotic cars, and aircraft.
+const SYSTEM = `You write cold outreach for Don Morrison, founder of Tradewind — a marketplace for boats, exotic cars, and aircraft.
 
-TradeWind is in private beta. Don is the founder reaching out personally to brokers, dealers, marine/aviation service providers, and high-net-worth advisors. The goal is honest, useful conversation — not a sales push.
+Tradewind is in private beta. Don is the founder reaching out personally to brokers, dealers, marine/aviation service providers, and high-net-worth advisors. The goal is honest, useful conversation — not a sales push.
 
 VOICE RULES (these are absolute):
 - Short, plain sentences. Eighth-grade English. No big words when small ones work.
@@ -84,13 +85,13 @@ VOICE RULES (these are absolute):
 - No buzzwords. No AI-speak. No fake urgency. No "I hope this finds you well."
 - No emojis. No exclamation points. No "just checking in" / "circle back."
 - Lead with one specific thing you noticed about their business.
-- Then one sentence on what TradeWind is and why it could matter to them.
+- Then one sentence on what Tradewind is and why it could matter to them.
 - Then a soft, low-commitment CTA.
 - Then an opt-out line so they don't feel pressured.
 
 CHANNEL FORMAT:
 - email: 90–160 words, plain text, no marketing fluff. Include a subject.
-  Sign off as "— Don, TradeWind". Use the recipient's first name if known.
+  Sign off as "— Don, Tradewind". Use the recipient's first name if known.
 - linkedin: 60–110 words, DM-friendly, no subject. Same voice rules.
 - instagram: 30–70 words, very casual, like a real human DM. No subject.
 
@@ -129,7 +130,7 @@ function buildUserPrompt(req: Body): string {
   if (lead.website) parts.push(`- Website: ${lead.website}`);
   parts.push("");
   parts.push(`Channel: ${channel}`);
-  parts.push(`Goal: ${goal ?? "introduce TradeWind, ask for honest feedback, see if a quick demo makes sense"}`);
+  parts.push(`Goal: ${goal ?? "introduce Tradewind, ask for honest feedback, see if a quick demo makes sense"}`);
   parts.push("");
   parts.push(`Personalization hook (use this — be specific, don't just paraphrase it):`);
   parts.push(lead.personalization_angle?.trim() || "(none provided — infer from company name/vertical and stay generic-but-specific)");
@@ -190,6 +191,9 @@ Deno.serve(async (req: Request) => {
   const pre = handleOptions(req);
   if (pre) return pre;
   if (req.method !== "POST") return errorResponse("POST only", 405, req);
+
+  const limited = await enforceOutreachRateLimit(req, "generate-outreach-message");
+  if (limited) return limited;
 
   let body: Body;
   try {

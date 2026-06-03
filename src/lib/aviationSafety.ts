@@ -15,7 +15,7 @@
 export const AVIATION_SAFETY_HEADING = "Aviation safety notice";
 
 export const AVIATION_DISCLAIMER_SHORT =
-  "TradeWind does not verify FAA status, airworthiness, title, escrow, "
+  "Tradewind does not verify FAA status, airworthiness, title, escrow, "
   + "logbooks, AD/SB compliance, insurance, or financing. Independent "
   + "verification by qualified aviation professionals is required.";
 
@@ -23,7 +23,7 @@ export const AVIATION_DISCLAIMER_LONG =
   "Aircraft details, registration, title, logbooks, maintenance status, "
   + "AD/SB compliance, and airworthiness must be independently verified "
   + "by qualified aviation professionals (A&P / IA / aircraft title "
-  + "company) before purchase. TradeWind does not verify FAA status, "
+  + "company) before purchase. Tradewind does not verify FAA status, "
   + "airworthiness, title chain, escrow, ferry, insurance, or financing.";
 
 export const AVIATION_REPORT_REASONS: { value: string; label: string }[] = [

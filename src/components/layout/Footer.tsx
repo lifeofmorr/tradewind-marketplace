@@ -39,6 +39,7 @@ const COLS: FooterCol[] = [
       { label: "Blog",           to: "/blog" },
       { label: "Market reports", to: "/market-reports" },
       { label: "Contact",        to: "/contact" },
+      { label: "Support",        to: "/support" },
     ],
   },
   {
@@ -53,8 +54,10 @@ const COLS: FooterCol[] = [
   {
     title: "Legal",
     links: [
-      { label: "Terms",         to: "/terms" },
-      { label: "Privacy",       to: "/privacy" },
+      { label: "Terms",          to: "/terms" },
+      { label: "Privacy",        to: "/privacy" },
+      { label: "Trust Center",   to: "/trust" },
+      { label: "Delete my data", to: "/delete-my-data" },
     ],
   },
 ];

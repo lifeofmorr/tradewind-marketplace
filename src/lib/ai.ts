@@ -189,7 +189,7 @@ export function localAircraftWalkaround(input: {
       "Avionics or panel doesn't match the photos.",
     ],
     _disclaimer:
-      "This walkaround script is informational only. TradeWind does not perform inspections, "
+      "This walkaround script is informational only. Tradewind does not perform inspections, "
       + "verify airworthiness, or sign off on AD/SB compliance. A licensed A&P/IA must conduct "
       + "the pre-buy inspection and make the final airworthiness determination.",
   };

@@ -11,13 +11,13 @@ import {
 
 const GOOD_MESSAGE = `Hi Sarah,
 
-Noticed Bayside Marine has been listing center consoles in the Tampa area for a while. We are building TradeWind, a marketplace for serious boat buyers.
+Noticed Bayside Marine has been listing center consoles in the Tampa area for a while. We are building Tradewind, a marketplace for serious boat buyers.
 
 It is still in private beta and I am reaching out personally to a few brokers I respect. Would you be open to a quick 10-minute look and giving honest feedback?
 
 If this is not relevant, no worries — just tell me and I will not follow up.
 
-— Don, TradeWind`;
+— Don, Tradewind`;
 
 const BAD_BUZZWORD_MESSAGE = `Hi Sarah,
 
@@ -28,7 +28,7 @@ Don`;
 
 const BAD_TOO_LONG = "lorem ipsum dolor sit amet ".repeat(50) + " Would you be open to a quick look? If this isn't relevant, no worries.";
 
-const BAD_NO_CTA = `Hi Sarah at Bayside Marine, just letting you know about TradeWind. We are a new marketplace for boats. That is all for now.`;
+const BAD_NO_CTA = `Hi Sarah at Bayside Marine, just letting you know about Tradewind. We are a new marketplace for boats. That is all for now.`;
 
 describe("checkMessageQuality", () => {
   it("passes a clean founder-voice message", () => {
@@ -65,7 +65,7 @@ describe("checkMessageQuality", () => {
 
   it("known AI phrases are all flagged when present individually", () => {
     for (const phrase of ["just checking in", "circle back", "i hope this finds you well"]) {
-      const msg = `Hi Sarah at Bayside Marine, ${phrase} about TradeWind. Would you be open to a quick 10-minute look? If this isn't relevant, no worries.`;
+      const msg = `Hi Sarah at Bayside Marine, ${phrase} about Tradewind. Would you be open to a quick 10-minute look? If this isn't relevant, no worries.`;
       const r = checkMessageQuality(msg);
       expect(r.passed, `should flag "${phrase}"`).toBe(false);
     }

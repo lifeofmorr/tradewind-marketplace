@@ -16,6 +16,7 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { callLLM, parseJSON } from "../_shared/anthropic.ts";
+import { enforceAiRateLimit } from "../_shared/rate-limit.ts";
 
 interface Body {
   listing_price_cents: number;
@@ -32,7 +33,7 @@ interface NegotiationResult {
   deal_analysis: string;
 }
 
-const SYSTEM = `You are TradeWind's Negotiation Coach. Given a listing's asking price, an offer amount, and a deal-score signal, you produce buyer-side and seller-side messaging plus a fair-range read.
+const SYSTEM = `You are Tradewind's Negotiation Coach. Given a listing's asking price, an offer amount, and a deal-score signal, you produce buyer-side and seller-side messaging plus a fair-range read.
 
 Output JSON with these keys:
 - fair_range: { low_cents (int), high_cents (int), label (1-line string) } — your read on a reasonable buy-side range, anchored to the asking price and deal score
@@ -43,11 +44,13 @@ Output JSON with these keys:
 No fluff. Don't invent comps or market data — speak qualitatively (e.g. "consistent with a fair market", "aggressive ask"). Output ONLY a single JSON object.`;
 
 const DISCLAIMER =
-  "Advisory only — TradeWind's AI suggestions are non-binding negotiation aids, not appraisals or contracts.";
+  "Advisory only — Tradewind's AI suggestions are non-binding negotiation aids, not appraisals or contracts.";
 
 Deno.serve(async (req: Request) => {
   const pre = handleOptions(req); if (pre) return pre;
   if (req.method !== "POST") return errorResponse("POST only", 405, req);
+  const limited = await enforceAiRateLimit(req, "ai-negotiation-assistant");
+  if (limited) return limited;
   let body: Body;
   try { body = await req.json() as Body; } catch { return errorResponse("Invalid JSON", 400, req); }
   if (!body.listing_price_cents || !body.offer_amount_cents || !body.category) {

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 const ITEMS: { key: string; label: string; hint?: string }[] = [
   { key: "contacted", label: "Seller contacted" },
-  { key: "financing", label: "Financing pre-approval requested", hint: "Through TradeWind partners or your bank" },
+  { key: "financing", label: "Financing pre-approval requested", hint: "Through Tradewind partners or your bank" },
   { key: "insurance", label: "Insurance quote requested" },
   { key: "inspection", label: "Inspection / survey scheduled", hint: "Pre-purchase inspection or marine survey" },
   { key: "title", label: "Title / HIN / VIN reviewed", hint: "Confirm clean title and matching numbers" },
@@ -109,7 +109,7 @@ export function BuyReadyChecklist({ listing }: Props) {
       </ul>
 
       <p className="mt-4 text-[11px] text-muted-foreground/80">
-        Saved locally on this device. Use this as a guide — TradeWind concierge can handle each step
+        Saved locally on this device. Use this as a guide — Tradewind concierge can handle each step
         end-to-end.
       </p>
     </div>

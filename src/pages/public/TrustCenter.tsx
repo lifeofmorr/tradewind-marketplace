@@ -115,7 +115,7 @@ export default function TrustCenter() {
           <Card
             icon={Sparkles}
             title="Concierge support"
-            body="High-value purchases come with a TradeWind concierge who shepherds the entire deal."
+            body="High-value purchases come with a Tradewind concierge who shepherds the entire deal."
           />
         </div>
       </Section>
@@ -145,7 +145,7 @@ export default function TrustCenter() {
             "Bank account confirmed via Stripe Connect",
             "Identity check on the listed owner / principal",
             "At least one piece of physical inventory verified",
-            "Reviewed by TradeWind staff before badge is granted",
+            "Reviewed by Tradewind staff before badge is granted",
             "Re-checked annually or after compliance flags",
           ].map((line) => (
             <li key={line} className="flex items-start gap-2 text-sm">

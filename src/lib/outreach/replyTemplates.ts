@@ -52,16 +52,16 @@ export const REPLY_TEMPLATES: Record<ReplyTemplateKey, ReplyTemplate> = {
 
   wants_info: {
     label: "Wants more info before committing",
-    subject: "Quick TradeWind primer",
+    subject: "Quick Tradewind primer",
     body:
-      "Happy to send over more. Short version: TradeWind is a private marketplace for boats, autos, and aircraft, with deal rooms, buyer requests, and a service-partner side built in. Free for beta partners through public launch.\n\n" +
+      "Happy to send over more. Short version: Tradewind is a private marketplace for boats, autos, and aircraft, with deal rooms, buyer requests, and a service-partner side built in. Free for beta partners through public launch.\n\n" +
       "If a 10-minute call is easier than reading, I can show you the parts that matter to your operation. Tomorrow or Thursday work?\n\n" +
       SIGNATURE,
   },
 
   wants_demo: {
     label: "Wants a demo",
-    subject: "Booking your TradeWind demo",
+    subject: "Booking your Tradewind demo",
     body:
       "Glad to. The walkthrough is 10 minutes — I'll show your vertical's listing flow, the buyer-request side, and the deal room.\n\n" +
       "Tomorrow or Thursday? I can do mornings or after 3pm Pacific.\n\n" +
@@ -70,7 +70,7 @@ export const REPLY_TEMPLATES: Record<ReplyTemplateKey, ReplyTemplate> = {
 
   asks_pricing: {
     label: "Asks about pricing",
-    subject: "TradeWind beta pricing",
+    subject: "Tradewind beta pricing",
     body:
       "Honest answer: beta partners pay nothing through public launch. After that, we'll lock in an early-adopter rate that's well below the public price for anyone who used the platform during beta.\n\n" +
       "The point of the beta is to find out what's actually worth paying for, not to test a price point. Want a 10-minute walkthrough? Tomorrow or Thursday?\n\n" +
@@ -79,7 +79,7 @@ export const REPLY_TEMPLATES: Record<ReplyTemplateKey, ReplyTemplate> = {
 
   asks_if_live: {
     label: "Asks if the platform is live",
-    subject: "Yes — TradeWind is live",
+    subject: "Yes — Tradewind is live",
     body:
       "It is. tradewind-marketplace.vercel.app — listings, buyer requests, deal rooms, service-partner side. Demo inventory is labeled clearly; real inventory comes from beta partners.\n\n" +
       "If you want a guided 10-minute look at the parts relevant to your side of the business, I can do tomorrow or Thursday.\n\n" +
@@ -88,16 +88,16 @@ export const REPLY_TEMPLATES: Record<ReplyTemplateKey, ReplyTemplate> = {
 
   asks_if_real: {
     label: "Asks if listings are real",
-    subject: "Real vs demo inventory on TradeWind",
+    subject: "Real vs demo inventory on Tradewind",
     body:
       "Fair question. Anything tagged \"demo\" is staged inventory we use to show the platform; everything else is real inventory from verified beta partners.\n\n" +
-      "We label demo listings clearly because the alternative — inflating counts — is exactly the kind of thing TradeWind exists to push back on. Want a 10-minute walkthrough of how the verified-listing flow works? Tomorrow or Thursday?\n\n" +
+      "We label demo listings clearly because the alternative — inflating counts — is exactly the kind of thing Tradewind exists to push back on. Want a 10-minute walkthrough of how the verified-listing flow works? Tomorrow or Thursday?\n\n" +
       SIGNATURE,
   },
 
   asks_aircraft: {
     label: "Asks about aircraft side",
-    subject: "Aircraft on TradeWind",
+    subject: "Aircraft on Tradewind",
     body:
       "Yes — aircraft is a first-class vertical alongside boats and autos. Light piston through midsize jets, plus rotorcraft. Listing fields cover N-number, TT, SMOH, avionics suite, last annual, damage history.\n\n" +
       "If you want to see the aircraft listing + deal-room flow end-to-end, I can do a 10-minute walkthrough. Tomorrow or Thursday?\n\n" +
@@ -106,7 +106,7 @@ export const REPLY_TEMPLATES: Record<ReplyTemplateKey, ReplyTemplate> = {
 
   asks_service_leads: {
     label: "Service provider — asks about leads",
-    subject: "How TradeWind sends service leads",
+    subject: "How Tradewind sends service leads",
     body:
       "Service leads come from two places: (1) buyers requesting an inspection / survey / transport / detail tied to a specific listing, and (2) dealers attaching a service partner to a deal room.\n\n" +
       "Beta service partners get listed in the service directory, surfaced on relevant listings, and matched to active buyer requests in their region. Free through public launch.\n\n" +
@@ -116,7 +116,7 @@ export const REPLY_TEMPLATES: Record<ReplyTemplateKey, ReplyTemplate> = {
 
   wants_to_list: {
     label: "Wants to list inventory now",
-    subject: "Listing your inventory on TradeWind",
+    subject: "Listing your inventory on Tradewind",
     body:
       "Great. Two options: (1) I can spin up your dealer account today and walk you through a first listing in 10 minutes, or (2) if you have a feed (CSV / Boatwizard / Dealertrack), we can import.\n\n" +
       "What works — call tomorrow or Thursday, or just send a sample feed?\n\n" +
@@ -125,7 +125,7 @@ export const REPLY_TEMPLATES: Record<ReplyTemplateKey, ReplyTemplate> = {
 
   wants_partnership: {
     label: "Wants partnership / integration",
-    subject: "TradeWind partnership chat",
+    subject: "Tradewind partnership chat",
     body:
       "Worth a real conversation. Beta partnerships fall in one of three buckets: data/feed, service network, or lender/insurance/escrow. Each has a different shape.\n\n" +
       "If you can tell me which of those is closest, I'll send a 10-minute call link. Tomorrow or Thursday?\n\n" +

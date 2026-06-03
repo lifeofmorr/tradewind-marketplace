@@ -88,7 +88,7 @@ function buildAircraftSections(
   const titleStatus: PassportItem = {
     label: "Title research (independent)",
     status: "missing",
-    detail: "TradeWind does not perform title research. Use an aircraft title company.",
+    detail: "Tradewind does not perform title research. Use an aircraft title company.",
   };
 
   // Certificate / inspection
@@ -136,7 +136,7 @@ function buildAircraftSections(
     status: spec?.ad_sb_compliance ? "pending" : "missing",
     detail: spec?.ad_sb_compliance
       ? "Notes on file — independent A&P/IA verification required"
-      : "Verify with A&P/IA — TradeWind does not check AD/SB compliance",
+      : "Verify with A&P/IA — Tradewind does not check AD/SB compliance",
   };
   const prebuy: PassportItem = {
     label: "Pre-buy inspection",
@@ -147,7 +147,7 @@ function buildAircraftSections(
       : isDemo ? demo![2] : "missing",
     detail: spec?.pre_buy_inspection_status
       ? `Status: ${spec.pre_buy_inspection_status.replace(/_/g, " ")}`
-      : "Schedule via TradeWind pre-buy request",
+      : "Schedule via Tradewind pre-buy request",
   };
 
   // Financing / insurance / escrow / ferry / hangar
@@ -276,7 +276,7 @@ function buildVehicleSections(listing: Listing): Section[] {
     : {
         label: "Inspection / survey",
         status: "pending",
-        detail: "Schedule a TradeWind-vetted inspector via the buyer hub",
+        detail: "Schedule a Tradewind-vetted inspector via the buyer hub",
       };
 
   return [
@@ -290,14 +290,14 @@ function buildVehicleSections(listing: Listing): Section[] {
           label: "Financing partners ready",
           status: listing.is_finance_partner ? "verified" : "pending",
           detail: listing.is_finance_partner
-            ? "Pre-qualified offers available from TradeWind lenders"
+            ? "Pre-qualified offers available from Tradewind lenders"
             : "Apply via the buyer financial hub",
         },
         {
           label: "Insurance partners ready",
           status: listing.is_insurance_partner ? "verified" : "pending",
           detail: listing.is_insurance_partner
-            ? "Quotes available from TradeWind insurers"
+            ? "Quotes available from Tradewind insurers"
             : "Request a quote from the buyer hub",
         },
         {
@@ -365,7 +365,7 @@ export function AssetPassport({ listing }: Props) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-mono text-[10px] uppercase tracking-[0.32em] text-brass-400">
-            TradeWind
+            Tradewind
           </div>
           <h3 className="font-display text-lg leading-tight">
             {isAircraft ? "Aircraft Asset Passport" : "Asset Passport"}
@@ -424,7 +424,7 @@ export function AssetPassport({ listing }: Props) {
 
       <div className="mt-4 pt-3 border-t border-brass-500/10 flex items-center justify-between gap-3">
         <p className="text-[11px] text-muted-foreground/80 flex-1">
-          The passport is a snapshot of trust signals on this asset. TradeWind
+          The passport is a snapshot of trust signals on this asset. Tradewind
           concierge can complete any pending check on your behalf.
         </p>
         <ReportButton targetType="listing" targetId={listing.id} variant="inline" />
@@ -436,7 +436,7 @@ export function AssetPassport({ listing }: Props) {
           Aircraft details, registration, title, logbooks, maintenance status,
           AD/SB compliance, and airworthiness must be independently verified by
           qualified aviation professionals (A&amp;P / IA / aircraft title
-          company) before purchase. TradeWind does not verify FAA status,
+          company) before purchase. Tradewind does not verify FAA status,
           airworthiness, title chain, escrow, ferry, insurance, or financing.
         </p>
       )}

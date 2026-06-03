@@ -82,7 +82,7 @@ export default function AviationServicesPage() {
         <h1 className="font-display text-4xl mt-1">Aviation services</h1>
         <p className="text-muted-foreground mt-2 max-w-2xl">
           Vetted aviation partners — A&amp;P/IA inspections, escrow, title, ferry, avionics,
-          hangar, financing and insurance. Match by airport / state. TradeWind does not perform
+          hangar, financing and insurance. Match by airport / state. Tradewind does not perform
           inspections, escrow, title, financing or insurance itself.
         </p>
       </header>
@@ -94,7 +94,7 @@ export default function AviationServicesPage() {
         <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
         <div className="leading-relaxed text-amber-100/90">
           <span className="font-display text-base text-amber-100">Aviation safety notice.</span>{" "}
-          Service providers listed are independent — TradeWind does not perform inspections,
+          Service providers listed are independent — Tradewind does not perform inspections,
           verify airworthiness, perform title searches, hold escrow funds, or underwrite
           insurance. Buyers must independently verify each partner's credentials with the FAA,
           state regulators, and references before engaging.

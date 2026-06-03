@@ -8,7 +8,7 @@ import type { Listing } from "@/types/database";
 
 export default function BuyerSaved() {
   const { data: saved = [], isLoading } = useSavedListings();
-  useEffect(() => { setMeta({ title: "Saved listings", description: "Your saved listings on TradeWind." }); }, []);
+  useEffect(() => { setMeta({ title: "Saved listings", description: "Your saved listings on Tradewind." }); }, []);
   const listings: Listing[] = saved.map((s) => s.listing).filter((l): l is Listing => !!l);
   const hasDemo = listings.some((l) => l.is_demo);
   return (

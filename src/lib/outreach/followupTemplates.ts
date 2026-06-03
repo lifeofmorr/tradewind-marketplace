@@ -59,18 +59,18 @@ export function buildFollowup1(ctx: FollowupContext): FollowupOutput {
   const label = verticalLabel(ctx.vertical);
   const subject = ctx.original_subject?.trim()
     ? `re: ${ctx.original_subject.trim()}`
-    : "re: TradeWind";
+    : "re: Tradewind";
   const body = [
     `Hey ${first} —`,
     "",
     `Quick bump in case my note from earlier this week got buried.`,
     "",
-    `Still hand-picking the first set of ${label}s into the TradeWind beta — free profile, free first listings, no fee until you see lead flow.`,
+    `Still hand-picking the first set of ${label}s into the Tradewind beta — free profile, free first listings, no fee until you see lead flow.`,
     "",
     `If a 5-minute look on your own time is useful, I will send the link. If not, no worries at all — just tell me and I will not follow up.`,
     "",
     `— Don`,
-    `TradeWind`,
+    `Tradewind`,
   ].join("\n");
   return { subject, body, followup_number: 1 };
 }
@@ -90,9 +90,9 @@ export function buildFollowup2(ctx: FollowupContext): FollowupOutput {
     `If this is not relevant, no worries — just tell me and I will not follow up.`,
     "",
     `— Don`,
-    `TradeWind`,
+    `Tradewind`,
   ].join("\n");
-  return { subject: "one more on TradeWind", body, followup_number: 2 };
+  return { subject: "one more on Tradewind", body, followup_number: 2 };
 }
 
 export function buildCloseLoop(ctx: FollowupContext): CloseLoopOutput {
@@ -103,7 +103,7 @@ export function buildCloseLoop(ctx: FollowupContext): CloseLoopOutput {
     `Not going to keep emailing. If it is a no — all good. If timing is bad but you want me to circle back in a quarter or two, just say "later" and I will save you for then.`,
     "",
     `— Don`,
-    `TradeWind`,
+    `Tradewind`,
   ].join("\n");
   return { subject: "closing the loop", body };
 }

@@ -33,7 +33,7 @@ export const BADGE_META: Record<BadgeType, BadgeMeta> = {
   verified_dealer: {
     type: "verified_dealer",
     label: "Verified Dealer",
-    tooltip: "Identity-verified dealer with active listings on TradeWind.",
+    tooltip: "Identity-verified dealer with active listings on Tradewind.",
     tone: "emerald",
     icon: "shield",
   },
@@ -54,7 +54,7 @@ export const BADGE_META: Record<BadgeType, BadgeMeta> = {
   featured: {
     type: "featured",
     label: "Featured",
-    tooltip: "Hand-picked by TradeWind editors for visibility this week.",
+    tooltip: "Hand-picked by Tradewind editors for visibility this week.",
     tone: "brass",
     icon: "star",
   },
@@ -68,7 +68,7 @@ export const BADGE_META: Record<BadgeType, BadgeMeta> = {
   demo: {
     type: "demo",
     label: "Demo",
-    tooltip: "Demo listing — used to preview the TradeWind marketplace experience. Not represented as available inventory.",
+    tooltip: "Demo listing — used to preview the Tradewind marketplace experience. Not represented as available inventory.",
     tone: "slate",
     icon: "flask",
   },
@@ -103,7 +103,7 @@ export const BADGE_META: Record<BadgeType, BadgeMeta> = {
   concierge_eligible: {
     type: "concierge_eligible",
     label: "Concierge Eligible",
-    tooltip: "Eligible for the TradeWind concierge end-to-end service.",
+    tooltip: "Eligible for the Tradewind concierge end-to-end service.",
     tone: "violet",
     icon: "sparkles",
   },

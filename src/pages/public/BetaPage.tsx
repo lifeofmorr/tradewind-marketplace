@@ -287,7 +287,7 @@ export default function BetaPage() {
         </ul>
       </Section>
 
-      {/* Why TradeWind is different */}
+      {/* Why Tradewind is different */}
       <Section eyebrow="Positioning" title={`Why ${BRAND.name} is different`}>
         <div className="grid gap-4 md:grid-cols-2 max-w-4xl">
           {[

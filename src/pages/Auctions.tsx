@@ -41,7 +41,7 @@ export default function AuctionsPage() {
   const { data: auctions = [], isLoading } = useAuctions(
     tab === "ended" ? ["ended"] : tab === "upcoming" ? ["upcoming"] : ["live"],
   );
-  useEffect(() => { setMeta({ title: "Auctions", description: "Live and upcoming auctions on TradeWind." }); }, []);
+  useEffect(() => { setMeta({ title: "Auctions", description: "Live and upcoming auctions on Tradewind." }); }, []);
 
   return (
     <div className="container-pad py-12 space-y-8">

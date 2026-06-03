@@ -57,7 +57,7 @@ export default function CreateListing() {
     defaultValues: { category: initialCategory },
   });
   const category = watch("category");
-  useEffect(() => { setMeta({ title: "Create listing", description: "Add a new listing to TradeWind." }); }, []);
+  useEffect(() => { setMeta({ title: "Create listing", description: "Add a new listing to Tradewind." }); }, []);
 
   async function generateWithAI() {
     if (!aiPrompt.trim()) {

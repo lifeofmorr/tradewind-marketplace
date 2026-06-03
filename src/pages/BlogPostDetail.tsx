@@ -74,7 +74,7 @@ export default function BlogPostDetail() {
         <h1 className="font-display text-4xl leading-tight">{post.title}</h1>
         {post.excerpt && <p className="text-muted-foreground">{post.excerpt}</p>}
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          {post.author && <span>by {post.author.full_name ?? "TradeWind"}</span>}
+          {post.author && <span>by {post.author.full_name ?? "Tradewind"}</span>}
           {post.published_at && <span>· {new Date(post.published_at).toLocaleDateString()}</span>}
         </div>
         {post.tags?.length > 0 && (

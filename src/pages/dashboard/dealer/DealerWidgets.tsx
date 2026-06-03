@@ -18,15 +18,15 @@ interface WidgetRow {
 }
 
 const TYPES: { type: WidgetType; label: string; description: string; icon: typeof ListChecks }[] = [
-  { type: "inventory", label: "Inventory grid", description: "Embed your live TradeWind inventory on your own site.", icon: ListChecks },
-  { type: "lead_capture", label: "Lead capture", description: "A drop-in form that lands directly in your TradeWind inbox.", icon: Inbox },
+  { type: "inventory", label: "Inventory grid", description: "Embed your live Tradewind inventory on your own site.", icon: ListChecks },
+  { type: "lead_capture", label: "Lead capture", description: "A drop-in form that lands directly in your Tradewind inbox.", icon: Inbox },
   { type: "finance_request", label: "Finance request", description: "Pre-qual form routed to your finance partner.", icon: CreditCard },
 ];
 
 const SITE = typeof window !== "undefined" ? window.location.origin : "https://gotradewind.com";
 
 function widgetSnippet(dealerId: string, type: WidgetType): string {
-  return `<!-- TradeWind ${type} widget -->\n<div data-tradewind-widget="${type}" data-dealer-id="${dealerId}"></div>\n<script async src="${SITE}/embed/widget.js"></script>`;
+  return `<!-- Tradewind ${type} widget -->\n<div data-tradewind-widget="${type}" data-dealer-id="${dealerId}"></div>\n<script async src="${SITE}/embed/widget.js"></script>`;
 }
 
 export default function DealerWidgets() {
@@ -35,7 +35,7 @@ export default function DealerWidgets() {
   const qc = useQueryClient();
 
   useEffect(() => {
-    setMeta({ title: "Dealer · widgets", description: "Embed TradeWind inventory and lead-capture on your own site." });
+    setMeta({ title: "Dealer · widgets", description: "Embed Tradewind inventory and lead-capture on your own site." });
   }, []);
 
   const { data: widgets = [], isLoading } = useQuery({
@@ -94,8 +94,8 @@ export default function DealerWidgets() {
         <div className="eyebrow">Dealer · widgets</div>
         <h1 className="section-title">Embeddable widgets</h1>
         <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-          Drop these onto your own dealer site. Inventory stays in sync with TradeWind, leads land
-          in your TradeWind inbox, and finance requests route to your partner.
+          Drop these onto your own dealer site. Inventory stays in sync with Tradewind, leads land
+          in your Tradewind inbox, and finance requests route to your partner.
         </p>
       </div>
 

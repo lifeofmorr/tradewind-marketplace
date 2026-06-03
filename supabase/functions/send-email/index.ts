@@ -15,7 +15,7 @@
 //
 // Required secrets:
 //   RESEND_API_KEY
-//   RESEND_FROM                  (default: "TradeWind <hello@gotradewind.com>")
+//   RESEND_FROM                  (default: "Tradewind <hello@gotradewind.com>")
 //   APP_URL                      (used to build links inside templates)
 //   SUPABASE_URL
 //   SUPABASE_SERVICE_ROLE_KEY    (used to verify caller JWT)
@@ -23,10 +23,13 @@
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
-const FROM = Deno.env.get("RESEND_FROM") ?? "TradeWind <hello@gotradewind.com>";
+const FROM = Deno.env.get("RESEND_FROM") ?? "Tradewind <hello@gotradewind.com>";
 const APP_URL = (Deno.env.get("APP_URL") ?? "https://gotradewind.com").replace(/\/$/, "");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// Physical postal address for the email footer (CAN-SPAM). Optional for
+// transactional mail, but include it whenever configured.
+const MAILING_ADDRESS = Deno.env.get("BUSINESS_MAILING_ADDRESS")?.trim() ?? "";
 
 const VALID_TEMPLATES = new Set<Template>([
   "listing_approved", "new_inquiry", "featured_live",
@@ -99,14 +102,15 @@ function shell(title: string, bodyHtml: string): string {
     <tr><td align="center">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#0f2238;border:1px solid rgba(201,168,76,0.18);border-radius:12px;overflow:hidden;">
         <tr><td style="padding:24px 32px;border-bottom:1px solid rgba(201,168,76,0.12);">
-          <a href="${APP_URL}" style="color:#f5f0e8;text-decoration:none;font-family:Georgia,serif;font-size:22px;">TradeWind<span style="color:#c9a84c;">.</span></a>
+          <a href="${APP_URL}" style="color:#f5f0e8;text-decoration:none;font-family:Georgia,serif;font-size:22px;">Tradewind<span style="color:#c9a84c;">.</span></a>
         </td></tr>
         <tr><td style="padding:32px;">
           ${bodyHtml}
         </td></tr>
         <tr><td style="padding:20px 32px;border-top:1px solid rgba(201,168,76,0.12);font-size:12px;color:#8a99ad;">
-          You're receiving this because you have an account on TradeWind.
+          You're receiving this because you have an account on Tradewind.
           <br>Questions? <a style="color:#c9a84c;text-decoration:none;" href="mailto:support@gotradewind.com">support@gotradewind.com</a>
+          ${MAILING_ADDRESS ? `<br><span style="color:#6b7a8d;">Tradewind · ${esc(MAILING_ADDRESS)}</span>` : ""}
         </td></tr>
       </table>
     </td></tr>
@@ -126,7 +130,7 @@ function render(template: Template, props: Record<string, string | number | unde
       const subject = `Your listing is live: ${props.listing_title ?? "your listing"}`;
       const html = shell(subject, `
         <h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 12px;">Your listing is live.</h1>
-        <p>Good news — <strong>${esc(props.listing_title)}</strong> is now visible on TradeWind.</p>
+        <p>Good news — <strong>${esc(props.listing_title)}</strong> is now visible on Tradewind.</p>
         <p style="margin:24px 0;">${btn("View your listing", `${APP_URL}/listings/${props.listing_slug ?? ""}`)}</p>
       `);
       return { subject, html };
@@ -172,7 +176,7 @@ function render(template: Template, props: Record<string, string | number | unde
       const subject = `Concierge engagement confirmed`;
       const html = shell(subject, `
         <h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 12px;">Welcome to concierge.</h1>
-        <p>Your engagement is paid in full. A TradeWind concierge will reach out within one business day to begin sourcing.</p>
+        <p>Your engagement is paid in full. A Tradewind concierge will reach out within one business day to begin sourcing.</p>
         <p style="margin:24px 0;">${btn("View my requests", `${APP_URL}/buyer/requests`)}</p>
       `);
       return { subject, html };

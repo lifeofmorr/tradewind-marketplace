@@ -20,7 +20,7 @@ export function generateFollowUp(
 ): string {
   const buyer = firstName(inquiry.buyer_name);
   const listing = ctx.listing_title ? ` ${ctx.listing_title}` : " your inquiry";
-  const sigName = ctx.agent_name ?? "TradeWind dealer team";
+  const sigName = ctx.agent_name ?? "Tradewind dealer team";
   const sigDealer = ctx.dealer_name ? `\n${ctx.dealer_name}` : "";
 
   if (type === "first_reply") {

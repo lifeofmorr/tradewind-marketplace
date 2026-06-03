@@ -37,7 +37,7 @@ const DEMO_POSTS: CommunityPost[] = [
     author: { name: "Mara Chen", role: "buyer", handle: "mara_at_sea" },
     postType: "lifestyle",
     content:
-      "First overnight on the new sailboat. Anchored in Cuttyhunk, sundowners on the bow. The TradeWind concierge made this whole purchase a non-event — strongest endorsement I can give.",
+      "First overnight on the new sailboat. Anchored in Cuttyhunk, sundowners on the bow. The Tradewind concierge made this whole purchase a non-event — strongest endorsement I can give.",
     mediaUrl: "https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?auto=format&fit=crop&w=1200&q=70",
     createdAtLabel: "5h ago",
     likes: 128,
@@ -55,7 +55,7 @@ const DEMO_POSTS: CommunityPost[] = [
   },
   {
     id: "demo-p4",
-    author: { name: "TradeWind Market Desk", role: "service_provider", handle: "market_pulse" },
+    author: { name: "Tradewind Market Desk", role: "service_provider", handle: "market_pulse" },
     postType: "market_insight",
     content:
       "Center-console pricing flattened in March after 14 months of compression. Sub-30ft inventory turning in 38 days median; 30-40ft holding at 64. Full report drops Monday.",
@@ -68,7 +68,7 @@ const DEMO_POSTS: CommunityPost[] = [
     author: { name: "Coastal Auto Imports", role: "dealer", handle: "coastal_auto" },
     postType: "dealer_spotlight",
     content:
-      "Crossed our 200th TradeWind delivery this week. Shoutout to the buyer team — every deal closed with zero off-platform funny business. This is how marketplaces should work.",
+      "Crossed our 200th Tradewind delivery this week. Shoutout to the buyer team — every deal closed with zero off-platform funny business. This is how marketplaces should work.",
     mediaUrl: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=70",
     createdAtLabel: "2d ago",
     likes: 203,
@@ -123,7 +123,7 @@ interface RealPostRow {
 }
 
 function rowToPost(row: RealPostRow, likedIds: Set<string>): CommunityPost {
-  const fullName = row.profile?.full_name ?? "TradeWind member";
+  const fullName = row.profile?.full_name ?? "Tradewind member";
   const handle = (fullName || "member").toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) || "member";
   return {
     id: row.id,

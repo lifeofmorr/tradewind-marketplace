@@ -4,6 +4,7 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { callLLM, parseJSON } from "../_shared/anthropic.ts";
+import { enforceAiRateLimit } from "../_shared/rate-limit.ts";
 
 interface Body { prompt: string; category: string }
 
@@ -27,7 +28,7 @@ interface ListingDraft {
   suggested_price_cents?: number;
 }
 
-const SYSTEM = `You are TradeWind's listing copywriter. Given a seller's free-text prompt about a boat, vehicle, or aircraft, you produce a structured listing JSON.
+const SYSTEM = `You are Tradewind's listing copywriter. Given a seller's free-text prompt about a boat, vehicle, or aircraft, you produce a structured listing JSON.
 
 Tone:
 - Confident, specific, no fluff. No emojis. No exclamation points.
@@ -52,6 +53,8 @@ Output ONLY a single JSON object. No prose, no code fences.`;
 Deno.serve(async (req: Request) => {
   const pre = handleOptions(req); if (pre) return pre;
   if (req.method !== "POST") return errorResponse("POST only", 405);
+  const limited = await enforceAiRateLimit(req, "ai-listing-generator");
+  if (limited) return limited;
   let body: Body;
   try { body = await req.json() as Body; } catch { return errorResponse("Invalid JSON"); }
   if (!body.prompt || !body.category) return errorResponse("prompt + category required");

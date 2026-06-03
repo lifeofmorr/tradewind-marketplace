@@ -115,7 +115,7 @@ export default function AppSwitcher() {
           </div>
 
           <div className="px-3 pt-3 pb-1 font-mono text-[10px] uppercase tracking-[0.32em] text-brass-400">
-            TradeWind apps
+            Tradewind apps
           </div>
 
           <div className="max-h-[60vh] overflow-y-auto p-3 grid gap-2 sm:grid-cols-2">

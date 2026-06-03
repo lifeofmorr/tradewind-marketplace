@@ -76,7 +76,7 @@ export default function AircraftPage({
           <span className="font-display text-base text-amber-100">Aviation safety notice.</span>{" "}
           Aircraft details, registration, title, logbooks, maintenance status, and airworthiness
           must be independently verified by qualified aviation professionals before purchase.
-          TradeWind does not verify FAA status, airworthiness, or maintenance compliance.
+          Tradewind does not verify FAA status, airworthiness, or maintenance compliance.
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export default function AircraftPage({
         variant="banner"
         source="aircraft_page"
         title="Aircraft brokers — want to list here?"
-        body="TradeWind is in private beta. We're inviting aircraft brokers to test the compliance-aware listing and pre-buy workflows early."
+        body="Tradewind is in private beta. We're inviting aircraft brokers to test the compliance-aware listing and pre-buy workflows early."
       />
     </div>
   );

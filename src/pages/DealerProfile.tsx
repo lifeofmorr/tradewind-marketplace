@@ -107,7 +107,7 @@ export default function DealerProfile() {
 
 export function DealersIndex() {
   useEffect(() => {
-    setMeta({ title: "Dealers", description: "Verified boat and auto dealers on TradeWind." });
+    setMeta({ title: "Dealers", description: "Verified boat and auto dealers on Tradewind." });
   }, []);
   const { data: dealers = [], isLoading } = useQuery({
     queryKey: ["dealers"],

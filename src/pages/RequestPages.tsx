@@ -48,6 +48,11 @@ function RequestShell({ eyebrow, title, description, children }: RequestShellPro
           <p className="text-[11px] text-muted-foreground/80 pt-2">
             Never send payment outside the platform. We screen every request before passing it on.
           </p>
+          <p className="text-[11px] text-muted-foreground/70">
+            Financing, insurance, escrow, inspection, and transport services are provided by
+            independent third-party partners. Tradewind is not a lender, insurer, escrow agent,
+            broker, or financial institution, and does not guarantee approval, rates, or coverage.
+          </p>
         </header>
         <div className={isConcierge ? "glass-card-elevated p-6" : "glass-card p-6"}>{children}</div>
       </div>
@@ -111,7 +116,7 @@ export function Financing() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FinancingValues>({
     resolver: zodResolver(FinancingSchema as ZodType<FinancingValues>),
   });
-  useEffect(() => { setMeta({ title: "Financing", description: "Marine and auto financing through TradeWind partners." }); }, []);
+  useEffect(() => { setMeta({ title: "Financing", description: "Marine and auto financing through Tradewind partners." }); }, []);
   async function onSubmit(v: FinancingValues) {
     setError(null);
     const { error: e } = await supabase.from("financing_requests").insert({

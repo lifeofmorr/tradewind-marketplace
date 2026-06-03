@@ -10,7 +10,7 @@ interface Props {
   body?: string;
 }
 
-const DEFAULT_TITLE = "TradeWind is in private beta.";
+const DEFAULT_TITLE = "Tradewind is in private beta.";
 const DEFAULT_BODY =
   "We're inviting dealers, brokers, service partners, and serious buyers to use the platform early — and shape what comes next.";
 

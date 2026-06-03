@@ -253,7 +253,7 @@ export default function FeedbackPage() {
             {error && <p className="text-xs text-red-400">{error}</p>}
 
             <Button type="submit" disabled={isSubmitting} size="lg" className="btn-glow">
-              {isSubmitting ? "Sending…" : "Send to TradeWind"}
+              {isSubmitting ? "Sending…" : "Send to Tradewind"}
             </Button>
             <p className="text-[11px] text-muted-foreground/80">
               We use this only to follow up on your feedback. No marketing list.

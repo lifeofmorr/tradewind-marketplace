@@ -17,7 +17,7 @@ import ListingDetail from "@/pages/ListingDetail";
 import DealerProfile, { DealersIndex } from "@/pages/DealerProfile";
 import ServiceProviderProfile, { ServicesIndex } from "@/pages/ServiceProviderProfile";
 import {
-  About, Contact, Services as ServicesHub,
+  About, Contact, Support, Services as ServicesHub,
   Pricing, Dealers as DealersInfo, SellMyBoat, SellMyCar, SellHub,
   Terms, Privacy, NotFound,
 } from "@/pages/SimplePages";
@@ -97,6 +97,7 @@ const AdminUsers = lazy(() => import("@/pages/dashboard/admin/AdminUsers"));
 const AdminRequests = lazy(() => import("@/pages/dashboard/admin/AdminRequests"));
 const AdminFraud = lazy(() => import("@/pages/dashboard/admin/AdminFraud"));
 const AdminPayments = lazy(() => import("@/pages/dashboard/admin/AdminPayments"));
+const AdminPaymentsLiveReadiness = lazy(() => import("@/pages/dashboard/admin/AdminPaymentsLiveReadiness"));
 const AdminContent = lazy(() => import("@/pages/dashboard/admin/AdminContent"));
 const AdminAuctions = lazy(() => import("@/pages/dashboard/admin/AdminAuctions"));
 const AdminBlog = lazy(() => import("@/pages/dashboard/admin/AdminBlog"));
@@ -152,6 +153,7 @@ export default function App() {
 
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/support" element={<Support />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPostDetail />} />
         <Route path="/market-reports" element={<MarketReports />} />
@@ -277,6 +279,7 @@ export default function App() {
           <Route path="/admin/requests" element={<L><AdminRequests /></L>} />
           <Route path="/admin/fraud" element={<L><AdminFraud /></L>} />
           <Route path="/admin/payments" element={<L><AdminPayments /></L>} />
+          <Route path="/admin/payments/live-readiness" element={<L><AdminPaymentsLiveReadiness /></L>} />
           <Route path="/admin/content" element={<L><AdminContent /></L>} />
           <Route path="/admin/blog" element={<L><AdminBlog /></L>} />
           <Route path="/admin/market-reports" element={<L><AdminMarketReports /></L>} />

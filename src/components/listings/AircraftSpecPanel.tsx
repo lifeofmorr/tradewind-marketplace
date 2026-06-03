@@ -153,7 +153,7 @@ export function AircraftSpecPanel({ listingId }: Props) {
 
       <p className="mt-4 pt-3 border-t border-amber-500/15 text-[11px] leading-relaxed text-amber-200/85">
         <span className="font-display text-amber-100">Aviation notice.</span>{" "}
-        Specs shown are seller-supplied. TradeWind does not verify FAA status,
+        Specs shown are seller-supplied. Tradewind does not verify FAA status,
         airworthiness, AD/SB compliance, logbook completeness, or maintenance
         history. Independent verification by an A&amp;P/IA and a qualified
         broker is required before purchase.

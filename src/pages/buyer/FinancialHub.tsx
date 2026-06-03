@@ -91,7 +91,7 @@ const PARTNERS: Array<{
     name: "Harborline Insurance",
     type: "insurance",
     rate: "Quote in 5 min",
-    blurb: "Marine and auto coverage with TradeWind-direct pricing.",
+    blurb: "Marine and auto coverage with Tradewind-direct pricing.",
     icon: Umbrella,
   },
   {
@@ -195,7 +195,7 @@ export default function FinancialHub() {
       <div className="glass-card p-3 flex items-start gap-3 max-w-2xl">
         <Info className="h-4 w-4 text-brass-400 mt-0.5 shrink-0" />
         <p className="text-xs text-muted-foreground">
-          TradeWind does not make credit decisions. This is informational only — readiness tracking
+          Tradewind does not make credit decisions. This is informational only — readiness tracking
           and partner introductions help you stay organized; lenders make their own determinations.
         </p>
       </div>
@@ -270,7 +270,7 @@ export default function FinancialHub() {
         <Landmark className="h-5 w-5 text-brass-400" />
         <div className="font-display text-xl mt-3">Concierge-grade closings</div>
         <p className="text-sm text-muted-foreground mt-2">
-          For deals over $250k, a TradeWind concierge coordinates lender, insurer, surveyor, and
+          For deals over $250k, a Tradewind concierge coordinates lender, insurer, surveyor, and
           transport into a single closing timeline. No off-platform wires, no surprises.
         </p>
         <div className="mt-4">

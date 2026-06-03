@@ -4,6 +4,7 @@
 
 import { handleOptions, jsonResponse, errorResponse } from "../_shared/cors.ts";
 import { callLLM, parseJSON } from "../_shared/anthropic.ts";
+import { enforceAiRateLimit } from "../_shared/rate-limit.ts";
 
 interface Body {
   email?: string;
@@ -19,7 +20,7 @@ interface Verdict {
   recommended_action: "allow" | "review" | "block";
 }
 
-const SYSTEM = `You are TradeWind's fraud-screening AI for marketplace inquiries.
+const SYSTEM = `You are Tradewind's fraud-screening AI for marketplace inquiries.
 Score the message 0–100 (100 = certainly fraud) and list specific signals.
 
 Common fraud signals on a high-ticket marketplace:
@@ -46,6 +47,8 @@ Output ONLY JSON: { "score": int, "signals": [string], "recommended_action": "al
 Deno.serve(async (req: Request) => {
   const pre = handleOptions(req); if (pre) return pre;
   if (req.method !== "POST") return errorResponse("POST only", 405);
+  const limited = await enforceAiRateLimit(req, "ai-fraud-check");
+  if (limited) return limited;
   let body: Body;
   try { body = await req.json() as Body; } catch { return errorResponse("Invalid JSON"); }
 
