@@ -16,10 +16,11 @@ const COLS: FooterCol[] = [
   {
     title: "Sellers & Dealers",
     links: [
-      { label: "Sell my boat", to: "/sell-my-boat" },
-      { label: "Sell my car",  to: "/sell-my-car" },
-      { label: "Dealers",      to: "/dealers" },
-      { label: "Pricing",      to: "/pricing" },
+      { label: "Sell my boat",     to: "/sell-my-boat" },
+      { label: "Sell my car",      to: "/sell-my-car" },
+      { label: "Sell my aircraft", to: "/sell-my-aircraft" },
+      { label: "Dealers",          to: "/dealers" },
+      { label: "Pricing",          to: "/pricing" },
     ],
   },
   {

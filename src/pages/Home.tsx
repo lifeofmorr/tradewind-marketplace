@@ -124,7 +124,7 @@ function AIAssistantBanner() {
           </div>
           <h2 className="font-display text-3xl md:text-4xl mt-2">Tell us what you're after.</h2>
           <p className="text-muted-foreground mt-3 max-w-lg">
-            Describe your dream boat or car. Our AI concierge narrows your search, surfaces comps,
+            Describe your dream boat, car, or aircraft. Our AI concierge narrows your search, surfaces comps,
             and lines up inspections, financing, and transport — end-to-end.
           </p>
         </div>

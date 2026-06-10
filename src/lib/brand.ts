@@ -10,7 +10,9 @@ const env = import.meta.env as Record<string, string | undefined>;
 
 export const BRAND = {
   name: env.VITE_BUSINESS_NAME?.trim() || "Tradewind",
-  domain: "gotradewind.com",
+  // Canonical/SEO domain. Override per environment (e.g. the vercel.app host
+  // while the custom domain is unresolved) without a code change.
+  domain: env.VITE_PUBLIC_DOMAIN?.trim() || "gotradewind.com",
   tagline: "The AI-powered marketplace for boats, autos, dealers, and serious buyers.",
   email: "hello@gotradewind.com",
   supportEmail: env.VITE_BUSINESS_SUPPORT_EMAIL?.trim() || "don@lifeofmorr.com",

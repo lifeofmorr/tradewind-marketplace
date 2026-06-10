@@ -11,6 +11,8 @@ export interface MetaArgs {
   ogImage?: string;
   ogType?: "website" | "article" | "product" | "vehicle";
   jsonLd?: object;
+  /** Set on error/utility pages (404) so crawlers drop them from the index. */
+  noindex?: boolean;
 }
 
 const TITLE_SUFFIX = ` — ${BRAND.name}`;
@@ -37,7 +39,7 @@ function upsertJsonLd(json: object) {
   el.text = JSON.stringify(json);
 }
 
-export function setMeta({ title, description, canonical, ogImage, ogType = "website", jsonLd }: MetaArgs) {
+export function setMeta({ title, description, canonical, ogImage, ogType = "website", jsonLd, noindex }: MetaArgs) {
   const fullTitle = title.endsWith(BRAND.name) ? title : title + TITLE_SUFFIX;
   document.title = fullTitle;
   const path = typeof window !== "undefined" ? window.location.pathname : "/";
@@ -51,6 +53,7 @@ export function setMeta({ title, description, canonical, ogImage, ogType = "webs
   if (ogImage) upsertMeta('meta[property="og:image"]', { property: "og:image", content: ogImage });
   upsertMeta('meta[name="twitter:card"]', { name: "twitter:card", content: ogImage ? "summary_large_image" : "summary" });
   upsertMeta('link[rel="canonical"]', { rel: "canonical", href: canonicalUrl });
+  upsertMeta('meta[name="robots"]', { name: "robots", content: noindex ? "noindex, follow" : "index, follow" });
   if (jsonLd) upsertJsonLd(jsonLd);
 }
 
@@ -66,26 +69,30 @@ export function listingMeta(listing: {
     listing.ai_summary ??
     listing.description?.slice(0, 160) ??
     `${listing.title} for sale on ${BRAND.name}.`;
+  // Conditional spreads keep null fields out of the JSON-LD entirely —
+  // schema.org validators reject literal nulls (JSON.stringify only drops undefined).
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": isAircraft ? "Product" : isBoat ? "Product" : "Vehicle",
-    additionalType: isAircraft ? "https://schema.org/Vehicle" : undefined,
+    ...(isAircraft && { additionalType: "https://schema.org/Vehicle" }),
     name: listing.title,
     description,
-    brand: listing.make,
-    model: listing.model,
-    vehicleModelDate: listing.year,
-    offers: listing.price_cents
-      ? { "@type": "Offer", priceCurrency: "USD", price: (listing.price_cents / 100).toFixed(2),
-          availability: "https://schema.org/InStock" }
-      : undefined,
-    image: listing.cover_photo_url ?? undefined,
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: listing.city ?? undefined,
-      addressRegion: listing.state ?? undefined,
-      addressCountry: "US",
-    },
+    ...(listing.make && { brand: listing.make }),
+    ...(listing.model && { model: listing.model }),
+    ...(listing.year && { vehicleModelDate: listing.year }),
+    ...(listing.price_cents && {
+      offers: { "@type": "Offer", priceCurrency: "USD", price: (listing.price_cents / 100).toFixed(2),
+        availability: "https://schema.org/InStock" },
+    }),
+    ...(listing.cover_photo_url && { image: listing.cover_photo_url }),
+    ...((listing.city || listing.state) && {
+      address: {
+        "@type": "PostalAddress",
+        ...(listing.city && { addressLocality: listing.city }),
+        ...(listing.state && { addressRegion: listing.state }),
+        addressCountry: "US",
+      },
+    }),
   };
   return {
     title: listing.title,

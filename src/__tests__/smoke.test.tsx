@@ -120,7 +120,10 @@ describe("Tradewind smoke", () => {
     renderRoute(<Home />, "/");
     expect(screen.getAllByRole("heading").length).toBeGreaterThan(0);
     // Hero scene is lazy-loaded; the search input mounts after Suspense resolves.
-    expect(await screen.findByPlaceholderText(/Boston Whaler|Porsche/i)).toBeInTheDocument();
+    // Generous timeout: the lazy chunk can take >1s when the full suite runs in parallel.
+    expect(
+      await screen.findByPlaceholderText(/Boston Whaler|Porsche/i, undefined, { timeout: 10000 }),
+    ).toBeInTheDocument();
   });
 
   it("TrustCenter page renders verification copy", async () => {

@@ -24,10 +24,10 @@ function PageShell({ eyebrow, title, description, children, wide }: ShellProps) 
   );
 }
 
-function useTitle(title: string, description: string) {
+function useTitle(title: string, description: string, noindex = false) {
   useEffect(() => {
-    setMeta({ title, description });
-  }, [title, description]);
+    setMeta({ title, description, noindex });
+  }, [title, description, noindex]);
 }
 
 export function About() {
@@ -255,13 +255,23 @@ export function SellMyCar() {
   );
 }
 
+export function SellMyAircraft() {
+  useTitle("Sell my aircraft", "List your aircraft in minutes on Tradewind.");
+  return (
+    <PageShell eyebrow="Sell" title="Sell my aircraft." description="Drop in a few details and let our AI write the listing for you.">
+      <p><Link className="text-brass-400" to="/seller/listings/new?category=aircraft_single_engine">Start your listing →</Link></p>
+    </PageShell>
+  );
+}
+
 export function SellHub() {
-  useTitle("Sell on Tradewind", "List boats, cars, RVs, and more.");
+  useTitle("Sell on Tradewind", "List boats, cars, aircraft, RVs, and more.");
   return (
     <PageShell eyebrow="Sell" title="What are you selling?">
       <ul className="list-disc pl-6 space-y-1">
         <li><Link className="text-brass-400" to="/sell-my-boat">Boat</Link></li>
         <li><Link className="text-brass-400" to="/sell-my-car">Car or truck</Link></li>
+        <li><Link className="text-brass-400" to="/sell-my-aircraft">Aircraft</Link></li>
         <li>RV / powersports / exotic — start a listing from your dashboard.</li>
       </ul>
     </PageShell>
@@ -377,7 +387,7 @@ export function Support() {
 }
 
 export function NotFound() {
-  useTitle("Not found", "That page doesn't exist on Tradewind.");
+  useTitle("Not found", "That page doesn't exist on Tradewind.", true);
   return (
     <PageShell eyebrow="404" title="Page not found.">
       <p><Link className="text-brass-400" to="/">Take me home →</Link></p>

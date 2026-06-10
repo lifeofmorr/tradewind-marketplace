@@ -224,6 +224,59 @@ describe("calculateListingQuality", () => {
     expect(result.score).toBeLessThanOrEqual(100);
     expect(result.checks.length).toBe(11);
   });
+
+  it("credits aircraft specs from hours, not mileage", () => {
+    const result = calculateListingQuality({
+      listing: { ...baseListing, category: "aircraft_single_engine", hours: 1200, length_ft: null, mileage: null },
+      photoCount: 0,
+    });
+    const specs = result.checks.find((c) => c.key === "specs");
+    expect(specs?.ok).toBe(true);
+    expect(specs?.label).toBe("Total time (hours)");
+    const vin = result.checks.find((c) => c.key === "vin_hin");
+    expect(vin?.label).toBe("N-number / serial");
+  });
+});
+
+describe("listingMeta JSON-LD", () => {
+  it("omits null fields instead of emitting literal nulls", async () => {
+    const { listingMeta } = await import("@/lib/seo");
+    const meta = listingMeta({
+      title: "1979 Cessna 182Q",
+      category: "aircraft_single_engine",
+      make: null,
+      model: null,
+      year: null,
+      price_cents: null,
+      city: null,
+      state: null,
+      cover_photo_url: null,
+    });
+    const json = JSON.stringify(meta.jsonLd);
+    expect(json).not.toContain("null");
+    expect(meta.jsonLd).not.toHaveProperty("brand");
+    expect(meta.jsonLd).not.toHaveProperty("offers");
+    expect(meta.jsonLd).not.toHaveProperty("address");
+  });
+
+  it("keeps populated fields and offer pricing", async () => {
+    const { listingMeta } = await import("@/lib/seo");
+    const meta = listingMeta({
+      title: "Boston Whaler 330",
+      category: "boat",
+      make: "Boston Whaler",
+      model: "330 Outrage",
+      year: 2020,
+      price_cents: 35_000_00,
+      city: "Miami",
+      state: "FL",
+      cover_photo_url: "https://img.example.com/x.jpg",
+    });
+    const ld = meta.jsonLd as Record<string, unknown>;
+    expect(ld.brand).toBe("Boston Whaler");
+    expect((ld.offers as Record<string, unknown>).price).toBe("35000.00");
+    expect((ld.address as Record<string, unknown>).addressLocality).toBe("Miami");
+  });
 });
 
 describe("calculateOwnershipCost", () => {

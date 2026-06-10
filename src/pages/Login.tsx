@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,6 +22,7 @@ export default function Login() {
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Values>({
     resolver: zodResolver(Schema),
@@ -34,9 +35,13 @@ export default function Login() {
   useEffect(() => {
     if (user) {
       const state = location.state as LocationState | null;
-      navigate(state?.from ?? "/", { replace: true });
+      // ?redirect= is set by public pages; only honor app-internal paths.
+      const redirect = params.get("redirect");
+      const target =
+        state?.from ?? (redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/");
+      navigate(target, { replace: true });
     }
-  }, [user, navigate, location.state]);
+  }, [user, navigate, location.state, params]);
 
   async function onSubmit(values: Values) {
     setError(null);

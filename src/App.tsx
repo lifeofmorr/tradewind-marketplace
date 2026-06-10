@@ -14,7 +14,7 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import Home from "@/pages/Home";
 import {
   About, Contact, Support, Services as ServicesHub,
-  Pricing, Dealers as DealersInfo, SellMyBoat, SellMyCar, SellHub,
+  Pricing, Dealers as DealersInfo, SellMyBoat, SellMyCar, SellMyAircraft, SellHub,
   Terms, Privacy, NotFound,
 } from "@/pages/SimplePages";
 import Login from "@/pages/Login";
@@ -136,6 +136,7 @@ function L({ children }: { children: ReactNode }) {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <Routes>
       {/* Public marketing + marketplace surface */}
       <Route element={<PublicShell />}>
@@ -178,6 +179,7 @@ export default function App() {
         <Route path="/sell" element={<SellHub />} />
         <Route path="/sell-my-boat" element={<SellMyBoat />} />
         <Route path="/sell-my-car" element={<SellMyCar />} />
+        <Route path="/sell-my-aircraft" element={<SellMyAircraft />} />
         <Route path="/services-hub" element={<ServicesHub />} />
 
         <Route path="/financing" element={<L><Financing /></L>} />
@@ -303,5 +305,6 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </ErrorBoundary>
   );
 }

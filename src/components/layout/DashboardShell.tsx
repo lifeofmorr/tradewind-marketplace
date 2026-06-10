@@ -127,6 +127,12 @@ export default function DashboardShell() {
 
   return (
     <div className="min-h-screen md:flex">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:ring-2 focus:ring-brass-500"
+      >
+        Skip to main content
+      </a>
       {/* Mobile top bar */}
       <div className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur px-4 h-14">
         <button
@@ -170,7 +176,7 @@ export default function DashboardShell() {
       <aside className="hidden md:flex w-60 shrink-0 border-r border-border bg-navy-950/40 flex-col">
         {sidebar}
       </aside>
-      <main className="flex-1 overflow-auto p-4 md:p-8">
+      <main id="main-content" className="flex-1 overflow-auto p-4 md:p-8">
         <Outlet />
       </main>
     </div>

@@ -208,8 +208,9 @@ Deno.serve(async (req: Request) => {
       body: form(params),
     });
     if (!r.ok) {
-      const text = await r.text();
-      return errorResponse(`stripe ${r.status}: ${text}`, 502, req);
+      // Log details server-side only; Stripe error bodies can describe internal config.
+      console.error("[stripe-checkout] stripe error", r.status, await r.text());
+      return errorResponse("Payment service error — please try again.", 502, req);
     }
     const data = await r.json() as { id: string; url: string };
     return jsonResponse({ url: data.url, id: data.id }, 200, req);

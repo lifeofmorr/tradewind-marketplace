@@ -8,6 +8,7 @@ import { DealScoreBadge } from "@/components/listings/DealScoreBadge";
 import { getListingBadges } from "@/lib/badges";
 import { useCompare } from "@/contexts/CompareContext";
 import { formatCents, formatNumber, cn } from "@/lib/utils";
+import { isAircraftCategory } from "@/lib/categories";
 
 interface Props {
   listing: Listing;
@@ -19,6 +20,7 @@ const BOAT_CATS = new Set(["boat", "performance_boat", "yacht", "center_console"
 
 export function ListingCard({ listing, saved, onToggleSave }: Props) {
   const isBoat = BOAT_CATS.has(listing.category);
+  const isAircraft = isAircraftCategory(listing.category);
   const badges = getListingBadges(listing);
   const compare = useCompare();
   const inCompare = compare.has(listing.id);
@@ -94,7 +96,8 @@ export function ListingCard({ listing, saved, onToggleSave }: Props) {
           <span>·</span>
           <span>{listing.make ?? listing.category}</span>
           {isBoat && listing.length_ft != null && (<><span>·</span><span>{listing.length_ft}ft</span></>)}
-          {!isBoat && listing.mileage != null && (<><span>·</span><span>{formatNumber(listing.mileage)} mi</span></>)}
+          {isAircraft && listing.hours != null && (<><span>·</span><span>{formatNumber(listing.hours)} hrs TT</span></>)}
+          {!isBoat && !isAircraft && listing.mileage != null && (<><span>·</span><span>{formatNumber(listing.mileage)} mi</span></>)}
         </div>
         {(listing.city || listing.state) && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">

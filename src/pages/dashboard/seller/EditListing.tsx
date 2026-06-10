@@ -71,15 +71,18 @@ export default function EditListing() {
 
   async function saveVideoUrl(url: string) {
     if (!listing) return;
+    setError(null);
     const trimmed = url.trim();
     const existing = videos[0];
+    let e: { message: string } | null = null;
     if (!trimmed) {
-      if (existing) await supabase.from("listing_videos").delete().eq("id", existing.id);
+      if (existing) ({ error: e } = await supabase.from("listing_videos").delete().eq("id", existing.id));
     } else if (existing) {
-      await supabase.from("listing_videos").update({ url: trimmed }).eq("id", existing.id);
+      ({ error: e } = await supabase.from("listing_videos").update({ url: trimmed }).eq("id", existing.id));
     } else {
-      await supabase.from("listing_videos").insert({ listing_id: listing.id, url: trimmed });
+      ({ error: e } = await supabase.from("listing_videos").insert({ listing_id: listing.id, url: trimmed }));
     }
+    if (e) { setError(e.message); return; }
     void qc.invalidateQueries({ queryKey: ["seller-listing-videos", listing.id] });
     setSaved(true);
     setTimeout(() => setSaved(false), 1600);
@@ -116,15 +119,18 @@ export default function EditListing() {
 
   const current = listing;
   async function persistPhotos(next: { storage_path: string; url: string | null }[]) {
-    await supabase.from("listing_photos").delete().eq("listing_id", current.id);
+    setError(null);
+    const { error: delErr } = await supabase.from("listing_photos").delete().eq("listing_id", current.id);
+    if (delErr) { setError(delErr.message); return; }
     if (next.length) {
-      await supabase.from("listing_photos").insert(next.map((p, i) => ({
+      const { error: insErr } = await supabase.from("listing_photos").insert(next.map((p, i) => ({
         listing_id: current.id,
         storage_path: p.storage_path,
         url: p.url,
         position: i,
         is_cover: i === 0,
       })));
+      if (insErr) { setError(insErr.message); return; }
       await save({ cover_photo_url: next[0]?.url ?? null });
     } else {
       await save({ cover_photo_url: null });

@@ -1,4 +1,5 @@
 import type { Listing } from "@/types/database";
+import { isAircraftCategory } from "@/lib/categories";
 
 export type QualityLabel = "Poor" | "Good" | "Strong" | "Premium";
 
@@ -25,6 +26,7 @@ export function calculateListingQuality({ listing, photoCount = 0 }: QualityInpu
   const isBoat = ["boat", "performance_boat", "yacht", "center_console"].includes(
     listing.category,
   );
+  const isAircraft = isAircraftCategory(listing.category);
   const checks: QualityCheck[] = [
     {
       key: "title",
@@ -81,9 +83,14 @@ export function calculateListingQuality({ listing, photoCount = 0 }: QualityInpu
     },
     {
       key: "specs",
-      label: isBoat ? "Hours + length" : "Mileage",
+      label: isBoat ? "Hours + length" : isAircraft ? "Total time (hours)" : "Mileage",
       weight: 8,
-      ok: isBoat ? listing.hours != null && listing.length_ft != null : listing.mileage != null,
+      ok: isBoat
+        ? listing.hours != null && listing.length_ft != null
+        : isAircraft
+          ? listing.hours != null
+          : listing.mileage != null,
+      hint: isAircraft ? "Enter airframe total time; full specs live in the Aircraft panel." : undefined,
     },
     {
       key: "condition",
@@ -93,7 +100,7 @@ export function calculateListingQuality({ listing, photoCount = 0 }: QualityInpu
     },
     {
       key: "vin_hin",
-      label: isBoat ? "HIN" : "VIN",
+      label: isBoat ? "HIN" : isAircraft ? "N-number / serial" : "VIN",
       weight: 6,
       ok: !!listing.vin_or_hin,
     },
