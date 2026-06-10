@@ -1,121 +1,93 @@
-# Final Beta Readiness Report
+# Tradewind — Final Beta Readiness Report
 
-**Date:** 2026-05-21
-**Branch:** `claude/thirsty-bhabha-03835d` (worktree)
-**Live URL:** https://tradewind-marketplace.vercel.app
-**Supabase project:** `qwaotydaazymgnvnfuuj`
+_Generated: 2026-06-03 · Branch: `main` @ `e609a2c` · Verify-only pass (no features built, no outreach sent, Stripe left in test)_
 
-# VERDICT: READY FOR PRIVATE BETA — ZERO BLOCKERS
-
-All ten gate phases ran clean. Two real defects were found and fixed during
-this pass; everything else was verified-as-is.
-
-| # | Phase | Result |
-|---|---|---|
-| 1 | Feature readiness | ✅ All 8 verticals × all asserted feature components present and routed |
-| 2 | Zero dead button audit | ✅ Every "coming soon" / "preview" / "request access" surface honestly labeled with a working request flow or feature-flag gate |
-| 3 | Media final check | ✅ 65 demo listings × 4 photos = 260 demo media rows; 15/15 random URL spot-checks return 200 image/jpeg with CDN params |
-| 4 | Payments | ✅ Stripe checkout JWT-auth + ownership-checked; webhook signature-verified + idempotent; 7 SKUs wired |
-| 5 | AI | ✅ All 7 AI edge fns operational; aircraft-aware after this pass; aviation safety has local fallback |
-| 6 | Security | ✅ Self-role-escalation hole closed in migration; RLS on 46 tables; CSP/HSTS/X-Frame-Options live |
-| 7 | Mobile | ✅ Hamburger menu, responsive grids, 15 tables wrapped in overflow-x-auto |
-| 8 | Performance | ✅ 296 KB gzipped eager bundle, 42 lazy routes, Unsplash CDN params on every demo photo |
-| 9 | Tests / build / deploy | ✅ typecheck clean; build 4.41s; vitest 53/53 |
-| 10 | Final decision | ✅ Reports written, BETA_BLOCKERS / PRODUCTION_READINESS updated |
+_Supersedes the prior 2026-05-21 worktree-era report._
 
 ---
 
-## Fixes shipped in this pass
+## Verdict
 
-### P0 — Self role escalation (Security)
-**Found:** `profiles_update_own_or_admin` RLS policy allowed any signed-in
-user to UPDATE their own profile row. No column guard or trigger blocked
-`UPDATE profiles SET role='admin' WHERE id = auth.uid()`. A non-admin could
-have escalated to admin via a single PATCH, then bypassed RLS on every
-admin-gated table.
+### ✅ PRIVATE BETA ONLY — READY
 
-**Fix:** new migration
-`supabase/migrations/20260521_prevent_self_role_escalation.sql` installs a
-`BEFORE UPDATE` trigger on `public.profiles` that:
-- lets the service role through (auth.uid() is null)
-- lets admins set any field on any row
-- raises `insufficient_privilege` (SQLSTATE 42501) on any non-admin change to
-  `role`, `banned`, or `verification_level`
+The build is healthy, all routes are wired, and every fail-closed safety control works as designed. The platform is safe to expose to a controlled private-beta audience right now. It is **NOT** ready for controlled live charges — that is intentional and correct: Stripe is fail-closed to test mode and live keys/mode are not configured (and the instructions explicitly said not to enable them).
 
-Mirrored into `supabase/schema.sql` so fresh dev DBs get the same trigger.
-`handle_new_user()` already rejected `admin` on signup; this closes the
-post-signup UPDATE path.
-
-> **Apply this migration to the live database before invites go out.**
-> `npx supabase db push --project-ref qwaotydaazymgnvnfuuj`
-
-### P2 — Aircraft AI awareness (AI)
-**Found:** Five AI edge function system prompts only listed boat/auto
-categories. For aircraft, the LLM would silently drift into boat/auto
-rationale, lose the A&P/IA pre-buy reminder, and miss aviation-specific
-fraud signals.
-
-**Fix:** updated system prompts in:
-- `ai-listing-generator` (added 10 aircraft categories + aviation copy rules)
-- `ai-pricing-estimate` (added TT/SMOH/avionics drivers + hours label)
-- `ai-concierge-intake` (extended category enum)
-- `ai-fraud-check` (added 4 aviation-specific fraud signals)
-- `ai-buyer-assistant` (added mission-profile discovery + A&P/IA reminder)
-
-`ai-listing-autopilot` and `ai-negotiation-assistant` were already
-category-agnostic and required no change.
+**Nothing is blocking private beta.** The two missing env vars below are quality-of-life / observability, not gates.
 
 ---
 
-## Acceptance evidence per criterion
+## 1. Production Deploy Status
 
-- **Zero critical bugs** — found one P0 (self role escalation) and fixed it.
-- **Zero high-priority bugs** — none surfaced.
-- **Zero dead buttons** — see `ZERO_DEAD_BUTTON_AUDIT.md`; 18 flagged surfaces, all classified as honestly labeled or correctly-disabled.
-- **Zero broken images** — 15/15 random demo photo HEAD requests return 200 image/jpeg with `?w=1200&q=80&auto=format&fit=crop`.
-- **Zero misleading demo listings** — every demo listing carries an `is_demo` banner; inquiries disabled on demo; demo media tagged in DB.
-- **Zero payment blockers** — see `PAYMENT_FINAL_QA.md`; JWT-auth, ownership-checked, signature-verified, idempotent.
-- **Zero AI blockers** — see `AI_FINAL_QA.md`; aircraft-aware; graceful local fallback for aviation walkaround.
-- **Zero security blockers (after migration apply)** — see `SECURITY_FINAL_QA.md`; only outstanding action is to apply the new migration.
-
----
-
-## What's NOT in scope of this gate (intentionally deferred)
-
-- Public-beta-scale concerns: bundle splitting, mobile BuyerCompare reflow, TransactionRoom persistence — all tracked in `BETA_BLOCKERS.md` "Watch list".
-- External integrations not yet GA: live Plaid, live partner quote APIs, e-sign — labeled coming-soon with working request-access flows.
-
----
-
-## Files produced in this pass
-
-| File | Purpose |
+| Item | Status |
 |---|---|
-| `FINAL_BETA_READINESS_REPORT.md` | This file — comprehensive verdict |
-| `BETA_BLOCKERS.md` | Updated — declares zero blockers |
-| `ENTERPRISE_FEATURE_MATRIX.md` | Features × code surfaces × status |
-| `PRODUCTION_READINESS.md` | Updated — deploy checklist + env requirements |
-| `ZERO_DEAD_BUTTON_AUDIT.md` | Per-surface table of every flagged string |
-| `FINAL_MEDIA_QA_REPORT.md` | Media QA + URL spot-check results |
-| `PAYMENT_FINAL_QA.md` | Stripe path enterprise review |
-| `AI_FINAL_QA.md` | 7 AI edge fns audited + aircraft awareness fix |
-| `SECURITY_FINAL_QA.md` | Service-role check + RLS + header + admin guard + P0 fix |
-| `MOBILE_FINAL_QA.md` | Responsive design audit |
-| `PERFORMANCE_FINAL_QA.md` | Build sizes + lazy routes + CDN params |
-| `supabase/migrations/20260521_prevent_self_role_escalation.sql` | P0 fix migration |
+| Local `main` vs `origin/main` | ✅ Clean (only untracked `WORKTREE_BRANCH_DEPLOYMENT_RECONCILIATION_REPORT.md`) |
+| HEAD commit | `e609a2c` |
+| Vercel project | `team-c29c835d/tradewind-marketplace` (CLI authed as `donmondemorrison-5143`) |
+| TypeScript (`tsc --noEmit`) | ✅ Pass |
+| Production build (`tsc -b && vite build`) | ✅ Pass (8.73s; main chunk 1.06 MB / 301 KB gzip — size warning only, non-blocking) |
+| Test suite (`vitest run`) | ✅ **191 / 191 passed** across 8 files |
 
 ---
 
-## One remaining manual step before invites
+## 2. Configuration Status (Vercel Production — present/missing, no values printed)
 
-Apply the new RLS migration to the live database. Everything else ships via
-the Vercel auto-deploy from this branch's merge to `main`.
+Source: `vercel env ls production`. Secret **values were not read or printed** — presence only.
 
-```
-npx supabase db push --project-ref qwaotydaazymgnvnfuuj
-npx supabase functions deploy ai-listing-generator ai-pricing-estimate \
-  ai-concierge-intake ai-fraud-check ai-buyer-assistant \
-  --project-ref qwaotydaazymgnvnfuuj
-```
+| Env Var | Production | Notes |
+|---|---|---|
+| `VITE_BUSINESS_NAME` | ✅ Present (7h ago) | Code default also `"Tradewind"` (correct casing) |
+| `VITE_BUSINESS_MAILING_ADDRESS` | ✅ Present (7h ago) | Satisfies CAN-SPAM client gate |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | ✅ Present (36d ago) | Mode still fail-closed to test regardless of key |
+| `VITE_ENV_NAME` | ✅ Present (7h ago) | = `production` (set by done-for-Don) |
+| `VITE_APP_VERSION` | ✅ Present (7h ago) | = `1.0.0` (set by done-for-Don) |
+| `VITE_APP_ENV` | ✅ Present (7h ago) | |
+| `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | ✅ Present | |
+| 7× `VITE_STRIPE_PRICE_*` | ✅ Present | Test-mode price IDs |
+| `VITE_STRIPE_MODE` | ⚠️ **Missing** | **Intentional / safe** — code defaults to `test` (fail-closed). Leave unset for beta. |
+| `VITE_BUSINESS_SUPPORT_EMAIL` | ⚠️ **Missing** | Non-blocking — falls back to `don@lifeofmorr.com` in `brand.ts` |
+| `VITE_SENTRY_DSN` | ⚠️ **Missing** | Non-blocking — Sentry stays a no-op; error monitoring is simply off |
 
-Once that's done, TradeWind is ready to send the first private beta invites.
+### Fail-closed / safety controls — verified in code
+
+- **Stripe fail-closed** ✅ — `src/lib/stripeMode.ts:44` `normalizeMode()` returns `"test"` for any value that isn't exactly `"live"`. UI gate `AdminPaymentsLiveReadiness.tsx:67` requires *both* client `mode==="live"` and server `mode==="live"` plus `pk_live`/`sk_live` prefixes before `goLive` is true. With `VITE_STRIPE_MODE` unset, go-live is impossible. Cannot accidentally charge.
+- **CAN-SPAM blocking** ✅ — `AdminOutreach.tsx:881` reads `VITE_BUSINESS_MAILING_ADDRESS`; renders a red "scaling blocked" alert when empty (and notes the server `build-daily-queue` hard-blocks too). Address is set in prod → compliant path is active.
+- **Sentry safe skip** ✅ — `src/instrument.ts:25` `if (!DSN) return;` — no DSN means a complete no-op, tree-shaken to the guard. Missing DSN cannot crash or leak.
+
+---
+
+## 3. Don's Exact Remaining Dashboard Actions
+
+Only items actually missing are listed. **None are required for private beta.**
+
+1. **(Optional, observability)** Vercel → Project `tradewind-marketplace` → Settings → Environment Variables → Production → add `VITE_SENTRY_DSN` → _Missing._ Enables error monitoring. Skip if you don't want Sentry during beta.
+2. **(Optional, cosmetic)** Vercel → Settings → Environment Variables → Production → add `VITE_BUSINESS_SUPPORT_EMAIL` → _Missing._ Without it, public pages/footer show the fallback `don@lifeofmorr.com`. Set it only if you want a different support address shown.
+3. **(Do NOT do for beta — go-live only)** `VITE_STRIPE_MODE` is intentionally absent so payments stay in test. Leave it unset. Setting it to `live` (plus live keys + Supabase `STRIPE_MODE=live`) is the future go-live step, explicitly out of scope now.
+
+> If Don does nothing, the platform is still beta-ready.
+
+---
+
+## 4. Private Beta Readiness
+
+| Check | Status | Evidence |
+|---|---|---|
+| `/beta` route exists & renders | ✅ | `App.tsx:183` → `BetaPage.tsx` (lazy, built as `BetaPage-*.js`) |
+| `/feedback` route exists | ✅ | `App.tsx:185` → `FeedbackPage.tsx` |
+| `/admin/beta-inbox` exists | ✅ | `App.tsx:287` → `AdminBetaInbox.tsx` (admin-protected) |
+| `/admin/outreach` with follow-up tracking | ✅ | `App.tsx:286` → `AdminOutreach.tsx`; `outreach_followups` query + dedicated **followups** tab (`:432`), `followup_number`/`follow_up_date` fields |
+| `/admin/payments/live-readiness` | ✅ | `App.tsx:282` → `AdminPaymentsLiveReadiness.tsx` |
+| `/contact`, `/support` | ✅ | `App.tsx:155–156` → `SimplePages.tsx` (public) |
+| Admin routes protected | ✅ | `ProtectedRoute roles={["admin"]}` wraps `/admin/*` |
+
+### Queued follow-ups / pending sends
+
+⚠️ **Could not be verified from this environment.** The outreach follow-up/queue infrastructure exists in code (`outreach_followups`, queue reads in `AdminOutreach.tsx`), but **live row counts live in Supabase**, and the Supabase CLI is **not authenticated** (commands hang on an interactive login prompt and were terminated — consistent with the known launch blocker). To confirm zero pending sends before beta, Don should open `/admin/outreach` → **Queue** and **Followups** tabs in the deployed app, or auth the Supabase CLI. **Per instructions, no sends were triggered and no outreach was queued by this pass.**
+
+---
+
+## 5. Brutally Honest Summary
+
+- **What's genuinely done:** clean tree, deploying commit matches HEAD, build/typecheck/191 tests all green, every route wired, all three fail-closed controls (Stripe, CAN-SPAM, Sentry) verified in source — not assumed.
+- **What's actually missing:** only `VITE_SENTRY_DSN` and `VITE_BUSINESS_SUPPORT_EMAIL` in Vercel — both non-blocking with safe fallbacks. `VITE_STRIPE_MODE` absent is correct, not a gap.
+- **What this report cannot vouch for:** live Supabase state (queued sends/followups) — CLI not authed. Verify in the admin UI before any outreach.
+- **Bottom line:** **Safe for private beta today. Not live-charge ready, by design.**

@@ -13,7 +13,11 @@ const DEFAULT_ALLOWED = [
   "http://localhost:3000",
 ];
 
-const ENV_ALLOWED = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+// Read via globalThis so this module also loads under Node (vitest) where
+// the Deno global doesn't exist.
+const denoEnv = (globalThis as { Deno?: { env: { get(n: string): string | undefined } } }).Deno?.env;
+
+const ENV_ALLOWED = (denoEnv?.get("ALLOWED_ORIGINS") ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);

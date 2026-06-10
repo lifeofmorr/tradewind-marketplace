@@ -1,5 +1,9 @@
 import "@testing-library/jest-dom";
 
+// Edge-function tests run under `@vitest-environment node`, where there is
+// no window — the DOM shims below only apply to jsdom suites.
+if (typeof window !== "undefined") {
+
 if (!window.matchMedia) {
   window.matchMedia = (query: string) => ({
     matches: false,
@@ -25,4 +29,6 @@ if (!window.IntersectionObserver) {
   }
   Object.defineProperty(window, "IntersectionObserver", { value: StubIO });
   Object.defineProperty(global, "IntersectionObserver", { value: StubIO });
+}
+
 }
