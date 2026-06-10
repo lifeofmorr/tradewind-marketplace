@@ -120,7 +120,8 @@ describe("cn", () => {
     expect(cn("px-2 py-1", "px-4")).not.toContain("px-2");
   });
   it("filters falsy values", () => {
-    expect(cn("a", false && "b", null, undefined, "c")).toBe("a c");
+    const hidden = false as boolean;
+    expect(cn("a", hidden && "b", null, undefined, "c")).toBe("a c");
   });
 });
 

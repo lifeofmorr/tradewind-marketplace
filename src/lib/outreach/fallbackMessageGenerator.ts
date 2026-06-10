@@ -147,7 +147,7 @@ const TEMPLATES: Record<Vertical, Template> = {
 
   exotic_dealer: {
     label: "exotic car dealer",
-    subject: (company) => `your exotic inventory`,
+    subject: () => `your exotic inventory`,
     observation: (lead) =>
       lead.personalization_angle?.trim()
         ? lead.personalization_angle.trim()
@@ -162,7 +162,7 @@ const TEMPLATES: Record<Vertical, Template> = {
 
   classic_dealer: {
     label: "classic car dealer",
-    subject: (company) => `your classic inventory`,
+    subject: () => `your classic inventory`,
     observation: (lead) =>
       lead.personalization_angle?.trim()
         ? lead.personalization_angle.trim()

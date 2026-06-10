@@ -184,13 +184,11 @@ const STATUSES = [
   "demo_booked", "beta_invited", "do_not_contact",
 ] as const;
 
-// Status buckets introduced by supabase/outreach-lead-cleanup.sql (2026-05-27).
+// Status buckets introduced by supabase/outreach-lead-cleanup.sql (2026-05-27),
+// referenced below as string literals:
 // send_ready        — likely_valid email, safe to draft
 // needs_review      — email pattern-inferred / post-audit downgrade
 // non_email_channel — no public email; LinkedIn / form / phone only
-const SEND_READY_STATUSES = ["send_ready"] as const;
-const NEEDS_REVIEW_STATUSES = ["needs_review"] as const;
-const NON_EMAIL_STATUSES = ["non_email_channel"] as const;
 
 const PRIORITIES = ["all", "1", "2", "3", "4", "5"] as const;
 

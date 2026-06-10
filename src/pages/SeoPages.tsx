@@ -13,7 +13,6 @@ import { CATEGORIES, FEATURED_BOAT_BRANDS, FEATURED_AUTO_BRANDS } from "@/lib/ca
 import type { Listing, ListingCategory } from "@/types/database";
 
 const BOAT_CATEGORIES: ListingCategory[] = ["boat", "performance_boat", "yacht", "center_console"];
-const AUTO_CATEGORIES: ListingCategory[] = ["car", "truck", "exotic", "classic", "powersports", "rv"];
 
 function breadcrumbsLD(items: { name: string; href: string }[]) {
   return {

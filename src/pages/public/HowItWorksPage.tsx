@@ -4,7 +4,6 @@ import {
   Search,
   ShieldCheck,
   Wrench,
-  Plane,
   Building2,
   Users,
   ArrowRight,

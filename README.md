@@ -33,6 +33,20 @@ npm run dev                        # http://localhost:5173
 
 `bash setup.sh` does the same plus optional GitHub repo creation.
 
+### Quality gates
+
+```bash
+npm run lint        # ESLint (flat config)
+npm run typecheck   # tsc --noEmit
+npm test            # vitest — unit + component + edge-function suites
+npm run test:e2e    # Playwright smoke tests (chromium; no backend needed)
+npm run build       # tsc -b && vite build
+```
+
+All five run in CI on every push (`.github/workflows/ci.yml`). Historical
+audit/launch reports live in [`docs/archive/`](./docs/archive/); durable
+reference docs in [`docs/`](./docs/).
+
 ### Backend setup
 
 1. **Create a Supabase project** → https://supabase.com/dashboard/projects.
@@ -61,7 +75,7 @@ npm run dev                        # http://localhost:5173
    `listings-photos`, `listings-videos`, `avatars`,
    `dealer-assets`, `service-provider-assets`, `documents` (private).
 
-5. **Stripe products** — see [`PRICING.md`](./PRICING.md). Create the 7 prices,
+5. **Stripe products** — see [`docs/PRICING.md`](./docs/PRICING.md). Create the 7 prices,
    drop `price_…` ids into both `.env.local` and `supabase secrets set`.
 
 6. **Edge functions** — deploy from `supabase/functions/`:

@@ -20,7 +20,7 @@ export function initTelemetry(): void {
 }
 
 export function captureException(err: unknown, context?: Record<string, unknown>): void {
-  // eslint-disable-next-line no-console
+   
   console.error("[telemetry]", err, context ?? {});
   if (sentryEnabled()) {
     Sentry.captureException(err, context ? { extra: context } : undefined);
@@ -28,7 +28,7 @@ export function captureException(err: unknown, context?: Record<string, unknown>
 }
 
 export function captureMessage(msg: string, context?: Record<string, unknown>): void {
-  // eslint-disable-next-line no-console
+   
   console.warn("[telemetry]", msg, context ?? {});
   if (sentryEnabled()) {
     Sentry.captureMessage(msg, context ? { extra: context } : undefined);

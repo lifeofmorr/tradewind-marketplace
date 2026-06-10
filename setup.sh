@@ -98,7 +98,7 @@ NEXT (do these in parallel):
                                  dealer-assets, service-provider-assets, documents
 
   ▸ Stripe    →  https://dashboard.stripe.com/test/products
-       Create 7 products + prices (see PRICING.md or §1L of the prompt)
+       Create 7 products + prices (see docs/PRICING.md or §1L of the prompt)
        Developers → API keys → grab publishable + secret keys
        Add each price_xxx id to your secret notes
 

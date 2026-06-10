@@ -68,8 +68,8 @@ export function calculateLeadScore(inquiry: Inquiry): LeadScoreResult {
 
   score = Math.max(0, Math.min(100, Math.round(score)));
 
-  let label: LeadLabel = "Cold";
-  let color: LeadScoreResult["color"] = "sky";
+  let label: LeadLabel;
+  let color: LeadScoreResult["color"];
 
   if (score < 20) {
     label = "Spam Risk";

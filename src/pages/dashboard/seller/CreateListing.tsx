@@ -31,7 +31,12 @@ const Schema = z.object({
   title: z.string().min(4, "Give it a real title"),
   make: z.string().optional(),
   model: z.string().optional(),
-  year: z.coerce.number().int().min(1900).max(new Date().getFullYear() + 1).optional(),
+  // Preprocess: an empty input must mean "no year" — bare z.coerce would turn
+  // "" into 0, fail min(1900), and silently make this optional field required.
+  year: z.preprocess(
+    (v) => (v === "" || v == null ? undefined : v),
+    z.coerce.number().int().min(1900).max(new Date().getFullYear() + 1).optional(),
+  ),
   price: z.coerce.number().positive("Set a price"),
   city: z.string().optional(),
   state: z.string().max(2).optional(),

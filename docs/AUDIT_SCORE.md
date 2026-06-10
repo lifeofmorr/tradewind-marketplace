@@ -158,6 +158,79 @@ none, leaving subscribers no way to manage billing.
 of checkout and dashboard flows, tests for the 17 remaining edge functions,
 ESLint, browse pagination, doc-rot purge, resolved domain + monitored deploys.
 
+### Second remediation pass — 2026-06-10 (the breadth items)
+
+This pass addressed the remaining gaps the 7.5 re-grade called out. Everything
+below was verified by actually running the gates (`npm run lint`, `npm run
+typecheck`, `npm run build`, `npm test`, `npm run test:e2e` — all green).
+
+**What was done:**
+
+1. **ESLint (flat config)** — `@eslint/js` + `typescript-eslint` +
+   `eslint-plugin-react-hooks` (core `rules-of-hooks` / `exhaustive-deps` as
+   errors; the plugin's React-Compiler diagnostics are off since the app
+   doesn't use the compiler). `npm run lint` exits 0 and runs in CI. Fixed:
+   unused vars/imports, a dead-assignment pair in `leadScore.ts`,
+   `require()` in `tailwind.config.js`, stale disable directives.
+2. **All remaining edge functions tested** — the 18 previously-untested
+   functions (7 `ai-*`, `auction-end`, `build-daily-queue`,
+   `classify-outreach-reply`, `generate-outreach-message`,
+   `inquiry-fraud-check`, `partner-quote`, `photo-enhance`, `plaid-link`,
+   `send-email`, `sitemap`, `vin-decode`) now have request-level vitest
+   suites (128 tests) running the real `index.ts` modules under a Deno shim,
+   plus 22 tests for the `_shared` helpers (CORS allow-list, LLM fallback
+   chain, rate-limiter fail-open semantics, CAN-SPAM compliance). Covered
+   behaviors include the send-email spam-relay guard, the build-daily-queue
+   CAN-SPAM 409 gate + AI→template fallback, and fraud-flag severity mapping.
+3. **Browse pagination** — `usePaginatedListings` uses `.range()` with a
+   24-row page size and `count: "exact"`; `?page=N` is URL-synced
+   (back/forward and deep links work, stale pages clamp); filters reset to
+   page 1; accessible Prev/Next controls (aria-labels, disabled states,
+   `aria-live` indicator). Applied to `/browse`, `/boats`, `/autos`, and
+   category pages — the old 60–80-row hard caps are gone.
+4. **Component + E2E tests for UI flows** — listing-creation form
+   (validation, AI-assistant population/failure, exact Supabase insert
+   payload, RLS-error surfacing), checkout (`startCheckout` payload/redirect
+   with mocked Stripe + edge function, success/cancel pages, test-mode
+   banner), and browse pagination (12 component tests). Playwright
+   (chromium) runs 11 smoke tests against the dev server with Supabase REST
+   intercepted in-browser: home, browse + pagination + URL sync + filter
+   reset, listing detail via public slug, login form, and the
+   `/seller/* → /login` auth gate. CI runs the e2e job on every push.
+   Found and fixed a real form bug: the optional Year field rejected empty
+   input (`z.coerce` turned `""` into `0`, failing `min(1900)`).
+5. **Doc rot purged** — 114 generated audit/launch/status files moved (via
+   `git mv`) to `docs/archive/` with a README marking them unmaintained;
+   24 durable references (runbooks, security architecture, design system,
+   pricing, incident/rollback plans…) live in `docs/`. Repo root now has
+   exactly README, SETUP, DEPLOY. Tracked build artifacts removed
+   (`package-lock.json.local-backup`); local artifacts gitignored.
+
+**Re-graded scores (same harsh calibration):**
+
+| Dimension | 7.5 pass | Now | Rationale |
+|---|:-:|:-:|---|
+| Code Quality | 7 | 8 | A lint gate finally exists and is clean; lint+tests surfaced real bugs (dead assignments, the Year-field validation bug). Held back from 9 by the 2,300-line `AdminOutreach.tsx` monolith and loosely-typed Supabase rows. |
+| Test Coverage | 7 | 8.5 | 410 vitest tests (was 252) + 11 Playwright e2e. Every edge function is request-level tested; checkout/listing-creation/browse UI covered. Not 9–10: dashboards are still mostly untested and nothing runs against a live backend. |
+| Build Status | 9 | 9 | Typecheck + production build clean; unchanged. |
+| Deployment | 7 | 7.5 | CI now gates on lint + typecheck + unit + build + e2e + `deno check`. Still manual deploys and the custom domain remains unresolved — that caps it. |
+| Security | 8 | 8 | No new controls, but the existing ones are now regression-tested (webhook replay, send-email relay guard, user-id spoofing in plaid/partner-quote, CORS allow-list). |
+| Accessibility | 7 | 7 | Pagination shipped accessible (roles, labels, live region, disabled states). Still no assistive-technology pass, so no score movement. |
+| Performance | 6 | 7 | Browse no longer fetches 60–80 rows flat — server-side pages of 24 with exact counts. `useConversations`'s 5,000-row pull and missing image `srcset` remain. |
+| Documentation | 5 | 8 | The 140-file root burying is gone; real docs are findable and the archive is honestly labeled. Not 9: some `docs/` content is still aspirational and there's no architecture overview. |
+| **OVERALL** | **7.5** | **8.5** | Breadth gaps (lint, UI/E2E tests, edge-function tests, pagination, doc rot) closed and CI-enforced. |
+
+**What still keeps this from 9–10 (honest list):**
+- `AdminOutreach.tsx` (≈2,300 lines) needs decomposition.
+- `useConversations` still pulls up to 5,000 message rows client-side; no
+  image resizing/srcset pipeline.
+- Deploys are manual and the custom domain is still unresolved; no
+  post-deploy monitoring loop.
+- Dashboard flows (seller/dealer/admin) have thin test coverage; e2e runs
+  against mocked REST, not a seeded live backend.
+- No assistive-technology (screen reader) audit; `npm audit` dev-chain
+  vulnerabilities remain.
+
 ---
 
 ## 4. Reserved House — the-reserved-house (the-reserved-house.vercel.app) — OVERALL: 6/10

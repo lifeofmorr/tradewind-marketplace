@@ -5,7 +5,9 @@ import { ListingFilters, type ListingFilterValues } from "@/components/listings/
 import { ListingGrid } from "@/components/listings/ListingGrid";
 import { BetaCTA } from "@/components/layout/BetaCTA";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useListings } from "@/hooks/useListings";
+import { Pagination } from "@/components/ui/pagination";
+import { usePaginatedListings } from "@/hooks/useListings";
+import { usePageParam } from "@/hooks/usePageParam";
 import { CATEGORIES } from "@/lib/categories";
 import { categoryMeta, setMeta } from "@/lib/seo";
 import type { ListingCategory } from "@/types/database";
@@ -32,18 +34,24 @@ export default function CategoryPage() {
     category: def?.key as ListingCategory | undefined,
     search: initialSearch,
   });
+  const [page, setPage] = usePageParam();
 
   useEffect(() => {
     if (!def) return;
     setMeta(categoryMeta(def.group, def.label, def.blurb));
   }, [def]);
 
-  const { data: listings = [], isLoading, isError, refetch } = useListings({
+  const { data, isLoading, isError, refetch, isFetching } = usePaginatedListings({
     ...filters,
     status: "active",
-    limit: 60,
     order: "newest",
+    page,
   });
+
+  // Clamp stale deep links (?page=99) once the real page count is known.
+  useEffect(() => {
+    if (data && page > data.pageCount) setPage(data.pageCount);
+  }, [data, page, setPage]);
 
   if (category && !def) return <Navigate to="/categories" replace />;
 
@@ -56,7 +64,13 @@ export default function CategoryPage() {
         <h1 className="font-display text-4xl mt-1">{def ? def.label : "All categories"}</h1>
         {def && <p className="text-muted-foreground mt-2">{def.blurb}</p>}
       </header>
-      <ListingFilters value={filters} onChange={setFilters} />
+      <ListingFilters
+        value={filters}
+        onChange={(next) => {
+          setFilters(next);
+          setPage(1, { scroll: false });
+        }}
+      />
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -66,13 +80,22 @@ export default function CategoryPage() {
       ) : isError ? (
         <ListingsErrorState onRetry={() => { void refetch(); }} />
       ) : (
-        <ListingGrid
-          listings={listings}
-          emptyText="No listings match those filters"
-          emptyBody="Try a wider price range, a different state, or browse all categories."
-          emptyCtaTo="/browse"
-          emptyCtaLabel="Browse all"
-        />
+        <>
+          <ListingGrid
+            listings={data?.listings ?? []}
+            emptyText="No listings match those filters"
+            emptyBody="Try a wider price range, a different state, or browse all categories."
+            emptyCtaTo="/browse"
+            emptyCtaLabel="Browse all"
+          />
+          <Pagination
+            page={page}
+            pageCount={data?.pageCount ?? 1}
+            total={data?.total}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
+        </>
       )}
     </div>
   );
@@ -109,6 +132,7 @@ export function GroupPage({ group }: { group: "boat" | "auto" }) {
     state: searchParams.get("state") ?? undefined,
   };
   const [filters, setFilters] = useState<ListingFilterValues>(initial);
+  const [page, setPage] = usePageParam();
   useEffect(() => {
     setMeta({
       title: group === "boat" ? "Boats for sale" : "Cars, trucks, and more",
@@ -117,13 +141,16 @@ export function GroupPage({ group }: { group: "boat" | "auto" }) {
         : "Cars, trucks, exotics, classics, RVs, and powersports.",
     });
   }, [group]);
-  const { data: listings = [], isLoading, isError, refetch } = useListings({
+  const { data, isLoading, isError, refetch, isFetching } = usePaginatedListings({
     ...filters,
     categories: filters.category ? undefined : groupCats,
     status: "active",
-    limit: 80,
     order: "newest",
+    page,
   });
+  useEffect(() => {
+    if (data && page > data.pageCount) setPage(data.pageCount);
+  }, [data, page, setPage]);
   return (
     <div className="container-pad py-12 space-y-8">
       <header>
@@ -139,7 +166,13 @@ export function GroupPage({ group }: { group: "boat" | "auto" }) {
             : "Cars, trucks, exotics, classics, RVs, and powersports from vetted sellers."}
         </p>
       </header>
-      <ListingFilters value={filters} onChange={setFilters} />
+      <ListingFilters
+        value={filters}
+        onChange={(next) => {
+          setFilters(next);
+          setPage(1, { scroll: false });
+        }}
+      />
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -149,13 +182,22 @@ export function GroupPage({ group }: { group: "boat" | "auto" }) {
       ) : isError ? (
         <ListingsErrorState onRetry={() => { void refetch(); }} />
       ) : (
-        <ListingGrid
-          listings={listings}
-          emptyText="No listings match those filters"
-          emptyBody="Try a wider price range, a different state, or browse all categories."
-          emptyCtaTo="/browse"
-          emptyCtaLabel="Browse all"
-        />
+        <>
+          <ListingGrid
+            listings={data?.listings ?? []}
+            emptyText="No listings match those filters"
+            emptyBody="Try a wider price range, a different state, or browse all categories."
+            emptyCtaTo="/browse"
+            emptyCtaLabel="Browse all"
+          />
+          <Pagination
+            page={page}
+            pageCount={data?.pageCount ?? 1}
+            total={data?.total}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
+        </>
       )}
       <BetaCTA
         variant="banner"
@@ -179,6 +221,7 @@ export function BrowsePage() {
     state: searchParams.get("state") ?? undefined,
   };
   const [filters, setFilters] = useState<ListingFilterValues>(initial);
+  const [page, setPage] = usePageParam();
   useEffect(() => {
     setMeta({
       title: featuredOnly ? "Featured listings" : "Browse listings",
@@ -187,13 +230,16 @@ export function BrowsePage() {
         : "All active boats and autos on Tradewind.",
     });
   }, [featuredOnly]);
-  const { data: listings = [], isLoading, isError, refetch } = useListings({
+  const { data, isLoading, isError, refetch, isFetching } = usePaginatedListings({
     ...filters,
     is_featured: featuredOnly ? true : undefined,
     status: "active",
-    limit: 80,
     order: "newest",
+    page,
   });
+  useEffect(() => {
+    if (data && page > data.pageCount) setPage(data.pageCount);
+  }, [data, page, setPage]);
   return (
     <div className="container-pad py-12 space-y-8">
       <header>
@@ -205,7 +251,13 @@ export function BrowsePage() {
           </p>
         )}
       </header>
-      <ListingFilters value={filters} onChange={setFilters} />
+      <ListingFilters
+        value={filters}
+        onChange={(next) => {
+          setFilters(next);
+          setPage(1, { scroll: false });
+        }}
+      />
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -215,13 +267,22 @@ export function BrowsePage() {
       ) : isError ? (
         <ListingsErrorState onRetry={() => { void refetch(); }} />
       ) : (
-        <ListingGrid
-          listings={listings}
-          emptyText={featuredOnly ? "No featured listings right now" : "No listings match those filters"}
-          emptyBody={featuredOnly ? "Check back soon — sellers feature new inventory daily." : "Try widening your search or removing a filter."}
-          emptyCtaTo="/browse"
-          emptyCtaLabel="Browse all"
-        />
+        <>
+          <ListingGrid
+            listings={data?.listings ?? []}
+            emptyText={featuredOnly ? "No featured listings right now" : "No listings match those filters"}
+            emptyBody={featuredOnly ? "Check back soon — sellers feature new inventory daily." : "Try widening your search or removing a filter."}
+            emptyCtaTo="/browse"
+            emptyCtaLabel="Browse all"
+          />
+          <Pagination
+            page={page}
+            pageCount={data?.pageCount ?? 1}
+            total={data?.total}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
+        </>
       )}
     </div>
   );

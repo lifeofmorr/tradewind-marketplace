@@ -32,10 +32,24 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/__tests__/setup.ts"],
+    // Map the edge functions' Deno URL imports onto local equivalents so the
+    // real function code can run under vitest (see
+    // supabase/functions/tests/helpers/edge-harness.ts).
+    alias: {
+      "https://deno.land/std@0.168.0/http/server.ts": path.resolve(
+        __dirname,
+        "./supabase/functions/tests/helpers/deno-std-server-shim.ts",
+      ),
+      "https://esm.sh/@supabase/supabase-js@2.45.4": "@supabase/supabase-js",
+      "https://esm.sh/@supabase/supabase-js@2": "@supabase/supabase-js",
+    },
     exclude: [
       "**/node_modules/**",
       "**/dist/**",
       "**/.claude/**",
+      "e2e/**", // Playwright specs — run via `npm run test:e2e`
+      "**/playwright-report/**",
+      "**/test-results/**",
       "**/cypress/**",
       "**/.{idea,git,cache,output,temp}/**",
     ],

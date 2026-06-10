@@ -21,7 +21,7 @@
 ### 1. Stripe (no payments work yet)
 
 Create the 7 prices in https://dashboard.stripe.com/test/products
-(see [PRICING.md](./PRICING.md) for the table).
+(see [docs/PRICING.md](./docs/PRICING.md) for the table).
 
 ```bash
 export SUPABASE_ACCESS_TOKEN=<your-supabase-pat>
