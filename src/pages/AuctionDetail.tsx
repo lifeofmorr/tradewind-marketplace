@@ -19,13 +19,14 @@ import type { ListingPhoto } from "@/types/database";
 
 export default function AuctionDetail() {
   const { id } = useParams<{ id: string }>();
-  const { data: auction, isLoading } = useAuction(id);
+  const { data: auction, isLoading, isError } = useAuction(id);
   const { data: bids = [], refetch: refetchBids } = useBids(id);
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [bidAmount, setBidAmount] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const { data: photos = [] } = useQuery({
@@ -65,6 +66,14 @@ export default function AuctionDetail() {
   }, [id, refetchBids, qc]);
 
   if (isLoading) return <div className="container-pad py-16 text-sm text-muted-foreground">Loading…</div>;
+  if (isError) {
+    return (
+      <div className="container-pad py-16">
+        <h1 className="font-display text-3xl">Couldn't load this auction</h1>
+        <p className="text-muted-foreground mt-2 text-sm">Something went wrong. Refresh the page to try again.</p>
+      </div>
+    );
+  }
   if (!auction || !auction.listing) return <div className="container-pad py-16"><h1 className="font-display text-3xl">Auction not found</h1></div>;
 
   const currentBid = auction.current_bid_cents ?? auction.starting_price_cents;
@@ -76,6 +85,7 @@ export default function AuctionDetail() {
     if (!user) { navigate("/login"); return; }
     if (!auction) return;
     setError(null);
+    setSuccess(null);
     const cents = Math.round(Number(bidAmount) * 100);
     if (!Number.isFinite(cents) || cents < minNext) {
       setError(`Bid must be at least ${formatCents(minNext)}`);
@@ -87,6 +97,7 @@ export default function AuctionDetail() {
     });
     setBusy(false);
     if (e) { setError(e.message); return; }
+    setSuccess(`Bid of ${formatCents(cents)} placed.`);
     setBidAmount("");
     void refetchBids();
     void qc.invalidateQueries({ queryKey: ["auction", auction.id] });
@@ -150,6 +161,7 @@ export default function AuctionDetail() {
                 placeholder={(minNext / 100).toFixed(0)}
               />
               {error && <p className="text-xs text-red-400">{error}</p>}
+              {success && <p className="text-xs text-emerald-400">{success}</p>}
               <Button onClick={() => { void placeBid(); }} disabled={busy} className="w-full">
                 {busy ? "Placing…" : `Place bid · min ${formatCents(minNext)}`}
               </Button>

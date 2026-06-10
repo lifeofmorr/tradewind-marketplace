@@ -1,12 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useParams, useSearchParams } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
 import { ListingFilters, type ListingFilterValues } from "@/components/listings/ListingFilters";
 import { ListingGrid } from "@/components/listings/ListingGrid";
 import { BetaCTA } from "@/components/layout/BetaCTA";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useListings } from "@/hooks/useListings";
 import { CATEGORIES } from "@/lib/categories";
 import { categoryMeta, setMeta } from "@/lib/seo";
 import type { ListingCategory } from "@/types/database";
+
+function ListingsErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <EmptyState
+      icon={AlertTriangle}
+      title="Couldn't load listings"
+      body="Something went wrong while fetching listings. Check your connection and try again."
+      cta={{ label: "Try again", onClick: onRetry }}
+    />
+  );
+}
 
 export default function CategoryPage() {
   const { category } = useParams<{ category?: string }>();
@@ -25,7 +38,7 @@ export default function CategoryPage() {
     setMeta(categoryMeta(def.group, def.label, def.blurb));
   }, [def]);
 
-  const { data: listings = [], isLoading } = useListings({
+  const { data: listings = [], isLoading, isError, refetch } = useListings({
     ...filters,
     status: "active",
     limit: 60,
@@ -50,6 +63,8 @@ export default function CategoryPage() {
             <div key={i} className="aspect-[4/3] skeleton rounded-xl" />
           ))}
         </div>
+      ) : isError ? (
+        <ListingsErrorState onRetry={() => { void refetch(); }} />
       ) : (
         <ListingGrid
           listings={listings}
@@ -102,7 +117,7 @@ export function GroupPage({ group }: { group: "boat" | "auto" }) {
         : "Cars, trucks, exotics, classics, RVs, and powersports.",
     });
   }, [group]);
-  const { data: listings = [], isLoading } = useListings({
+  const { data: listings = [], isLoading, isError, refetch } = useListings({
     ...filters,
     categories: filters.category ? undefined : groupCats,
     status: "active",
@@ -131,6 +146,8 @@ export function GroupPage({ group }: { group: "boat" | "auto" }) {
             <div key={i} className="aspect-[4/3] skeleton rounded-xl" />
           ))}
         </div>
+      ) : isError ? (
+        <ListingsErrorState onRetry={() => { void refetch(); }} />
       ) : (
         <ListingGrid
           listings={listings}
@@ -170,7 +187,7 @@ export function BrowsePage() {
         : "All active boats and autos on Tradewind.",
     });
   }, [featuredOnly]);
-  const { data: listings = [], isLoading } = useListings({
+  const { data: listings = [], isLoading, isError, refetch } = useListings({
     ...filters,
     is_featured: featuredOnly ? true : undefined,
     status: "active",
@@ -195,6 +212,8 @@ export function BrowsePage() {
             <div key={i} className="aspect-[4/3] skeleton rounded-xl" />
           ))}
         </div>
+      ) : isError ? (
+        <ListingsErrorState onRetry={() => { void refetch(); }} />
       ) : (
         <ListingGrid
           listings={listings}

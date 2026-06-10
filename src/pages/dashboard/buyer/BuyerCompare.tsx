@@ -278,6 +278,7 @@ export default function BuyerCompare() {
                       src={listing.cover_photo_url}
                       alt={listing.title}
                       className="h-full w-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <ListingPlaceholder category={listing.category} />
@@ -285,7 +286,7 @@ export default function BuyerCompare() {
                   <button
                     onClick={() => remove(listing.id)}
                     className="absolute top-2 right-2 rounded-full bg-background/70 backdrop-blur p-1.5"
-                    aria-label="Remove"
+                    aria-label={`Remove ${listing.title} from comparison`}
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>

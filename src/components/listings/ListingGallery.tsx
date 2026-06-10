@@ -60,7 +60,7 @@ export function ListingGallery({ photos, coverFallback, category }: Props) {
                 i === active ? "border-brass-500" : "border-transparent",
               )}
             >
-              <img src={p.url} alt="" className="h-full w-full object-cover" />
+              <img src={p.url} alt="" loading="lazy" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>

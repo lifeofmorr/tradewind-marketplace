@@ -37,7 +37,8 @@ export default function ListingDetail() {
   const { data: listing, isLoading } = useListing(slug);
   const { user } = useAuth();
 
-  const { data: photos = [] } = useQuery({
+  // On error, photos falls back to [] and the gallery degrades to the cover photo / placeholder.
+  const { data: photos = [], isError: photosError } = useQuery({
     queryKey: ["listing-photos", listing?.id],
     enabled: !!listing,
     queryFn: async (): Promise<ListingPhoto[]> => {
@@ -129,6 +130,11 @@ export default function ListingDetail() {
             coverFallback={listing.cover_photo_url}
             category={listing.category}
           />
+          {photosError && (
+            <p className="text-xs text-muted-foreground">
+              Some photos couldn't be loaded. Refresh the page to try again.
+            </p>
+          )}
           {listing.video_url && (
             <VideoWalkaround url={listing.video_url} title={listing.title} />
           )}

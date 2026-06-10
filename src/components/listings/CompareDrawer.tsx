@@ -54,8 +54,9 @@ export function CompareDrawer() {
                   {listing.cover_photo_url ? (
                     <img
                       src={listing.cover_photo_url}
-                      alt=""
+                      alt={listing.title}
                       className="h-full w-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <ListingPlaceholder category={listing.category} />
@@ -80,6 +81,7 @@ export function CompareDrawer() {
 
           <div className="flex items-center gap-2 shrink-0 ml-auto">
             <button
+              type="button"
               onClick={clear}
               className="text-xs text-muted-foreground hover:text-foreground"
             >

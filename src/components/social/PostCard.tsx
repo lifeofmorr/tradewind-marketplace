@@ -240,7 +240,7 @@ export function PostCard({ post, onToggleLike, canInteract = false }: PostCardPr
         <div className="aspect-[16/9] bg-secondary overflow-hidden">
           <img
             src={post.mediaUrl}
-            alt=""
+            alt="Post media"
             className="h-full w-full object-cover"
             loading="lazy"
           />
@@ -323,6 +323,7 @@ export function PostCard({ post, onToggleLike, canInteract = false }: PostCardPr
                 value={commentDraft}
                 onChange={(e) => setCommentDraft(e.target.value)}
                 placeholder="Add a comment…"
+                aria-label="Add a comment"
                 maxLength={500}
                 className="flex-1 h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-brass-400/50"
                 disabled={commentBusy}

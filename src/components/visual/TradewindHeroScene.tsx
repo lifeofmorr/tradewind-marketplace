@@ -29,7 +29,7 @@ function useIsMobile() {
   return isMobile;
 }
 
-export default function TradeWindHeroScene() {
+export default function TradewindHeroScene() {
   const [q, setQ] = useState("");
   const navigate = useNavigate();
   const ref = useRef<HTMLElement | null>(null);

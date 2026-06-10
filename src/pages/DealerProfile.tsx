@@ -129,7 +129,7 @@ export function DealersIndex() {
             <Link key={d.id} to={`/dealers/${d.slug}`} className="rounded-lg border border-border bg-card p-6 hover:border-brass-500/50">
               <div className="flex items-center gap-3">
                 {d.logo_url ? (
-                  <img src={d.logo_url} alt={d.name} className="h-10 w-10 rounded object-cover" />
+                  <img src={d.logo_url} alt={d.name} loading="lazy" className="h-10 w-10 rounded object-cover" />
                 ) : (
                   <div className="h-10 w-10 rounded bg-secondary grid place-items-center font-display">{d.name.slice(0, 1)}</div>
                 )}

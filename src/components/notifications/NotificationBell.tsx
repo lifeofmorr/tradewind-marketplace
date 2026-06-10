@@ -22,7 +22,11 @@ export function NotificationBell() {
         >
           <Bell className="h-4 w-4" />
           {unread > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brass-500 text-navy-950 text-[10px] font-mono font-semibold inline-flex items-center justify-center">
+            <span
+              aria-live="polite"
+              aria-atomic="true"
+              className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brass-500 text-navy-950 text-[10px] font-mono font-semibold inline-flex items-center justify-center"
+            >
               {unread > 99 ? "99+" : unread}
             </span>
           )}

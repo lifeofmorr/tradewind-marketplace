@@ -10,35 +10,48 @@ import ProtectedRoute from "@/routes/ProtectedRoute";
 import OnboardingGuard from "@/routes/OnboardingGuard";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
-// Public pages — eager-loaded so the homepage paints fast
+// Eager-loaded: homepage (paints fast), small static pages, auth
 import Home from "@/pages/Home";
-import CategoryPage, { CategoriesIndex, BrowsePage, GroupPage } from "@/pages/CategoryPage";
-import ListingDetail from "@/pages/ListingDetail";
-import DealerProfile, { DealersIndex } from "@/pages/DealerProfile";
-import ServiceProviderProfile, { ServicesIndex } from "@/pages/ServiceProviderProfile";
 import {
   About, Contact, Support, Services as ServicesHub,
   Pricing, Dealers as DealersInfo, SellMyBoat, SellMyCar, SellHub,
   Terms, Privacy, NotFound,
 } from "@/pages/SimplePages";
-import TrustCenter from "@/pages/public/TrustCenter";
-import Blog from "@/pages/Blog";
-import BlogPostDetail from "@/pages/BlogPostDetail";
-import MarketReports from "@/pages/MarketReports";
-import MarketReportDetail from "@/pages/MarketReportDetail";
-import AuctionsPage from "@/pages/Auctions";
-import AuctionDetail from "@/pages/AuctionDetail";
-import { Financing, Insurance, Inspections, Transport, Concierge } from "@/pages/RequestPages";
-import { CheckoutSuccess, CheckoutCancel } from "@/pages/CheckoutPages";
-
-// Programmatic SEO (Phase 2B)
-import {
-  StatePage, BrandPage, BrandsIndex, CityPage, StatesIndex, CategoryCityIndex,
-} from "@/pages/SeoPages";
-
-// Auth (small)
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
+
+// Heavier public pages are lazy-loaded so the initial bundle stays small.
+const CategoryPage = lazy(() => import("@/pages/CategoryPage"));
+const CategoriesIndex = lazy(() => import("@/pages/CategoryPage").then((m) => ({ default: m.CategoriesIndex })));
+const BrowsePage = lazy(() => import("@/pages/CategoryPage").then((m) => ({ default: m.BrowsePage })));
+const GroupPage = lazy(() => import("@/pages/CategoryPage").then((m) => ({ default: m.GroupPage })));
+const ListingDetail = lazy(() => import("@/pages/ListingDetail"));
+const DealerProfile = lazy(() => import("@/pages/DealerProfile"));
+const DealersIndex = lazy(() => import("@/pages/DealerProfile").then((m) => ({ default: m.DealersIndex })));
+const ServiceProviderProfile = lazy(() => import("@/pages/ServiceProviderProfile"));
+const ServicesIndex = lazy(() => import("@/pages/ServiceProviderProfile").then((m) => ({ default: m.ServicesIndex })));
+const TrustCenter = lazy(() => import("@/pages/public/TrustCenter"));
+const Blog = lazy(() => import("@/pages/Blog"));
+const BlogPostDetail = lazy(() => import("@/pages/BlogPostDetail"));
+const MarketReports = lazy(() => import("@/pages/MarketReports"));
+const MarketReportDetail = lazy(() => import("@/pages/MarketReportDetail"));
+const AuctionsPage = lazy(() => import("@/pages/Auctions"));
+const AuctionDetail = lazy(() => import("@/pages/AuctionDetail"));
+const Financing = lazy(() => import("@/pages/RequestPages").then((m) => ({ default: m.Financing })));
+const Insurance = lazy(() => import("@/pages/RequestPages").then((m) => ({ default: m.Insurance })));
+const Inspections = lazy(() => import("@/pages/RequestPages").then((m) => ({ default: m.Inspections })));
+const Transport = lazy(() => import("@/pages/RequestPages").then((m) => ({ default: m.Transport })));
+const Concierge = lazy(() => import("@/pages/RequestPages").then((m) => ({ default: m.Concierge })));
+const CheckoutSuccess = lazy(() => import("@/pages/CheckoutPages").then((m) => ({ default: m.CheckoutSuccess })));
+const CheckoutCancel = lazy(() => import("@/pages/CheckoutPages").then((m) => ({ default: m.CheckoutCancel })));
+
+// Programmatic SEO (Phase 2B)
+const StatePage = lazy(() => import("@/pages/SeoPages").then((m) => ({ default: m.StatePage })));
+const BrandPage = lazy(() => import("@/pages/SeoPages").then((m) => ({ default: m.BrandPage })));
+const BrandsIndex = lazy(() => import("@/pages/SeoPages").then((m) => ({ default: m.BrandsIndex })));
+const CityPage = lazy(() => import("@/pages/SeoPages").then((m) => ({ default: m.CityPage })));
+const StatesIndex = lazy(() => import("@/pages/SeoPages").then((m) => ({ default: m.StatesIndex })));
+const CategoryCityIndex = lazy(() => import("@/pages/SeoPages").then((m) => ({ default: m.CategoryCityIndex })));
 
 // ─── Lazy-loaded surfaces (Phase 2G) ─────────────────────────────────────────
 // Premium expansion surfaces
@@ -127,9 +140,9 @@ export default function App() {
       {/* Public marketing + marketplace surface */}
       <Route element={<PublicShell />}>
         <Route path="/" element={<Home />} />
-        <Route path="/browse" element={<BrowsePage />} />
-        <Route path="/boats" element={<GroupPage group="boat" />} />
-        <Route path="/autos" element={<GroupPage group="auto" />} />
+        <Route path="/browse" element={<L><BrowsePage /></L>} />
+        <Route path="/boats" element={<L><GroupPage group="boat" /></L>} />
+        <Route path="/autos" element={<L><GroupPage group="auto" /></L>} />
         <Route path="/aircraft" element={<L><AircraftPage /></L>} />
         <Route path="/airplanes" element={<L><AircraftPage /></L>} />
         <Route
@@ -141,25 +154,25 @@ export default function App() {
           element={<L><AircraftPage defaultCategory="aircraft_helicopter" title="Helicopters for sale" eyebrow="rotorcraft" blurb="Turbine and piston helicopters — Robinson, Bell, Airbus." /></L>}
         />
         <Route path="/aviation-services" element={<L><AviationServicesPage /></L>} />
-        <Route path="/categories" element={<CategoriesIndex />} />
-        <Route path="/categories/:category" element={<CategoryPage />} />
-        <Route path="/listings/:slug" element={<ListingDetail />} />
+        <Route path="/categories" element={<L><CategoriesIndex /></L>} />
+        <Route path="/categories/:category" element={<L><CategoryPage /></L>} />
+        <Route path="/listings/:slug" element={<L><ListingDetail /></L>} />
 
-        <Route path="/dealers" element={<DealersIndex />} />
-        <Route path="/dealers/:slug" element={<DealerProfile />} />
+        <Route path="/dealers" element={<L><DealersIndex /></L>} />
+        <Route path="/dealers/:slug" element={<L><DealerProfile /></L>} />
 
-        <Route path="/services" element={<ServicesIndex />} />
-        <Route path="/services/:slug" element={<ServiceProviderProfile />} />
+        <Route path="/services" element={<L><ServicesIndex /></L>} />
+        <Route path="/services/:slug" element={<L><ServiceProviderProfile /></L>} />
 
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/support" element={<Support />} />
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/blog/:slug" element={<BlogPostDetail />} />
-        <Route path="/market-reports" element={<MarketReports />} />
-        <Route path="/market-reports/:slug" element={<MarketReportDetail />} />
-        <Route path="/auctions" element={<AuctionsPage />} />
-        <Route path="/auctions/:id" element={<AuctionDetail />} />
+        <Route path="/blog" element={<L><Blog /></L>} />
+        <Route path="/blog/:slug" element={<L><BlogPostDetail /></L>} />
+        <Route path="/market-reports" element={<L><MarketReports /></L>} />
+        <Route path="/market-reports/:slug" element={<L><MarketReportDetail /></L>} />
+        <Route path="/auctions" element={<L><AuctionsPage /></L>} />
+        <Route path="/auctions/:id" element={<L><AuctionDetail /></L>} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/dealers-info" element={<DealersInfo />} />
         <Route path="/sell" element={<SellHub />} />
@@ -167,16 +180,16 @@ export default function App() {
         <Route path="/sell-my-car" element={<SellMyCar />} />
         <Route path="/services-hub" element={<ServicesHub />} />
 
-        <Route path="/financing" element={<Financing />} />
-        <Route path="/insurance" element={<Insurance />} />
-        <Route path="/inspections" element={<Inspections />} />
-        <Route path="/transport" element={<Transport />} />
-        <Route path="/concierge" element={<Concierge />} />
+        <Route path="/financing" element={<L><Financing /></L>} />
+        <Route path="/insurance" element={<L><Insurance /></L>} />
+        <Route path="/inspections" element={<L><Inspections /></L>} />
+        <Route path="/transport" element={<L><Transport /></L>} />
+        <Route path="/concierge" element={<L><Concierge /></L>} />
 
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/delete-my-data" element={<L><DataDeletion /></L>} />
-        <Route path="/trust" element={<TrustCenter />} />
+        <Route path="/trust" element={<L><TrustCenter /></L>} />
         <Route path="/integrations" element={<L><Integrations /></L>} />
         <Route path="/integrations/developer" element={<L><DeveloperHub /></L>} />
         <Route path="/community" element={<L><Community /></L>} />
@@ -184,16 +197,16 @@ export default function App() {
         <Route path="/how-it-works" element={<L><HowItWorksPage /></L>} />
         <Route path="/feedback" element={<L><FeedbackPage /></L>} />
 
-        <Route path="/checkout/success" element={<CheckoutSuccess />} />
-        <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+        <Route path="/checkout/success" element={<L><CheckoutSuccess /></L>} />
+        <Route path="/checkout/cancel" element={<L><CheckoutCancel /></L>} />
 
         {/* ── Programmatic SEO (Phase 2B) ───────────────────────────────── */}
-        <Route path="/by-state" element={<StatesIndex />} />
-        <Route path="/boats-for-sale-in-:state" element={<StatePage />} />
-        <Route path="/brands" element={<BrandsIndex />} />
-        <Route path="/:brand-for-sale" element={<BrandPage />} />
-        <Route path="/by-city" element={<CategoryCityIndex />} />
-        <Route path="/:category-in-:city" element={<CityPage />} />
+        <Route path="/by-state" element={<L><StatesIndex /></L>} />
+        <Route path="/boats-for-sale-in-:state" element={<L><StatePage /></L>} />
+        <Route path="/brands" element={<L><BrandsIndex /></L>} />
+        <Route path="/:brand-for-sale" element={<L><BrandPage /></L>} />
+        <Route path="/by-city" element={<L><CategoryCityIndex /></L>} />
+        <Route path="/:category-in-:city" element={<L><CityPage /></L>} />
 
         <Route path="*" element={<NotFound />} />
       </Route>

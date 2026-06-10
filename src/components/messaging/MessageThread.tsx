@@ -32,7 +32,7 @@ export function MessageThread({ conversationId }: Props) {
     void markRead(conversationId, user.id).then(() => {
       void qc.invalidateQueries({ queryKey: ["unread-conversations", user.id] });
       void qc.invalidateQueries({ queryKey: ["conversations", user.id] });
-    });
+    }).catch((e: unknown) => console.warn("[messages] markRead failed", e));
   }, [conversationId, messages.length, user, qc]);
 
   async function onSubmit(e: FormEvent) {

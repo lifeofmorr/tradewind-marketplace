@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#0a1628"/>
+  <!-- sail -->
+  <path d="M33 10 C33 10 48 26 48 38 C48 44 42 48 36 48 L33 48 Z" fill="#e6c478"/>
+  <path d="M29 14 C29 14 18 28 18 38 C18 44 23 48 28 48 L29 48 Z" fill="#c9a84c"/>
+  <!-- hull -->
+  <path d="M12 51 L52 51 C50 55 45 57 38 57 L26 57 C19 57 14 55 12 51 Z" fill="#e6c478"/>
+</svg>

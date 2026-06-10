@@ -120,10 +120,12 @@ export default function CreateListing() {
     if (e || !data) { setError(e?.message ?? "Could not create listing"); return; }
     const newListingId = (data as { id: string }).id;
     if (v.video_url && v.video_url.trim()) {
-      await supabase.from("listing_videos").insert({
+      // best-effort: the listing already exists, so a failed video insert shouldn't block creation
+      const { error: videoErr } = await supabase.from("listing_videos").insert({
         listing_id: newListingId,
         url: v.video_url.trim(),
       });
+      if (videoErr) console.warn("[create-listing] video URL insert failed", videoErr);
     }
     navigate(`/seller/listings/${newListingId}`, { replace: true });
   }

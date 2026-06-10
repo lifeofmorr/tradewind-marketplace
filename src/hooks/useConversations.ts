@@ -18,40 +18,44 @@ export function useConversations() {
     enabled: !!user,
     queryFn: async (): Promise<ConversationWithMeta[]> => {
       if (!user) return [];
+      // Embed the latest message per conversation so the whole list costs two
+      // queries total instead of two per conversation.
       const { data, error } = await supabase
         .from("conversations")
-        .select("*, listing:listings(id, title, slug)")
+        .select("*, listing:listings(id, title, slug), messages(body, created_at, sender_id)")
         .contains("participants", [user.id])
         .order("last_message_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { referencedTable: "messages", ascending: false })
+        .limit(1, { referencedTable: "messages" })
         .limit(100);
       if (error) throw error;
-      const convos = (data ?? []) as (Conversation & { listing: Pick<Listing, "id" | "title" | "slug"> | null })[];
+      const convos = (data ?? []) as (Conversation & {
+        listing: Pick<Listing, "id" | "title" | "slug"> | null;
+        messages: { body: string; created_at: string; sender_id: string }[];
+      })[];
 
-      // Fetch the most recent message + unread counts in parallel.
-      const enriched: ConversationWithMeta[] = await Promise.all(convos.map(async (c) => {
-        const [{ data: lastArr }, { count }] = await Promise.all([
-          supabase.from("messages")
-            .select("body, created_at, sender_id")
-            .eq("conversation_id", c.id)
-            .order("created_at", { ascending: false })
-            .limit(1),
-          supabase.from("messages")
-            .select("*", { count: "exact", head: true })
-            .eq("conversation_id", c.id)
-            .neq("sender_id", user.id)
-            .is("read_at", null),
-        ]);
-        const last = (lastArr ?? [])[0] as
-          | { body: string; created_at: string; sender_id: string }
-          | undefined;
-        return {
-          ...c,
-          unread: count ?? 0,
-          lastMessage: last ?? null,
-          otherIds: c.participants.filter((p) => p !== user.id),
-        };
+      // Batch unread counts across all conversations in one query.
+      const unreadByConvo = new Map<string, number>();
+      if (convos.length) {
+        const { data: unreadRows, error: unreadErr } = await supabase
+          .from("messages")
+          .select("conversation_id")
+          .in("conversation_id", convos.map((c) => c.id))
+          .neq("sender_id", user.id)
+          .is("read_at", null)
+          .limit(5000);
+        if (unreadErr) throw unreadErr;
+        for (const r of (unreadRows ?? []) as { conversation_id: string }[]) {
+          unreadByConvo.set(r.conversation_id, (unreadByConvo.get(r.conversation_id) ?? 0) + 1);
+        }
+      }
+
+      return convos.map(({ messages, ...c }) => ({
+        ...c,
+        unread: unreadByConvo.get(c.id) ?? 0,
+        lastMessage: messages?.[0] ?? null,
+        otherIds: c.participants.filter((p) => p !== user.id),
       }));
-      return enriched;
     },
   });
 }
@@ -100,12 +104,14 @@ export function useMessages(conversationId: string | undefined) {
     enabled: !!conversationId,
     queryFn: async (): Promise<Message[]> => {
       if (!conversationId) return [];
+      // Most recent 200, returned oldest-first for display.
       const { data, error } = await supabase
         .from("messages").select("*")
         .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
-      return (data ?? []) as Message[];
+      return ((data ?? []) as Message[]).reverse();
     },
   });
 
@@ -189,9 +195,10 @@ export function useProfilesByIds(ids: string[]) {
 }
 
 export async function markRead(conversationId: string, userId: string): Promise<void> {
-  await supabase.from("messages")
+  const { error } = await supabase.from("messages")
     .update({ read_at: new Date().toISOString() })
     .eq("conversation_id", conversationId)
     .neq("sender_id", userId)
     .is("read_at", null);
+  if (error) throw error;
 }

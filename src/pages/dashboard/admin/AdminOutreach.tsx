@@ -588,6 +588,8 @@ export default function AdminOutreach() {
         lead_id: id,
         action: "lead_updated",
         metadata: { fields: Object.keys(patch) },
+      }).then(({ error: logErr }) => {
+        if (logErr) console.warn("[outreach] activity log insert failed", logErr);
       });
       void qc.invalidateQueries({ queryKey: ["outreach-leads"] });
     } catch (e) {
@@ -1564,7 +1566,8 @@ function BetaPipelineView({ betaRows, leads, onOpen }: {
       if (next === "demo_booked") patch.demo_booked = true;
       if (next === "beta_invited") patch.beta_invited = true;
       if (Object.keys(patch).length > 0) {
-        await supabase.from("outreach_leads").update(patch).eq("id", row.lead_id);
+        const { error: leadErr } = await supabase.from("outreach_leads").update(patch).eq("id", row.lead_id);
+        if (leadErr) console.warn("[outreach] beta pipeline lead flag update failed", leadErr);
       }
     }
   }

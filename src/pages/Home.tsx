@@ -31,7 +31,7 @@ import { CATEGORIES } from "@/lib/categories";
 import { BRAND } from "@/lib/brand";
 import { setMeta } from "@/lib/seo";
 
-const TradeWindHeroScene = lazy(() => import("@/components/visual/TradeWindHeroScene"));
+const TradewindHeroScene = lazy(() => import("@/components/visual/TradewindHeroScene"));
 
 function HeroFallback() {
   return (
@@ -382,7 +382,7 @@ export default function Home() {
   return (
     <>
       <Suspense fallback={<HeroFallback />}>
-        <TradeWindHeroScene />
+        <TradewindHeroScene />
       </Suspense>
       <FeaturedListings />
       <Reveal as="section" className="container-pad py-12 border-t border-border">

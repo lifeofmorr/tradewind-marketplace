@@ -147,7 +147,12 @@ export default function DashboardShell() {
       {open && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)} aria-hidden />
-          <aside className="relative w-72 max-w-[85vw] bg-navy-950 border-r border-border flex flex-col">
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            className="relative w-72 max-w-[85vw] bg-navy-950 border-r border-border flex flex-col"
+          >
             <button
               type="button"
               className="absolute right-2 top-2 inline-flex items-center justify-center h-11 w-11"

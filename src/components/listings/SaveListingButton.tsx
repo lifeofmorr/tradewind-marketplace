@@ -20,7 +20,10 @@ export function SaveListingButton({ listingId, className }: Props) {
       variant={saved ? "secondary" : "outline"}
       onClick={() => {
         if (!user) { navigate("/login"); return; }
-        toggle.mutate({ listing_id: listingId, saved });
+        toggle.mutate(
+          { listing_id: listingId, saved },
+          { onError: (err) => console.warn("[save-listing] toggle failed", err) },
+        );
       }}
       disabled={pending}
       aria-pressed={saved}
