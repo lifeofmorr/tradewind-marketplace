@@ -12,6 +12,10 @@ export interface UseListingsArgs {
   min_year?: number;
   max_year?: number;
   search?: string;
+  /** Exact-brand match (case-insensitive) — used by SEO brand pages. */
+  make?: string;
+  /** Exact-city match (case-insensitive) — used by SEO city pages. */
+  city?: string;
   seller_id?: string;
   dealer_id?: string;
   is_featured?: boolean;
@@ -22,6 +26,7 @@ export interface UseListingsArgs {
 /** Minimal structural view of a PostgREST filter builder. */
 interface FilterableQuery {
   eq: (col: string, v: unknown) => FilterableQuery;
+  ilike: (col: string, v: string) => FilterableQuery;
   in: (col: string, v: unknown[]) => FilterableQuery;
   gte: (col: string, v: number) => FilterableQuery;
   lte: (col: string, v: number) => FilterableQuery;
@@ -36,6 +41,8 @@ function applyListingFilters<Q>(query: Q, args: UseListingsArgs): Q {
   if (args.category) q = q.eq("category", args.category);
   if (args.categories && args.categories.length > 0) q = q.in("category", args.categories);
   if (args.state) q = q.eq("state", args.state.toUpperCase());
+  if (args.make) q = q.ilike("make", args.make.replace(/[%,]/g, ""));
+  if (args.city) q = q.ilike("city", args.city.replace(/[%,]/g, ""));
   if (args.seller_id) q = q.eq("seller_id", args.seller_id);
   if (args.dealer_id) q = q.eq("dealer_id", args.dealer_id);
   if (typeof args.is_featured === "boolean") q = q.eq("is_featured", args.is_featured);
@@ -80,6 +87,8 @@ export interface UsePaginatedListingsArgs extends Omit<UseListingsArgs, "limit">
   /** 1-based page number. */
   page?: number;
   pageSize?: number;
+  /** Gate the query (e.g. until a route param resolves). Defaults to true. */
+  enabled?: boolean;
 }
 
 /**
@@ -89,12 +98,13 @@ export interface UsePaginatedListingsArgs extends Omit<UseListingsArgs, "limit">
  * the UI can clamp instead of erroring.
  */
 export function usePaginatedListings(args: UsePaginatedListingsArgs = {}) {
-  const { page: rawPage, pageSize: rawSize, ...filters } = args;
+  const { page: rawPage, pageSize: rawSize, enabled = true, ...filters } = args;
   const page = Math.max(1, Math.floor(rawPage ?? 1));
   const pageSize = Math.max(1, rawSize ?? LISTINGS_PAGE_SIZE);
   return useQuery({
     queryKey: ["listings", "paginated", filters, page, pageSize],
     placeholderData: keepPreviousData,
+    enabled,
     queryFn: async (): Promise<PaginatedListings> => {
       const from = (page - 1) * pageSize;
       const q = applyListingFilters(

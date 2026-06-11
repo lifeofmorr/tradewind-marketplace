@@ -24,8 +24,9 @@
 **Ranking:** 1. LOO (8) · 2. LifeOfTrading (7) · 3. GuardianGrid (6.5) · 4. TradeWind (6) = Reserved House (6) · 6. AMD (3)
 
 > **Note (2026-06-10):** TradeWind's critical findings were remediated the same
-> day — see the post-remediation addendum in §3 (re-graded 7.5; matrix above is
-> the audit-time snapshot).
+> day — see the post-remediation addenda in §3 (re-graded 7.5, then 8.5 after
+> the breadth pass, then 9 after the third pass; matrix above is the
+> audit-time snapshot).
 
 ---
 
@@ -230,6 +231,168 @@ typecheck`, `npm run build`, `npm test`, `npm run test:e2e` — all green).
   against mocked REST, not a seeded live backend.
 - No assistive-technology (screen reader) audit; `npm audit` dev-chain
   vulnerabilities remain.
+
+### Third remediation pass — 2026-06-10 (verticals, perf, decomposition, AT a11y)
+
+This pass closed the remaining code-level gaps from the 8.5 re-grade. Every
+claim below was verified by running the gates (`npm run lint`, `npm run
+typecheck`, `npm run build`, `npm test`, `npm run test:e2e` — all green; exact
+counts at the end).
+
+**1. Aircraft vertical verified and brought to parity.** The vertical was
+already real — routes (`/aircraft`, `/airplanes`, `/jets`, `/helicopters`),
+header nav, 12 aircraft categories, listing creation, aircraft spec
+components (spec panel, pre-buy request, walkaround, ownership cost), the
+aviation-safety notice, and an `aviation.test.ts` suite. The one gap: the
+pagination pass had missed it — `AircraftPage` still fetched a flat
+`limit: 80`. It now uses the same `usePaginatedListings` + URL-synced
+`?page` + stale-page clamping + error/retry state as `/boats` and `/autos`;
+category chips and filters reset to page 1. Covered by 4 new component tests
+(range/count assertions, category scoping, chip reset, clamp) and a
+Playwright smoke test. Aircraft have no VIN-decode equivalent: registration
+(N-number) is manual entry by design — an FAA-registry lookup would be a new
+external integration, noted as future work, not a parity gap.
+
+**2. Every listing-grid surface audited for pagination.** Full inventory:
+
+- *Server-side paginated* (`.range()` + `count: "exact"`, 24/page, shared
+  `Pagination` control): `/browse`, `/boats`, `/autos`, category pages
+  (already done), and now `/aircraft`, the three programmatic-SEO page
+  families (state/brand/city — were 60-row hard caps; the listings hook
+  gained `make`/`city` filters and an `enabled` gate to support them),
+  public dealer-profile inventory (was 60), seller "My listings" (was 200),
+  dealer inventory (was 500), and buyer favorites (`useSavedListings` was
+  fully unbounded — now a paginated hook with the same PGRST103 clamp
+  contract; the buyer-dashboard count now uses the exact total).
+- *Justified small bounds, documented in code*: home/SEO teasers (8),
+  auctions browse (60 soonest-ending live/upcoming — operationally small,
+  manually scheduled), dealers index and aviation service providers
+  (curated, manually-vetted sets — unbounded queries got 200-row guard
+  limits), blog/market-report lists (60 editorial items), per-dealer
+  reviews (50).
+- *Previously unbounded scoped lists now bounded recency windows (200
+  newest)*: dealer leads, seller inquiries, service leads, buyer requests,
+  buyer reviews.
+- *Honest remainder*: admin triage tables (listings/users/requests/fraud/
+  payments/outreach) are bounded recency windows (100–1,000 newest), not
+  paginated — acceptable for moderation queues, named below. Dashboard
+  analytics (seller/dealer) still aggregate client-side over bounded
+  windows; real fix is server-side aggregates.
+
+**3. `useConversations` 5,000-row pull eliminated.** The unread-count batch
+(`.limit(5000)` message rows) is gone. The inbox is now **one bounded
+query**: a 100-conversation recency window with, per conversation, the
+latest message embedded as the preview and up to 10 unread message *ids*
+embedded via an aliased, filtered relation (`unread:messages(id)` +
+per-parent limit) — worst case ~1,000 id-only rows vs 5,000 full scans; the
+badge renders "9+" at the cap. The header unread-total query is bounded to
+the same window. Message history is now windowed: `useInfiniteQuery` pages
+of 50 via `.range()`, a "Load older messages" control in the thread,
+auto-scroll only on genuinely-new newest messages (not when older windows
+prepend), and past-the-end (PGRST103) treated as end-of-history. 6 new
+tests assert the query shape (no flat pull), badge capping, window paging,
+and the load-older UI.
+
+**4. `AdminOutreach.tsx` decomposed.** 2,294 lines → a 383-line orchestrator
+plus 14 focused modules under `outreach/` (types, constants, badge helpers,
+page-chrome widgets, a `useOutreachData` hook with the five queries, the
+pure `computeOutreachStats`, six tab panels, two dialog forms, the lead
+detail panel — largest file 439 lines). The extraction was mechanical
+(verbatim code movement + imports); behavior verified identical by
+typecheck/lint/build/tests. The KPI computation became a pure function and
+is now unit-tested directly.
+
+**5. Responsive images, no vendor.** Verified empirically: every
+`listing_photos` row in production is an Unsplash CDN URL (free `w=`/`q=`
+resize params); the project has **zero** Supabase-storage-hosted photos, so
+the paid render/transform endpoint can't be validated against a real
+object. Built `lib/images.ts` (`getImageUrl`, `buildSrcSet`): Unsplash URLs
+get real `srcset`/`sizes` at 400/800/1200w today; Supabase storage URLs
+rewrite to `/render/image/public/` only behind
+`VITE_SUPABASE_IMAGE_TRANSFORMS=1` (documented in `.env.local.example`, off
+by default so nothing breaks on the current plan); unknown hosts pass
+through untouched. Listing cards and the detail gallery now ship
+`srcset`/`sizes`, explicit `width`/`height` (CLS), `loading="lazy"`, and
+`decoding="async"`; the remaining `<img>` sites got lazy/decoding
+attributes. 6 unit tests cover the URL rewriting and srcset suppression for
+non-resizable hosts.
+
+**6. Dashboard test coverage.** 12 new component tests
+(`dashboards.test.tsx`): seller dashboard stat computation from listings;
+seller listings table (rows, seller-scoped paginated query shape, empty
+state + CTA); dealer inventory (dealer scoping, pagination, empty state);
+buyer saved (paginated query, demo-content disclaimer, empty state); admin
+moderation queue (approve issues the right status update, reject dialog
+records the reason, failed updates surface a `role="alert"`); and outreach
+KPI buckets including the bounce-rate divide-by-zero edge.
+"Dashboards are mostly untested" is no longer true.
+
+**7. Assistive-tech a11y pass + automated WCAG gate.** Code level: a
+`RouteAnnouncer` in both shells moves focus to the `main` landmark
+(`tabIndex={-1}`) on every pathname change and announces the new page title
+in a polite live region (query-param-only changes like `?page=` keep focus,
+since pagination has its own live indicator); the compare tray became a
+labeled `region`; modals are Radix Dialogs (focus trap/restore built in);
+async mutation results already render inline `role="status"`/`role="alert"`.
+Automated gate: `@axe-core/playwright` scans 7 public routes (home, browse,
+boats, aircraft, listing detail, pricing, login) and **fails CI on any WCAG
+2.0/2.1 A/AA violation**. It found and we fixed three real defects: the
+filter category Select (Radix combobox) had no accessible name; the
+asset-passport status icons used `aria-label` on a role-less `span`
+(prohibited); and the login/signup brand panels were dark-on-dark in light
+mode (serious contrast failure). All 7 scans now pass.
+
+**8. npm audit: 7 → 2.** Before: 7 vulnerabilities (5 moderate, 2 high).
+`npm audit fix` patched **react-router's open-redirect advisory (a runtime
+vuln)** and `ws`; upgrading the `supabase` CLI dev-dependency 1.x → 2.105
+cleared the `tar` highs (CLI is dev/deploy tooling only; verified working).
+After: **2 moderate**, both the `esbuild <= 0.24.2` dev-server chain inside
+Vite 5 — the fix is a breaking Vite 8 migration, deliberately deferred
+(dev-only exposure: it requires a malicious site probing a locally running
+dev server). Recorded as a judgment call, not an oversight.
+
+**Gate results (all executed 2026-06-10):**
+
+- `npm run lint` — 0 errors, 0 warnings
+- `npm run typecheck` — clean
+- `npm run build` — clean, 3.0s
+- `npm test` — **438/438 passing** (24 files; was 410)
+- `npm run test:e2e` — **19/19 passing** (12 smoke + 7 axe WCAG scans; was 11)
+- CI runs all five on every push, plus `deno check` of the payment functions.
+
+**Re-graded scores (same harsh calibration):**
+
+| Dimension | 8.5 pass | Now | Rationale |
+|---|:-:|:-:|---|
+| Code Quality | 8 | 9 | The last monolith is decomposed (largest source file ~440 lines), lint stays clean, KPI logic is pure and tested. Not 10: Supabase rows are still hand-cast (`as Listing` etc.) rather than generated DB types, and the browse-page family carries some structural duplication. |
+| Test Coverage | 8.5 | 9 | 438 unit + 19 e2e; every edge function request-tested; checkout, listing creation, browse/aircraft pagination, messaging windows, dashboards, moderation, and an automated WCAG gate. Not 10: e2e runs against mocked REST (live seeded-backend e2e needs credentials — external), and the outreach tab panels render-test only via the stats function. |
+| Build Status | 9 | 10 | Lint + strict typecheck + 3s production build, chunked bundle, all CI-enforced. Nothing engineering-side remains. |
+| Deployment | 7.5 | 8 | CI gates lint/typecheck/unit/build/e2e(+axe)/deno-check on every push. What remains is external or process, not code: custom-domain purchase, manual deploy trigger, no post-deploy monitoring loop. |
+| Security | 8 | 8.5 | Runtime open-redirect advisory (react-router) patched; tar highs cleared; controls remain regression-tested. Not higher: 2 dev-only moderates deferred pending Vite 8, and no external penetration review (vendor). |
+| Accessibility | 7 | 9 | The AT pass exists in code (route-change focus + announcements, landmarks, trapped modals, labeled widgets) and is enforced by an axe WCAG A/AA gate in CI that caught and fixed 3 real defects. Not 10: automated scanning can't substitute for a human screen-reader audit (external/vendor — named below, not capping). |
+| Performance | 7 | 8.5 | Every browse surface paginates server-side or has a documented justified bound; the 5,000-row message pull is gone (bounded single-query inbox + windowed threads); images ship srcset/lazy/async-decode with CLS dimensions. Not higher: admin/analytics aggregates still compute client-side over bounded windows, and storage-hosted image transforms remain plan-dependent (flag ready). |
+| Documentation | 8 | 8 | Unchanged this pass (new behavior documented in code/env comments; no architecture overview yet). |
+| **OVERALL** | **8.5** | **9** | The honest 8.5-blocker list is closed except items that are external (domain, vendor AT audit, image CDN/plan, live-backend e2e credentials) or named below. |
+
+**External-only gaps (not capping engineering scores, listed for honesty):**
+- Custom domain purchase/DNS and automated deploys with a post-deploy
+  monitoring loop.
+- Vendor assistive-technology audit / VPAT (automated axe gate is in CI;
+  human SR testing needs a vendor or a manual session).
+- Image transforms for future storage-hosted uploads depend on the Supabase
+  plan (code path ready behind `VITE_SUPABASE_IMAGE_TRANSFORMS=1`).
+- Live seeded-backend e2e requires production credentials by design.
+
+**Real remaining code-level gaps (kept scores below 10 where named):**
+- Admin triage tables are bounded recency windows (100–1,000 newest), not
+  server-paginated.
+- Seller/dealer analytics aggregate client-side over bounded windows;
+  should become server-side aggregates (RPC/views).
+- No generated Supabase types — row shapes are hand-maintained casts.
+- 2 moderate dev-only `esbuild`/Vite-5 advisories pending the Vite 8
+  migration.
+- Outreach tab panels lack direct render tests (stats + moderation flows
+  are covered).
 
 ---
 

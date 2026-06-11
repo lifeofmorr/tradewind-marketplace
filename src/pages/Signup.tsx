@@ -84,12 +84,12 @@ export default function Signup() {
   return (
     <div className="min-h-screen grid md:grid-cols-2">
       <div className="hidden md:flex flex-col justify-between p-12 bg-navy-950 border-r border-border">
-        <Link to="/" className="font-display text-2xl">{BRAND.name}<span className="text-brass-400">.</span></Link>
+        <Link to="/" className="font-display text-2xl text-navy-50">{BRAND.name}<span className="text-brass-400">.</span></Link>
         <div>
-          <h2 className="font-display text-4xl leading-tight">Join the marketplace.</h2>
-          <p className="text-muted-foreground mt-3">{BRAND.tagline}</p>
+          <h2 className="font-display text-4xl leading-tight text-navy-50">Join the marketplace.</h2>
+          <p className="text-navy-400 mt-3">{BRAND.tagline}</p>
         </div>
-        <div className="text-xs font-mono text-muted-foreground">© {new Date().getFullYear()} {BRAND.name}</div>
+        <div className="text-xs font-mono text-navy-400">© {new Date().getFullYear()} {BRAND.name}</div>
       </div>
       <div className="flex items-center justify-center p-8">
         <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm space-y-6">

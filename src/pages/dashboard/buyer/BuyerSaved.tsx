@@ -1,13 +1,20 @@
 import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { useSavedListings } from "@/hooks/useSavedListings";
+import { usePageParam } from "@/hooks/usePageParam";
 import { ListingGrid } from "@/components/listings/ListingGrid";
+import { Pagination } from "@/components/ui/pagination";
 import { setMeta } from "@/lib/seo";
 import { DEMO_DISCLAIMER_TITLE, DEMO_DISCLAIMER_BODY } from "@/lib/demoDisclaimer";
 import type { Listing } from "@/types/database";
 
 export default function BuyerSaved() {
-  const { data: saved = [], isLoading } = useSavedListings();
+  const [page, setPage] = usePageParam();
+  const { data, isLoading, isFetching } = useSavedListings(page);
+  const saved = data?.saved ?? [];
+  useEffect(() => {
+    if (data && page > data.pageCount) setPage(data.pageCount);
+  }, [data, page, setPage]);
   useEffect(() => { setMeta({ title: "Saved listings", description: "Your saved listings on Tradewind." }); }, []);
   const listings: Listing[] = saved.map((s) => s.listing).filter((l): l is Listing => !!l);
   const hasDemo = listings.some((l) => l.is_demo);
@@ -39,13 +46,22 @@ export default function BuyerSaved() {
           ))}
         </div>
       ) : (
-        <ListingGrid
-          listings={listings}
-          emptyText="You haven't saved anything yet"
-          emptyBody="Tap the heart on any listing to save it for later. Saved listings sync across devices."
-          emptyCtaTo="/browse"
-          emptyCtaLabel="Browse listings"
-        />
+        <>
+          <ListingGrid
+            listings={listings}
+            emptyText="You haven't saved anything yet"
+            emptyBody="Tap the heart on any listing to save it for later. Saved listings sync across devices."
+            emptyCtaTo="/browse"
+            emptyCtaLabel="Browse listings"
+          />
+          <Pagination
+            page={page}
+            pageCount={data?.pageCount ?? 1}
+            total={data?.total}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
+        </>
       )}
     </div>
   );

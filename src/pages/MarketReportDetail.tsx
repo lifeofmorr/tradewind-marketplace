@@ -55,7 +55,7 @@ export default function MarketReportDetail() {
       <Link to="/market-reports" className="text-xs text-muted-foreground hover:text-foreground">← All reports</Link>
       {report.cover_image_url && (
         <div className="aspect-[16/8] rounded-lg overflow-hidden bg-secondary">
-          <img src={report.cover_image_url} alt={report.title} className="h-full w-full object-cover" />
+          <img src={report.cover_image_url} alt={report.title} decoding="async" className="h-full w-full object-cover" />
         </div>
       )}
       <header className="space-y-2">

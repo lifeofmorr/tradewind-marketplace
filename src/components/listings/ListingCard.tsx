@@ -9,6 +9,7 @@ import { getListingBadges } from "@/lib/badges";
 import { useCompare } from "@/contexts/CompareContext";
 import { formatCents, formatNumber, cn } from "@/lib/utils";
 import { isAircraftCategory } from "@/lib/categories";
+import { buildSrcSet, getImageUrl } from "@/lib/images";
 
 interface Props {
   listing: Listing;
@@ -36,10 +37,15 @@ export function ListingCard({ listing, saved, onToggleSave }: Props) {
         <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
           {listing.cover_photo_url && !imgFailed ? (
             <img
-              src={listing.cover_photo_url}
+              src={getImageUrl(listing.cover_photo_url, 800) ?? listing.cover_photo_url}
+              srcSet={buildSrcSet(listing.cover_photo_url)}
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               alt={listing.title}
+              width={800}
+              height={600}
               className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
               loading="lazy"
+              decoding="async"
               onError={() => setImgFailed(true)}
             />
           ) : (

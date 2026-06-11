@@ -29,7 +29,9 @@ export default function BuyerReviews() {
         .from("reviews")
         .select("*, dealer:dealers(id, name, slug), service_provider:service_providers(id, name, slug)")
         .eq("reviewer_id", user!.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        // Bounded recency window — a user's own reviews (newest 200).
+        .limit(200);
       if (error) throw error;
       return (data ?? []) as ReviewWithTarget[];
     },

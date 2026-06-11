@@ -11,7 +11,7 @@ import { setMeta } from "@/lib/seo";
 
 export default function BuyerDashboard() {
   const { profile } = useAuth();
-  const { data: saved = [] } = useSavedListings();
+  const { data: saved } = useSavedListings();
   useEffect(() => { setMeta({ title: "Buyer dashboard", description: "Saved listings and requests." }); }, []);
   return (
     <div className="space-y-8">
@@ -34,7 +34,7 @@ export default function BuyerDashboard() {
         <Card className="lift-card brass-glow">
           <CardHeader><CardTitle>Saved listings</CardTitle></CardHeader>
           <CardContent>
-            <div className="font-display text-3xl">{saved.length}</div>
+            <div className="font-display text-3xl">{saved?.total ?? 0}</div>
             <Button asChild variant="outline" size="sm" className="mt-3"><Link to="/buyer/saved">View saved</Link></Button>
           </CardContent>
         </Card>

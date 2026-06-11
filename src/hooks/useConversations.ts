@@ -1,15 +1,26 @@
-import { useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Conversation, Message, Profile, Listing } from "@/types/database";
 
 export interface ConversationWithMeta extends Conversation {
   listing: Pick<Listing, "id" | "title" | "slug"> | null;
+  /** Unread count, capped at UNREAD_BADGE_CAP (render ">9" when it hits the cap). */
   unread: number;
   lastMessage: { body: string; created_at: string; sender_id: string } | null;
   otherIds: string[];
 }
+
+/** Inbox recency window — newest conversations by last activity. */
+export const CONVERSATIONS_WINDOW = 100;
+/**
+ * Per-conversation cap on unread rows fetched for the badge. Counting stops
+ * here and the UI renders "9+" — this is what keeps the inbox query bounded
+ * (window × cap id-only rows worst case) instead of the old flat 5,000-row
+ * message pull.
+ */
+export const UNREAD_BADGE_CAP = 10;
 
 export function useConversations() {
   const { user } = useAuth();
@@ -18,41 +29,30 @@ export function useConversations() {
     enabled: !!user,
     queryFn: async (): Promise<ConversationWithMeta[]> => {
       if (!user) return [];
-      // Embed the latest message per conversation so the whole list costs two
-      // queries total instead of two per conversation.
+      // One bounded query: the conversation window with, per conversation,
+      // (a) the latest message embedded as the preview and (b) up to
+      // UNREAD_BADGE_CAP unread incoming message ids for the badge count.
       const { data, error } = await supabase
         .from("conversations")
-        .select("*, listing:listings(id, title, slug), messages(body, created_at, sender_id)")
+        .select("*, listing:listings(id, title, slug), messages(body, created_at, sender_id), unread:messages(id)")
         .contains("participants", [user.id])
+        .neq("unread.sender_id", user.id)
+        .is("unread.read_at", null)
         .order("last_message_at", { ascending: false, nullsFirst: false })
         .order("created_at", { referencedTable: "messages", ascending: false })
         .limit(1, { referencedTable: "messages" })
-        .limit(100);
+        .limit(UNREAD_BADGE_CAP, { referencedTable: "unread" })
+        .limit(CONVERSATIONS_WINDOW);
       if (error) throw error;
       const convos = (data ?? []) as (Conversation & {
         listing: Pick<Listing, "id" | "title" | "slug"> | null;
         messages: { body: string; created_at: string; sender_id: string }[];
+        unread: { id: string }[];
       })[];
 
-      // Batch unread counts across all conversations in one query.
-      const unreadByConvo = new Map<string, number>();
-      if (convos.length) {
-        const { data: unreadRows, error: unreadErr } = await supabase
-          .from("messages")
-          .select("conversation_id")
-          .in("conversation_id", convos.map((c) => c.id))
-          .neq("sender_id", user.id)
-          .is("read_at", null)
-          .limit(5000);
-        if (unreadErr) throw unreadErr;
-        for (const r of (unreadRows ?? []) as { conversation_id: string }[]) {
-          unreadByConvo.set(r.conversation_id, (unreadByConvo.get(r.conversation_id) ?? 0) + 1);
-        }
-      }
-
-      return convos.map(({ messages, ...c }) => ({
+      return convos.map(({ messages, unread, ...c }) => ({
         ...c,
-        unread: unreadByConvo.get(c.id) ?? 0,
+        unread: unread?.length ?? 0,
         lastMessage: messages?.[0] ?? null,
         otherIds: c.participants.filter((p) => p !== user.id),
       }));
@@ -68,8 +68,12 @@ export function useUnreadConversationCount() {
     enabled: !!user,
     queryFn: async (): Promise<number> => {
       if (!user) return 0;
+      // Bounded to the same recency window as the inbox list — conversations
+      // older than the window can't surface in the UI anyway.
       const { data: convos } = await supabase
-        .from("conversations").select("id").contains("participants", [user.id]);
+        .from("conversations").select("id").contains("participants", [user.id])
+        .order("last_message_at", { ascending: false, nullsFirst: false })
+        .limit(CONVERSATIONS_WINDOW);
       const ids = ((convos ?? []) as { id: string }[]).map((r) => r.id);
       if (!ids.length) return 0;
       const { count } = await supabase
@@ -97,22 +101,47 @@ export function useUnreadConversationCount() {
   return result;
 }
 
+export const MESSAGES_PAGE_SIZE = 50;
+
+interface MessagesWindow {
+  /** Newest-first within the window (the flattened view re-orders for display). */
+  messages: Message[];
+  nextOffset: number | null;
+}
+
+/**
+ * Windowed message history: the newest MESSAGES_PAGE_SIZE rows up front,
+ * older windows on demand via `.range()` (`loadOlder`). Realtime inserts
+ * invalidate the query, which refetches the loaded windows fresh.
+ */
 export function useMessages(conversationId: string | undefined) {
   const qc = useQueryClient();
-  const result = useQuery({
+  const result = useInfiniteQuery({
     queryKey: ["messages", conversationId],
     enabled: !!conversationId,
-    queryFn: async (): Promise<Message[]> => {
-      if (!conversationId) return [];
-      // Most recent 200, returned oldest-first for display.
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }): Promise<MessagesWindow> => {
+      if (!conversationId) return { messages: [], nextOffset: null };
+      const from = pageParam;
       const { data, error } = await supabase
         .from("messages").select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return ((data ?? []) as Message[]).reverse();
+        .range(from, from + MESSAGES_PAGE_SIZE - 1);
+      if (error) {
+        // Past the end (rows deleted since the last window) — nothing older.
+        if ((error as { code?: string }).code === "PGRST103") {
+          return { messages: [], nextOffset: null };
+        }
+        throw error;
+      }
+      const rows = (data ?? []) as Message[];
+      return {
+        messages: rows,
+        nextOffset: rows.length === MESSAGES_PAGE_SIZE ? from + MESSAGES_PAGE_SIZE : null,
+      };
     },
+    getNextPageParam: (last) => last.nextOffset,
   });
 
   useEffect(() => {
@@ -125,7 +154,25 @@ export function useMessages(conversationId: string | undefined) {
     return () => { void supabase.removeChannel(channel); };
   }, [conversationId, qc]);
 
-  return result;
+  // Flatten the newest-first windows into a single oldest-first list for display.
+  const messages = useMemo<Message[]>(() => {
+    const pages = result.data?.pages ?? [];
+    const out: Message[] = [];
+    for (let i = pages.length - 1; i >= 0; i--) {
+      for (let j = pages[i].messages.length - 1; j >= 0; j--) out.push(pages[i].messages[j]);
+    }
+    return out;
+  }, [result.data]);
+
+  return {
+    messages,
+    isLoading: result.isLoading,
+    isError: result.isError,
+    /** Fetch the next (older) window of MESSAGES_PAGE_SIZE messages. */
+    loadOlder: result.fetchNextPage,
+    hasOlder: result.hasNextPage ?? false,
+    isLoadingOlder: result.isFetchingNextPage,
+  };
 }
 
 export function useSendMessage() {

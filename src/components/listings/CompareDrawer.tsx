@@ -32,7 +32,7 @@ export function CompareDrawer() {
   if (ids.length === 0) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 pointer-events-none">
+    <div role="region" aria-label="Compare selections" className="fixed inset-x-0 bottom-0 z-40 pointer-events-none">
       {/* Spacer so fixed bar doesn't cover viewport-bottom CTAs */}
       <div aria-hidden className="h-2" />
       <div className="container-pad pb-4 pointer-events-auto">

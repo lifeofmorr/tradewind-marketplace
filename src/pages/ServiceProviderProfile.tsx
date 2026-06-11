@@ -41,7 +41,7 @@ export default function ServiceProviderProfile() {
       <div className="border-b border-border bg-navy-950/40">
         <div className="container-pad py-12 flex flex-col md:flex-row md:items-center gap-6">
           {provider.logo_url ? (
-            <img src={provider.logo_url} alt={provider.name} className="h-20 w-20 rounded-lg object-cover border border-border" />
+            <img src={provider.logo_url} alt={provider.name} width={80} height={80} decoding="async" className="h-20 w-20 rounded-lg object-cover border border-border" />
           ) : (
             <div className="h-20 w-20 rounded-lg bg-secondary grid place-items-center font-display text-2xl">
               {provider.name.slice(0, 1)}

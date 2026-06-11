@@ -63,7 +63,7 @@ export default function BlogPostDetail() {
       <Link to="/blog" className="text-xs text-muted-foreground hover:text-foreground">← All posts</Link>
       {post.cover_image_url && (
         <div className="aspect-[16/8] rounded-lg overflow-hidden bg-secondary">
-          <img src={post.cover_image_url} alt={post.title} className="h-full w-full object-cover" />
+          <img src={post.cover_image_url} alt={post.title} decoding="async" className="h-full w-full object-cover" />
         </div>
       )}
       <header className="space-y-2">

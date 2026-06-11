@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { MapPin, Globe, Phone, Mail } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { ListingGrid } from "@/components/listings/ListingGrid";
-import { useListings } from "@/hooks/useListings";
+import { Pagination } from "@/components/ui/pagination";
+import { usePaginatedListings } from "@/hooks/useListings";
+import { usePageParam } from "@/hooks/usePageParam";
 import { TrustBadgeList } from "@/components/ui/TrustBadge";
 import { getDealerBadges } from "@/lib/badges";
 import { ReviewList } from "@/components/reviews/ReviewList";
@@ -30,12 +32,19 @@ export default function DealerProfile() {
     },
   });
 
-  const { data: listings = [] } = useListings({
+  const [page, setPage] = usePageParam();
+  const { data: listingPage, isFetching } = usePaginatedListings({
     dealer_id: dealer?.id,
     status: "active",
-    limit: 60,
     order: "newest",
+    page,
+    enabled: !!dealer,
   });
+  const listings = listingPage?.listings ?? [];
+
+  useEffect(() => {
+    if (listingPage && page > listingPage.pageCount) setPage(listingPage.pageCount);
+  }, [listingPage, page, setPage]);
 
   useEffect(() => {
     if (!dealer) return;
@@ -89,6 +98,13 @@ export default function DealerProfile() {
         )}
         <h2 className="font-display text-2xl">Inventory</h2>
         <ListingGrid listings={listings} emptyText="No active listings yet." />
+        <Pagination
+          page={page}
+          pageCount={listingPage?.pageCount ?? 1}
+          total={listingPage?.total}
+          onPageChange={setPage}
+          isLoading={isFetching}
+        />
 
         <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr] pt-8 border-t border-border">
           <ReviewList
@@ -112,7 +128,9 @@ export function DealersIndex() {
   const { data: dealers = [], isLoading } = useQuery({
     queryKey: ["dealers"],
     queryFn: async (): Promise<Dealer[]> => {
-      const { data, error } = await supabase.from("dealers").select("*").order("is_featured", { ascending: false }).order("name");
+      // Dealers are a curated, manually-verified set (well under this bound);
+      // the limit is a guard against unbounded growth, not pagination.
+      const { data, error } = await supabase.from("dealers").select("*").order("is_featured", { ascending: false }).order("name").limit(200);
       if (error) throw error;
       return (data ?? []) as Dealer[];
     },

@@ -3,6 +3,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import { CompareDrawer } from "@/components/listings/CompareDrawer";
 import { CookieNotice } from "@/components/ui/CookieNotice";
+import { RouteAnnouncer } from "@/components/ui/RouteAnnouncer";
 
 export default function PublicShell() {
   return (
@@ -14,10 +15,11 @@ export default function PublicShell() {
         Skip to main content
       </a>
       <Header />
-      <main id="main-content" className="flex-1"><Outlet /></main>
+      <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none"><Outlet /></main>
       <Footer />
       <CompareDrawer />
       <CookieNotice />
+      <RouteAnnouncer />
     </div>
   );
 }

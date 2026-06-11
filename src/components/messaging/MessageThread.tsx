@@ -12,19 +12,25 @@ interface Props { conversationId: string }
 
 export function MessageThread({ conversationId }: Props) {
   const { user } = useAuth();
-  const { data: messages = [], isLoading } = useMessages(conversationId);
+  const { messages, isLoading, loadOlder, hasOlder, isLoadingOlder } = useMessages(conversationId);
   const send = useSendMessage();
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const newestIdRef = useRef<string | null>(null);
 
-  // Auto-scroll on new messages
+  // Auto-scroll only when a *new* newest message arrives — not when an older
+  // window is prepended by "Load older".
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const newestId = messages.length ? messages[messages.length - 1].id : null;
+    if (newestId !== newestIdRef.current) {
+      newestIdRef.current = newestId;
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     }
-  }, [messages.length]);
+  }, [messages]);
 
   // Mark unread messages read when this thread is open.
   useEffect(() => {
@@ -52,6 +58,19 @@ export function MessageThread({ conversationId }: Props) {
   return (
     <div className="flex flex-col h-full">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-3">
+        {hasOlder && (
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => { void loadOlder(); }}
+              disabled={isLoadingOlder}
+            >
+              {isLoadingOlder ? "Loading…" : "Load older messages"}
+            </Button>
+          </div>
+        )}
         {isLoading ? (
           <div className="text-sm text-muted-foreground">Loading…</div>
         ) : messages.length === 0 ? (

@@ -70,7 +70,7 @@ export default function AuctionsPage() {
                 >
                   <div className="aspect-[16/10] bg-secondary">
                     {a.listing?.cover_photo_url
-                      ? <img src={a.listing.cover_photo_url} alt={a.listing.title} className="h-full w-full object-cover" loading="lazy" />
+                      ? <img src={a.listing.cover_photo_url} alt={a.listing.title} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                       : <div className="h-full w-full grid place-items-center text-xs font-mono text-muted-foreground">no photo</div>}
                   </div>
                   <div className="p-4 space-y-2">

@@ -61,12 +61,12 @@ export function ListingFilters({ value, onChange }: Props) {
         />
       </div>
       <div>
-        <Label>Category</Label>
+        <Label id="filter-category-label">Category</Label>
         <Select
           value={draft.category ?? ANY}
           onValueChange={(v) => update("category", v === ANY ? undefined : (v as ListingCategory))}
         >
-          <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
+          <SelectTrigger aria-labelledby="filter-category-label"><SelectValue placeholder="Any" /></SelectTrigger>
           <SelectContent>
             <SelectItem value={ANY}>Any category</SelectItem>
             {CATEGORIES.map((c) => (

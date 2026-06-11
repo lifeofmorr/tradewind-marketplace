@@ -398,6 +398,7 @@ export function AssetPassport({ listing }: Props) {
                     className="flex items-start gap-3 rounded-md px-1 py-1.5"
                   >
                     <span
+                      role="img"
                       className={cn(
                         "grid h-5 w-5 shrink-0 place-items-center rounded-full ring-1 ring-inset",
                         STATUS_STYLE[item.status],

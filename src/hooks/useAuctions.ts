@@ -11,6 +11,9 @@ export function useAuctions(status?: AuctionStatus | AuctionStatus[]) {
   return useQuery({
     queryKey: ["auctions", statuses],
     queryFn: async (): Promise<AuctionWithListing[]> => {
+      // Concurrently live/upcoming auctions are an operationally small set
+      // (each one is manually scheduled); 60 soonest-ending is a justified
+      // bound for the browse tabs, not a pagination gap.
       const { data, error } = await supabase
         .from("auctions")
         .select("*, listing:listings(*)")

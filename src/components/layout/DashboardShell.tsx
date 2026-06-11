@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadConversationCount } from "@/hooks/useConversations";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
+import { RouteAnnouncer } from "@/components/ui/RouteAnnouncer";
 import type { UserRole } from "@/types/database";
 
 interface NavItem { to: string; label: string; icon: LucideIcon; end?: boolean }
@@ -176,9 +177,10 @@ export default function DashboardShell() {
       <aside className="hidden md:flex w-60 shrink-0 border-r border-border bg-navy-950/40 flex-col">
         {sidebar}
       </aside>
-      <main id="main-content" className="flex-1 overflow-auto p-4 md:p-8">
+      <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto p-4 md:p-8 focus:outline-none">
         <Outlet />
       </main>
+      <RouteAnnouncer />
     </div>
   );
 }

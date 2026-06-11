@@ -23,7 +23,9 @@ function useUserRequests<T extends AnyRequest>(table: string, userId: string | u
         .from(table)
         .select("*")
         .eq("user_id", userId!)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        // Bounded recency window — a user's own requests (newest 200).
+        .limit(200);
       if (error) throw error;
       return (data ?? []) as T[];
     },

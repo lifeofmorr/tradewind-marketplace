@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ListingCategory, ListingPhoto } from "@/types/database";
 import { ListingPlaceholder } from "@/components/listings/ListingPlaceholder";
 import { cn } from "@/lib/utils";
+import { buildSrcSet, getImageUrl } from "@/lib/images";
 
 interface Props {
   photos: ListingPhoto[];
@@ -34,9 +35,14 @@ export function ListingGallery({ photos, coverFallback, category }: Props) {
           <ListingPlaceholder category={category ?? "car"} label="Photo unavailable" />
         ) : (
           <img
-            src={current.url}
+            src={getImageUrl(current.url, 1200) ?? current.url}
+            srcSet={buildSrcSet(current.url)}
+            sizes="(min-width: 1024px) 66vw, 100vw"
             alt={`Photo ${active + 1} of ${list.length}`}
+            width={1200}
+            height={675}
             className="h-full w-full object-cover"
+            decoding="async"
             onError={() => setFailed((prev) => new Set(prev).add(current.id))}
           />
         )}
@@ -60,7 +66,15 @@ export function ListingGallery({ photos, coverFallback, category }: Props) {
                 i === active ? "border-brass-500" : "border-transparent",
               )}
             >
-              <img src={p.url} alt="" loading="lazy" className="h-full w-full object-cover" />
+              <img
+                src={getImageUrl(p.url, 400) ?? p.url}
+                alt=""
+                width={96}
+                height={64}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
             </button>
           ))}
         </div>

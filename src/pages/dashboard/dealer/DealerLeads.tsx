@@ -49,7 +49,9 @@ export default function DealerLeads() {
         .from("inquiries")
         .select("*, listing:listings(title, slug)")
         .eq("dealer_id", profile!.dealer_id!)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        // Bounded recency window for the triage list (newest 200 leads).
+        .limit(200);
       if (error) throw error;
       return (data ?? []) as InquiryWithListing[];
     },

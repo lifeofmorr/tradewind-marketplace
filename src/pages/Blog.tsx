@@ -39,7 +39,7 @@ export default function Blog() {
             >
               <div className="aspect-[16/9] bg-secondary">
                 {p.cover_image_url
-                  ? <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover" loading="lazy" />
+                  ? <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                   : <div className="h-full w-full grid place-items-center text-xs font-mono text-muted-foreground">no cover</div>}
               </div>
               <div className="p-5 space-y-2">

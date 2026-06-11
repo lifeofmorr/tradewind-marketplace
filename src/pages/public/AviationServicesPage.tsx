@@ -55,7 +55,10 @@ export default function AviationServicesPage() {
         .select("*")
         .in("category", AVIATION_SERVICE_CATEGORIES as unknown as string[])
         .order("is_featured", { ascending: false })
-        .order("name");
+        .order("name")
+        // Service partners are a curated, manually-vetted set (well under this
+        // bound); the limit is a guard against unbounded growth, not pagination.
+        .limit(200);
       if (error) throw error;
       return (data ?? []) as ServiceProvider[];
     },

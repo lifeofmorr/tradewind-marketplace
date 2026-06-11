@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
-import { useConversations, useProfilesByIds, type ConversationWithMeta } from "@/hooks/useConversations";
+import { UNREAD_BADGE_CAP, useConversations, useProfilesByIds, type ConversationWithMeta } from "@/hooks/useConversations";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn, timeAgo } from "@/lib/utils";
 
@@ -71,7 +71,7 @@ function ConversationListItem({ conversation: c, otherName, selected, onSelect }
         <div className="font-display text-sm truncate">{otherName || "Member"}</div>
         {c.unread > 0 && (
           <span className="text-[10px] font-mono bg-brass-500 text-navy-950 rounded-full px-1.5 py-0.5">
-            {c.unread}
+            {c.unread >= UNREAD_BADGE_CAP ? `${UNREAD_BADGE_CAP - 1}+` : c.unread}
           </span>
         )}
       </div>

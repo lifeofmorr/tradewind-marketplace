@@ -29,7 +29,9 @@ export default function ServiceLeads() {
         .from("service_requests")
         .select("*")
         .eq("service_provider_id", profile!.service_provider_id!)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        // Bounded recency window for the triage list (newest 200 leads).
+        .limit(200);
       if (error) throw error;
       return (data ?? []) as ServiceRequest[];
     },

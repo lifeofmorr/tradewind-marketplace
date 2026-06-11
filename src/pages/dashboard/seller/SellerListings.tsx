@@ -2,10 +2,12 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Plus, ExternalLink, FileText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useListings } from "@/hooks/useListings";
+import { usePaginatedListings } from "@/hooks/useListings";
+import { usePageParam } from "@/hooks/usePageParam";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/pagination";
 import { setMeta } from "@/lib/seo";
 import { formatCents, formatNumber } from "@/lib/utils";
 import type { ListingStatus } from "@/types/database";
@@ -22,7 +24,16 @@ const STATUS_VARIANT: Record<ListingStatus, "default" | "accent" | "good" | "bad
 
 export default function SellerListings() {
   const { user } = useAuth();
-  const { data: listings = [], isLoading } = useListings({ seller_id: user?.id, limit: 200 });
+  const [page, setPage] = usePageParam();
+  const { data, isLoading, isFetching } = usePaginatedListings({
+    seller_id: user?.id,
+    page,
+    enabled: !!user,
+  });
+  const listings = data?.listings ?? [];
+  useEffect(() => {
+    if (data && page > data.pageCount) setPage(data.pageCount);
+  }, [data, page, setPage]);
   useEffect(() => { setMeta({ title: "Seller · listings", description: "Manage your listings." }); }, []);
   return (
     <div className="space-y-6">
@@ -82,6 +93,13 @@ export default function SellerListings() {
           </table>
         </div>
       )}
+      <Pagination
+        page={page}
+        pageCount={data?.pageCount ?? 1}
+        total={data?.total}
+        onPageChange={setPage}
+        isLoading={isFetching}
+      />
     </div>
   );
 }

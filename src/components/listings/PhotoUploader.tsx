@@ -100,7 +100,7 @@ export function PhotoUploader({ ownerId, listingId, initial = [], onChange, clas
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
         {photos.map((p) => (
           <div key={p.storage_path} className="relative aspect-square rounded-md overflow-hidden border border-border group">
-            {p.url && <img src={p.url} alt="" className="h-full w-full object-cover" />}
+            {p.url && <img src={p.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}
             <button
               type="button"
               onClick={() => { void remove(p); }}

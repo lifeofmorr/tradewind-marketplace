@@ -2,16 +2,27 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Plus, ExternalLink, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useListings } from "@/hooks/useListings";
+import { usePaginatedListings } from "@/hooks/useListings";
+import { usePageParam } from "@/hooks/usePageParam";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/pagination";
 import { setMeta } from "@/lib/seo";
 import { formatCents, formatNumber } from "@/lib/utils";
 
 export default function DealerInventory() {
   const { profile } = useAuth();
-  const { data: listings = [], isLoading } = useListings({ dealer_id: profile?.dealer_id ?? undefined, limit: 500 });
+  const [page, setPage] = usePageParam();
+  const { data, isLoading, isFetching } = usePaginatedListings({
+    dealer_id: profile?.dealer_id ?? undefined,
+    page,
+    enabled: !!profile?.dealer_id,
+  });
+  const listings = data?.listings ?? [];
+  useEffect(() => {
+    if (data && page > data.pageCount) setPage(data.pageCount);
+  }, [data, page, setPage]);
   useEffect(() => { setMeta({ title: "Dealer · inventory", description: "Your dealership inventory." }); }, []);
   return (
     <div className="space-y-6">
@@ -73,6 +84,13 @@ export default function DealerInventory() {
           </table>
         </div>
       )}
+      <Pagination
+        page={page}
+        pageCount={data?.pageCount ?? 1}
+        total={data?.total}
+        onPageChange={setPage}
+        isLoading={isFetching}
+      />
     </div>
   );
 }

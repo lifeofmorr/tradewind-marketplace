@@ -106,6 +106,18 @@ test.describe("navigation and auth gate", () => {
     await expect(page.getByRole("navigation", { name: "Pagination" })).toContainText("Page 1 of 3");
   });
 
+  test("the aircraft vertical renders with the shared pagination", async ({ page }) => {
+    await page.goto("/aircraft");
+    await expect(page.getByRole("heading", { name: "Aircraft for sale" })).toBeVisible();
+    await expect(page.getByText("Aviation safety notice.")).toBeVisible();
+    await expect(page.getByText("E2E Listing 0")).toBeVisible();
+    const nav = page.getByRole("navigation", { name: "Pagination" });
+    await expect(nav).toContainText("Page 1 of 3");
+    await nav.getByRole("button", { name: "Next page" }).click();
+    await expect(page.getByText("E2E Listing 24")).toBeVisible();
+    await expect(page).toHaveURL(/\/aircraft\?page=2$/);
+  });
+
   test("the login page renders its form", async ({ page }) => {
     await page.goto("/login");
     await expect(page.getByLabel(/email/i)).toBeVisible();

@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plane, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Plane, ShieldAlert } from "lucide-react";
 import { ListingFilters, type ListingFilterValues } from "@/components/listings/ListingFilters";
 import { ListingGrid } from "@/components/listings/ListingGrid";
 import { BetaCTA } from "@/components/layout/BetaCTA";
-import { useListings } from "@/hooks/useListings";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/pagination";
+import { usePaginatedListings } from "@/hooks/useListings";
+import { usePageParam } from "@/hooks/usePageParam";
 import { AIRCRAFT_CATEGORIES, CATEGORIES } from "@/lib/categories";
 import { setMeta } from "@/lib/seo";
 import type { ListingCategory } from "@/types/database";
@@ -31,6 +34,7 @@ export default function AircraftPage({
     category: defaultCategory,
   };
   const [filters, setFilters] = useState<ListingFilterValues>(initial);
+  const [page, setPage] = usePageParam();
 
   const aircraftCats = useMemo(
     () => AIRCRAFT_CATEGORIES,
@@ -44,13 +48,18 @@ export default function AircraftPage({
     });
   }, [title, blurb]);
 
-  const { data: listings = [], isLoading } = useListings({
+  const { data, isLoading, isError, refetch, isFetching } = usePaginatedListings({
     ...filters,
     categories: filters.category ? undefined : aircraftCats,
     status: "active",
-    limit: 80,
     order: "newest",
+    page,
   });
+
+  // Clamp stale deep links (?page=99) once the real page count is known.
+  useEffect(() => {
+    if (data && page > data.pageCount) setPage(data.pageCount);
+  }, [data, page, setPage]);
 
   const aviationCategoryDefs = useMemo(
     () => CATEGORIES.filter((c) => c.group === "aircraft"),
@@ -83,7 +92,10 @@ export default function AircraftPage({
       <nav aria-label="Aircraft categories" className="flex flex-wrap gap-2">
         <CategoryChip
           active={!filters.category}
-          onClick={() => setFilters({ ...filters, category: undefined })}
+          onClick={() => {
+            setFilters({ ...filters, category: undefined });
+            setPage(1, { scroll: false });
+          }}
         >
           All aircraft
         </CategoryChip>
@@ -91,14 +103,23 @@ export default function AircraftPage({
           <CategoryChip
             key={c.key}
             active={filters.category === c.key}
-            onClick={() => setFilters({ ...filters, category: c.key })}
+            onClick={() => {
+              setFilters({ ...filters, category: c.key });
+              setPage(1, { scroll: false });
+            }}
           >
             {c.label}
           </CategoryChip>
         ))}
       </nav>
 
-      <ListingFilters value={filters} onChange={setFilters} />
+      <ListingFilters
+        value={filters}
+        onChange={(next) => {
+          setFilters(next);
+          setPage(1, { scroll: false });
+        }}
+      />
 
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -106,14 +127,30 @@ export default function AircraftPage({
             <div key={i} className="aspect-[4/3] skeleton rounded-xl" />
           ))}
         </div>
-      ) : (
-        <ListingGrid
-          listings={listings}
-          emptyText="No aircraft match those filters"
-          emptyBody="Try widening price, year, or removing a category — new aircraft are listed weekly."
-          emptyCtaTo="/aircraft"
-          emptyCtaLabel="See all aircraft"
+      ) : isError ? (
+        <EmptyState
+          icon={AlertTriangle}
+          title="Couldn't load aircraft"
+          body="Something went wrong while fetching listings. Check your connection and try again."
+          cta={{ label: "Try again", onClick: () => { void refetch(); } }}
         />
+      ) : (
+        <>
+          <ListingGrid
+            listings={data?.listings ?? []}
+            emptyText="No aircraft match those filters"
+            emptyBody="Try widening price, year, or removing a category — new aircraft are listed weekly."
+            emptyCtaTo="/aircraft"
+            emptyCtaLabel="See all aircraft"
+          />
+          <Pagination
+            page={page}
+            pageCount={data?.pageCount ?? 1}
+            total={data?.total}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
+        </>
       )}
       <BetaCTA
         variant="banner"

@@ -1,16 +1,16 @@
 import { useEffect, useMemo } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
 import { ListingGrid } from "@/components/listings/ListingGrid";
-import { useListings } from "@/hooks/useListings";
+import { Pagination } from "@/components/ui/pagination";
+import { useListings, usePaginatedListings } from "@/hooks/useListings";
+import { usePageParam } from "@/hooks/usePageParam";
 import { setMeta } from "@/lib/seo";
 import { BRAND } from "@/lib/brand";
 import {
   US_STATES, FEATURED_CITIES, findStateBySlug, findCityBySlug, slugifyName,
 } from "@/lib/geo";
 import { CATEGORIES, FEATURED_BOAT_BRANDS, FEATURED_AUTO_BRANDS } from "@/lib/categories";
-import type { Listing, ListingCategory } from "@/types/database";
+import type { ListingCategory } from "@/types/database";
 
 const BOAT_CATEGORIES: ListingCategory[] = ["boat", "performance_boat", "yacht", "center_console"];
 
@@ -32,37 +32,35 @@ function breadcrumbsLD(items: { name: string; href: string }[]) {
 export function StatePage() {
   const { state: stateSlug } = useParams<{ state: string }>();
   const state = useMemo(() => stateSlug ? findStateBySlug(stateSlug) : undefined, [stateSlug]);
+  const [page, setPage] = usePageParam();
 
-  const { data: listings = [], isLoading } = useQuery({
-    queryKey: ["seo-state", state?.code],
+  const { data, isLoading, isFetching } = usePaginatedListings({
+    categories: BOAT_CATEGORIES,
+    state: state?.code,
+    status: "active",
+    order: "newest",
+    page,
     enabled: !!state,
-    queryFn: async (): Promise<Listing[]> => {
-      const { data, error } = await supabase
-        .from("listings")
-        .select("*")
-        .in("category", BOAT_CATEGORIES)
-        .eq("state", state!.code)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(60);
-      if (error) throw error;
-      return (data ?? []) as Listing[];
-    },
   });
+  const listings = data?.listings ?? [];
+
+  useEffect(() => {
+    if (data && page > data.pageCount) setPage(data.pageCount);
+  }, [data, page, setPage]);
 
   useEffect(() => {
     if (!state) return;
     const title = `Boats for sale in ${state.name}`;
     setMeta({
       title,
-      description: `Browse ${listings.length || "all"} active boats for sale in ${state.name} on ${BRAND.name}.`,
+      description: `Browse ${data?.total || "all"} active boats for sale in ${state.name} on ${BRAND.name}.`,
       jsonLd: breadcrumbsLD([
         { name: "Home", href: "/" },
         { name: "Boats", href: "/categories/boat" },
         { name: state.name, href: `/boats-for-sale-in-${slugifyName(state.name)}` },
       ]),
     });
-  }, [state, listings.length]);
+  }, [state, data?.total]);
 
   if (stateSlug && !state) return <Navigate to="/browse" replace />;
   if (!state) return null;
@@ -77,7 +75,10 @@ export function StatePage() {
         </p>
       </header>
       {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
-        <ListingGrid listings={listings} emptyText={`No active boats in ${state.name} just yet.`} />
+        <>
+          <ListingGrid listings={listings} emptyText={`No active boats in ${state.name} just yet.`} />
+          <Pagination page={page} pageCount={data?.pageCount ?? 1} total={data?.total} onPageChange={setPage} isLoading={isFetching} />
+        </>
       )}
       <RelatedStates current={state.code} />
     </div>
@@ -115,21 +116,19 @@ export function BrandPage() {
   const { brand: brandSlug } = useParams<{ brand: string }>();
   const brand = useMemo(() => brandSlug ? findBrandBySlug(brandSlug) : undefined, [brandSlug]);
 
-  const { data: listings = [], isLoading } = useQuery({
-    queryKey: ["seo-brand", brand],
+  const [page, setPage] = usePageParam();
+  const { data, isLoading, isFetching } = usePaginatedListings({
+    make: brand,
+    status: "active",
+    order: "newest",
+    page,
     enabled: !!brand,
-    queryFn: async (): Promise<Listing[]> => {
-      const { data, error } = await supabase
-        .from("listings")
-        .select("*")
-        .ilike("make", brand!)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(60);
-      if (error) throw error;
-      return (data ?? []) as Listing[];
-    },
   });
+  const listings = data?.listings ?? [];
+
+  useEffect(() => {
+    if (data && page > data.pageCount) setPage(data.pageCount);
+  }, [data, page, setPage]);
 
   useEffect(() => {
     if (!brand) return;
@@ -157,7 +156,10 @@ export function BrandPage() {
         </p>
       </header>
       {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
-        <ListingGrid listings={listings} emptyText={`No active ${brand} listings yet.`} />
+        <>
+          <ListingGrid listings={listings} emptyText={`No active ${brand} listings yet.`} />
+          <Pagination page={page} pageCount={data?.pageCount ?? 1} total={data?.total} onPageChange={setPage} isLoading={isFetching} />
+        </>
       )}
       <RelatedBrands current={brand} />
     </div>
@@ -223,22 +225,20 @@ export function CityPage() {
   );
   const city = useMemo(() => (citySlug ? findCityBySlug(citySlug) : undefined), [citySlug]);
 
-  const { data: listings = [], isLoading } = useQuery({
-    queryKey: ["seo-city", category?.key, city?.slug],
+  const [page, setPage] = usePageParam();
+  const { data, isLoading, isFetching } = usePaginatedListings({
+    category: category?.key,
+    city: city?.name,
+    status: "active",
+    order: "newest",
+    page,
     enabled: !!category && !!city,
-    queryFn: async (): Promise<Listing[]> => {
-      const { data, error } = await supabase
-        .from("listings")
-        .select("*")
-        .eq("category", category!.key)
-        .ilike("city", city!.name)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(60);
-      if (error) throw error;
-      return (data ?? []) as Listing[];
-    },
   });
+  const listings = data?.listings ?? [];
+
+  useEffect(() => {
+    if (data && page > data.pageCount) setPage(data.pageCount);
+  }, [data, page, setPage]);
 
   useEffect(() => {
     if (!category || !city) return;
@@ -266,7 +266,10 @@ export function CityPage() {
         <p className="text-muted-foreground mt-2 max-w-2xl">{category.blurb}.</p>
       </header>
       {isLoading ? <div className="text-sm text-muted-foreground">Loading…</div> : (
-        <ListingGrid listings={listings} emptyText={`No active ${category.label.toLowerCase()} in ${city.name} just yet.`} />
+        <>
+          <ListingGrid listings={listings} emptyText={`No active ${category.label.toLowerCase()} in ${city.name} just yet.`} />
+          <Pagination page={page} pageCount={data?.pageCount ?? 1} total={data?.total} onPageChange={setPage} isLoading={isFetching} />
+        </>
       )}
       <NearbyCities current={city.slug} />
     </div>

@@ -36,7 +36,9 @@ export default function SellerInquiries() {
         .from("inquiries")
         .select("*, listing:listings(title, slug)")
         .eq("seller_id", user!.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        // Bounded recency window for the triage list (newest 200 inquiries).
+        .limit(200);
       if (error) throw error;
       return (data ?? []) as InquiryWithListing[];
     },

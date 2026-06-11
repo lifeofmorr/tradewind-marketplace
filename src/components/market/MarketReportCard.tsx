@@ -11,7 +11,7 @@ export function MarketReportCard({ report }: Props) {
     >
       <div className="aspect-[16/9] bg-secondary">
         {report.cover_image_url
-          ? <img src={report.cover_image_url} alt={report.title} className="h-full w-full object-cover" loading="lazy" />
+          ? <img src={report.cover_image_url} alt={report.title} className="h-full w-full object-cover" loading="lazy" decoding="async" />
           : <div className="h-full w-full grid place-items-center text-xs font-mono text-muted-foreground">no cover</div>}
       </div>
       <div className="p-5 space-y-1">

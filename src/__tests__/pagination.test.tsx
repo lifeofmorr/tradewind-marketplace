@@ -142,8 +142,10 @@ vi.mock("react-intersection-observer", () => ({
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CompareProvider } from "@/contexts/CompareContext";
 import { BrowsePage } from "@/pages/CategoryPage";
+import AircraftPage from "@/pages/public/AircraftPage";
 import { Pagination } from "@/components/ui/pagination";
 import { parsePageParam } from "@/hooks/usePageParam";
+import { AIRCRAFT_CATEGORIES } from "@/lib/categories";
 
 function LocationProbe() {
   const loc = useLocation();
@@ -258,6 +260,64 @@ describe("BrowsePage pagination", () => {
     renderBrowse();
     await screen.findByText("Test Listing 0");
     expect(screen.queryByRole("navigation", { name: "Pagination" })).not.toBeInTheDocument();
+  });
+});
+
+describe("AircraftPage pagination (vertical parity)", () => {
+  function renderAircraft(initialEntry = "/aircraft") {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <QueryClientProvider client={qc}>
+          <AuthProvider>
+            <CompareProvider>
+              <AircraftPage />
+              <LocationProbe />
+            </CompareProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+  }
+
+  it("requests a 24-row range scoped to the aircraft categories with an exact count", async () => {
+    renderAircraft();
+    expect(await screen.findByText("Test Listing 0")).toBeInTheDocument();
+    const q = listingQueries()[0];
+    expect(q.range).toEqual([0, 23]);
+    expect(q.selectOpts).toEqual({ count: "exact" });
+    expect(q.filters).toContainEqual(["in:category", AIRCRAFT_CATEGORIES]);
+    expect(screen.getByText(/Page 1 of 3/)).toBeInTheDocument();
+  });
+
+  it("advances pages and syncs ?page= to the URL", async () => {
+    renderAircraft();
+    await screen.findByText("Test Listing 0");
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    expect(await screen.findByText("Test Listing 24")).toBeInTheDocument();
+    expect(screen.getByTestId("location")).toHaveTextContent("/aircraft?page=2");
+    expect(listingQueries().map((q) => q.range)).toContainEqual([24, 47]);
+  });
+
+  it("selecting a category chip narrows to one category and resets to page 1", async () => {
+    renderAircraft("/aircraft?page=2");
+    await screen.findByText("Test Listing 24");
+    fireEvent.click(screen.getByRole("button", { name: "Jets" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/aircraft$/),
+    );
+    const last = listingQueries().at(-1)!;
+    expect(last.range).toEqual([0, 23]);
+    expect(last.filters).toContainEqual(["eq:category", "aircraft_jet"]);
+  });
+
+  it("clamps a stale ?page= deep link past the end", async () => {
+    state.total = 10;
+    renderAircraft("/aircraft?page=9");
+    expect(await screen.findByText("Test Listing 0")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("location")).toHaveTextContent(/^\/aircraft$/),
+    );
   });
 });
 
